@@ -28,6 +28,23 @@ def project_rais(driver: Driver, database: str | None, observations: list[dict[s
     Call only after LaborStats nodes exist; no implicit identifiers or entities.
     Schema constraints must be installed separately to protect concurrent writers.
     """
+    _project(driver, database, observations, "LaborStats", "stats_id")
+
+
+def project_siconfi(
+    driver: Driver, database: str | None, observations: list[dict[str, Any]]
+) -> None:
+    """Project explicit dimensions onto existing MunicipalFinance facts."""
+    _project(driver, database, observations, "MunicipalFinance", "finance_id")
+
+
+def _project(
+    driver: Driver,
+    database: str | None,
+    observations: list[dict[str, Any]],
+    fact_label: str,
+    fact_key: str,
+) -> None:
     result = materialize([item["dimensions"] for item in observations])
 
     def write(tx: ManagedTransaction) -> None:
@@ -43,17 +60,26 @@ def project_rais(driver: Driver, database: str | None, observations: list[dict[s
             for name, identity in refs.items():
                 label, key, relation = _RELATIONS[name]
                 query = (
-                    f"MATCH (s:LaborStats {{stats_id: $stats_id}}) "
+                    f"MATCH (s:{fact_label} {{{fact_key}: $fact_id}}) "
                     f"MATCH (d:{label} {{{key}: $id}}) "
                     f"MERGE (s)-[:{relation}]->(d) RETURN count(s) AS matched"
                 )
                 if (
-                    tx.run(query, stats_id=item["stats_id"], id=identity).single(strict=True)[
+                    tx.run(query, fact_id=item[fact_key], id=identity).single(strict=True)[
                         "matched"
                     ]
                     != 1
                 ):
-                    raise ValueError("LaborStats missing or duplicated")
+                    raise ValueError(f"{fact_label} missing or duplicated")
+            if fact_label == "MunicipalFinance":
+                complete = "public_body" in refs
+                tx.run(
+                    "MATCH (s:MunicipalFinance {finance_id: $fact_id}) "
+                    "SET s.dimension_status = $status, s.dimension_reason = $reason",
+                    fact_id=item[fact_key],
+                    status="projected" if complete else "partial",
+                    reason="" if complete else "missing_public_body_metadata",
+                ).consume()
 
     with driver.session(database=database) as session:
         session.execute_write(write)

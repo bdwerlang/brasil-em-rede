@@ -9,14 +9,13 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 
 from bracc_etl.base import Pipeline
+from bracc_etl.dimensions.projection import project_siconfi
 
 if TYPE_CHECKING:
     from neo4j import Driver
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
     deduplicate_rows,
-    format_cnpj,
-    normalize_cnpj,
     normalize_name,
 )
 
@@ -27,7 +26,7 @@ class SiconfiPipeline(Pipeline):
     """ETL pipeline for SICONFI (municipal/state finance declarations).
 
     Data source: Tesouro Nacional API (apidatalake.tesouro.gov.br).
-    Loads MunicipalFinance nodes linked to municipalities (Company nodes by CNPJ).
+    Loads MunicipalFinance aggregates and explicit dimension references.
     """
 
     name = "siconfi"
@@ -44,7 +43,7 @@ class SiconfiPipeline(Pipeline):
         super().__init__(driver, data_dir, limit=limit, chunk_size=chunk_size, **kwargs)
         self._raw: list[dict[str, Any]] = []
         self.finances: list[dict[str, Any]] = []
-        self.municipality_rels: list[dict[str, Any]] = []
+        self.dimension_observations: list[dict[str, Any]] = []
 
     def extract(self) -> None:
         siconfi_dir = Path(self.data_dir) / "siconfi"
@@ -72,7 +71,8 @@ class SiconfiPipeline(Pipeline):
 
     def transform(self) -> None:
         finances: list[dict[str, Any]] = []
-        municipality_rels: list[dict[str, Any]] = []
+        dimension_observations: list[dict[str, Any]] = []
+        dimension_by_fact: dict[str, dict[str, Any]] = {}
 
         for row in self._raw:
             cod_ibge = str(row.get("cod_ibge", "")).strip()
@@ -80,9 +80,7 @@ class SiconfiPipeline(Pipeline):
                 continue
 
             # CSV uses "instituicao", API JSON uses "ente"
-            ente = normalize_name(
-                str(row.get("instituicao", "") or row.get("ente", ""))
-            )
+            ente = normalize_name(str(row.get("instituicao", "") or row.get("ente", "")))
             exercicio = str(row.get("exercicio", "")).strip()
             conta = str(row.get("conta", "")).strip()
             coluna = str(row.get("coluna", "")).strip()
@@ -96,39 +94,85 @@ class SiconfiPipeline(Pipeline):
             except (ValueError, TypeError):
                 continue
 
-            # CNPJ may be in API JSON but not in CSV downloads
-            cnpj_raw = str(row.get("cnpj", "")).strip()
-            cnpj_digits = normalize_cnpj(cnpj_raw)
-            cnpj_formatted = format_cnpj(cnpj_raw) if len(cnpj_digits) == 14 else ""
-
             id_source = f"{cod_ibge}_{exercicio}_{conta}_{coluna}"
             finance_id = hashlib.sha256(id_source.encode()).hexdigest()[:16]
 
-            finances.append({
-                "finance_id": finance_id,
-                "cod_ibge": cod_ibge,
-                "municipality": ente,
-                "year": exercicio,
-                "account": conta,
-                "column": coluna,
-                "amount": amount,
-                "source": "siconfi",
-            })
-
-            if cnpj_formatted:
-                municipality_rels.append({
-                    "cnpj": cnpj_formatted,
+            finances.append(
+                {
                     "finance_id": finance_id,
+                    "cod_ibge": cod_ibge,
                     "municipality": ente,
-                })
+                    "year": exercicio,
+                    "account": conta,
+                    "column": coluna,
+                    "amount": amount,
+                    "source": "siconfi",
+                    "dimension_status": "pending",
+                    "dimension_reason": "projection_not_completed",
+                }
+            )
+
+            required = (
+                "cod_ibge",
+                "exercicio",
+                "uf",
+                "versao_territorial",
+                "tipo_territorio",
+                "unidade_sistema",
+                "unidade_codigo",
+            )
+            missing = [
+                field for field in required if not isinstance(row.get(field), str) or not row[field]
+            ]
+            if missing:
+                finances[-1]["dimension_reason"] = "missing_metadata:" + ",".join(missing)
+            if not missing:
+                if row["tipo_territorio"] not in {"municipio", "uf"}:
+                    raise ValueError("tipo_territorio must be municipio or uf")
+                dimensions: dict[str, Any] = {
+                    "territory": {
+                        "system": "IBGE",
+                        "type": row["tipo_territorio"],
+                        "code": row["cod_ibge"],
+                        "territorial_version": row["versao_territorial"],
+                        "uf": row["uf"],
+                    },
+                    "unit": {"system": row["unidade_sistema"], "code": row["unidade_codigo"]},
+                    "fiscal_year": {"year": row["exercicio"]},
+                }
+                body_fields = (
+                    "orgao_jurisdicao",
+                    "orgao_sistema",
+                    "orgao_papel",
+                    "orgao_codigo",
+                    "orgao_versao",
+                )
+                if all(isinstance(row.get(field), str) and row[field] for field in body_fields):
+                    if row["orgao_papel"] not in {"orgao", "ug", "ente"}:
+                        raise ValueError("orgao_papel must be orgao, ug, or ente")
+                    dimensions["public_body"] = {
+                        "jurisdiction": row["orgao_jurisdicao"],
+                        "system": row["orgao_sistema"],
+                        "role": row["orgao_papel"],
+                        "code": row["orgao_codigo"],
+                        "version": row["orgao_versao"],
+                    }
+                if finance_id in dimension_by_fact and dimension_by_fact[finance_id] != dimensions:
+                    raise ValueError("conflicting dimensions for same finance_id")
+                if finance_id not in dimension_by_fact:
+                    dimension_by_fact[finance_id] = dimensions
+                    dimension_observations.append(
+                        {"finance_id": finance_id, "dimensions": dimensions}
+                    )
 
         self.finances = deduplicate_rows(finances, ["finance_id"])
-        self.municipality_rels = municipality_rels
-        logger.info(
-            "Transformed %d finance records, %d municipality links",
-            len(self.finances),
-            len(self.municipality_rels),
-        )
+        self.dimension_observations = dimension_observations
+        if len(dimension_observations) < len(self.finances):
+            logger.warning(
+                "SICONFI dimensions pending for %d facts",
+                len(self.finances) - len(dimension_observations),
+            )
+        logger.info("Transformed %d finance records", len(self.finances))
 
     def load(self) -> None:
         loader = Neo4jBatchLoader(self.driver)
@@ -136,21 +180,7 @@ class SiconfiPipeline(Pipeline):
         if self.finances:
             loader.load_nodes("MunicipalFinance", self.finances, key_field="finance_id")
 
-        if self.municipality_rels:
-            # Ensure Company nodes exist for municipalities
-            muni_nodes = deduplicate_rows(
-                [
-                    {"cnpj": r["cnpj"], "razao_social": r["municipality"]}
-                    for r in self.municipality_rels
-                ],
-                ["cnpj"],
-            )
-            loader.load_nodes("Company", muni_nodes, key_field="cnpj")
-
-            query = (
-                "UNWIND $rows AS row "
-                "MATCH (c:Company {cnpj: row.cnpj}) "
-                "MATCH (f:MunicipalFinance {finance_id: row.finance_id}) "
-                "MERGE (c)-[:DECLAROU_FINANCA]->(f)"
-            )
-            loader.run_query_with_retry(query, self.municipality_rels)
+        if self.dimension_observations:
+            project_siconfi(self.driver, self.neo4j_database, self.dimension_observations)
+        elif self.finances:
+            logger.warning("SICONFI dimensions pending: explicit vocabulary metadata unavailable")
