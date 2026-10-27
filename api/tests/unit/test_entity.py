@@ -221,3 +221,18 @@ def test_self_dealing_uses_value_committed_or_value_paid() -> None:
             assert "a.function" in line and "a.object" in line, (
                 f"amendment_object line missing dual-source fallback: {line.strip()}"
             )
+
+@pytest.mark.anyio
+async def test_entity_lookup_alphanumeric_cnpj(client: AsyncClient) -> None:
+    from unittest.mock import AsyncMock, patch
+
+    with patch("bracc.routers.entity.execute_query_single", new_callable=AsyncMock, return_value={
+        "e": {"cnpj": "00.ABC.123/0001-35", "razao_social": "Example"},
+        "entity_labels": ["Company"], "entity_id": "4:company:1",
+    }) as query:
+        response = await client.get("/api/v1/entity/00abc123000135")
+    assert response.status_code == 200
+    assert response.json()["id"] == "4:company:1"
+    assert query.await_args.args[2] == {
+        "identifier": "00ABC123000135", "identifier_formatted": "00.ABC.123/0001-35"
+    }

@@ -21,8 +21,8 @@ from bracc_etl.transforms import (
     cap_contract_value,
     deduplicate_rows,
     format_cnpj,
+    normalize_cnpj,
     normalize_name,
-    strip_document,
 )
 
 if TYPE_CHECKING:
@@ -103,7 +103,7 @@ class ComprasnetPipeline(Pipeline):
         for rec in self._raw_records:
             # Extract supplier CNPJ
             ni_fornecedor = str(rec.get("niFornecedor", "")).strip()
-            cnpj_digits = strip_document(ni_fornecedor)
+            cnpj_digits = normalize_cnpj(ni_fornecedor)
 
             # Only process companies (PJ with 14-digit CNPJ)
             tipo_pessoa = str(rec.get("tipoPessoa", "")).strip()
@@ -125,7 +125,7 @@ class ComprasnetPipeline(Pipeline):
             ).strip()
             if not numero_controle:
                 # Fallback: compose from org CNPJ + sequence
-                org_cnpj = strip_document(
+                org_cnpj = normalize_cnpj(
                     str(rec.get("orgaoEntidade", {}).get("cnpj", ""))
                 )
                 seq = rec.get("sequencialContrato", "")

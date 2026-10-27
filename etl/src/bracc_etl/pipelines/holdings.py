@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
     format_cnpj,
-    strip_document,
+    normalize_cnpj,
 )
 
 logger = logging.getLogger(__name__)
@@ -84,8 +84,8 @@ class HoldingsPipeline(Pipeline):
             ).strip()
 
             # Validate both CNPJs have exactly 14 digits
-            digits_empresa = strip_document(cnpj_empresa_raw)
-            digits_socia = strip_document(cnpj_socia_raw)
+            digits_empresa = normalize_cnpj(cnpj_empresa_raw)
+            digits_socia = normalize_cnpj(cnpj_socia_raw)
 
             if len(digits_empresa) != 14 or len(digits_socia) != 14:
                 continue

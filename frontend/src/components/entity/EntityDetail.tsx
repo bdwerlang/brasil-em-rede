@@ -23,8 +23,9 @@ export function EntityDetail({ entityId, onClose }: EntityDetailProps) {
       return;
     }
     setLoading(true);
-    const isCpfOrCnpj = /^\d{11}$/.test(entityId) || /^\d{14}$/.test(entityId);
-    const fetcher = isCpfOrCnpj ? getEntity(entityId) : getEntityByElementId(entityId);
+    const identifier = entityId.replace(/[.\-/]/g, "");
+    const isCpfOrCnpj = /^\d{11}$/.test(identifier) || /^[a-z0-9]{12}\d{2}$/i.test(identifier);
+    const fetcher = isCpfOrCnpj ? getEntity(identifier) : getEntityByElementId(entityId);
     fetcher
       .then(setEntity)
       .catch(() => setEntity(null))

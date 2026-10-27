@@ -21,9 +21,11 @@ import pandas as pd
 from bracc_etl.base import Pipeline
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     format_cpf,
+    normalize_cnpj,
     normalize_name,
     parse_date,
     strip_document,
@@ -157,7 +159,7 @@ class SenadoPipeline(Pipeline):
             expense_type = str(row.get("TIPO_DESPESA", "")).strip()
 
             supplier_doc_raw = str(row.get("CNPJ_CPF", ""))
-            supplier_digits = strip_document(supplier_doc_raw)
+            supplier_digits = normalize_cnpj(supplier_doc_raw)
             supplier_name = normalize_name(str(row.get("FORNECEDOR", "")))
 
             if not supplier_digits:
@@ -165,9 +167,9 @@ class SenadoPipeline(Pipeline):
                 continue
 
             # Format supplier document
-            if len(supplier_digits) == 14:
+            if classify_document(supplier_doc_raw) == "cnpj_valid":
                 supplier_doc = format_cnpj(supplier_doc_raw)
-            elif len(supplier_digits) == 11:
+            elif classify_document(supplier_doc_raw) == "cpf_valid":
                 supplier_doc = format_cpf(supplier_doc_raw)
             else:
                 skipped += 1
@@ -209,12 +211,12 @@ class SenadoPipeline(Pipeline):
                 })
 
             # Track supplier
-            if len(supplier_digits) == 14:
+            if classify_document(supplier_doc_raw) == "cnpj_valid":
                 suppliers_map[supplier_doc] = {
                     "cnpj": supplier_doc,
                     "razao_social": supplier_name,
                 }
-            elif len(supplier_digits) == 11:
+            elif classify_document(supplier_doc_raw) == "cpf_valid":
                 suppliers_map[supplier_doc] = {
                     "cpf": supplier_doc,
                     "name": supplier_name,
