@@ -54,8 +54,15 @@ jobs:
             -lll -iii
 
   pip-audit:
-    name: Pip Audit (Python deps)
+    name: Pip Audit (${{ matrix.project }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [api, etl]
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
     steps:
       - uses: actions/checkout@v4
 
@@ -67,18 +74,26 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Export lock-compatible requirement sets
-        run: |
-          cd api
-          uv export --format requirements-txt --no-hashes --no-emit-project --no-emit-local > /tmp/api-requirements.txt
-          cd ../etl
-          uv export --format requirements-txt --no-hashes --no-emit-project --no-emit-local > /tmp/etl-requirements.txt
+      - name: Export locked dependencies, including optional features
+        run: >-
+          uv export --locked --all-extras --all-groups
+          --format requirements-txt --no-hashes --no-emit-project --no-emit-local
+          --output-file audit-requirements.txt
 
-      - name: Audit API dependencies
-        run: uvx pip-audit -r /tmp/api-requirements.txt --strict
+      - name: Audit dependencies
+        run: >-
+          uvx pip-audit==2.10.1 -r audit-requirements.txt --strict
+          --format json --output audit-report.json
 
-      - name: Audit ETL dependencies
-        run: uvx pip-audit -r /tmp/etl-requirements.txt --strict
+      - name: Preserve audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-${{ matrix.project }}
+          path: |
+            ${{ matrix.project }}/audit-requirements.txt
+            ${{ matrix.project }}/audit-report.json
+          if-no-files-found: error
 
   npm-audit:
     name: NPM Audit (frontend)
