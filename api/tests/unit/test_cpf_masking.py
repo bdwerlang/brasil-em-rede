@@ -335,3 +335,30 @@ def test_company_document_mismatch_preserves_privacy_for_all_fields() -> None:
     assert result["document"] == "ABC*******8901"
     assert result["properties"]["cnpj"] == "XYZ12345678902"
     assert result["properties"]["cpf"] == "*******4725"
+
+
+def test_company_generic_ids_require_matching_typed_cnpj() -> None:
+    payload = [
+        {
+            "type": "company",
+            "id": "ABC12345678901",
+            "document_id": "ABC12345678901",
+            "properties": {"cnpj": "ABC12345678901"},
+        },
+        {
+            "type": "person",
+            "id": "12345678901",
+            "document_id": "12345678901",
+            "properties": {"cnpj": "ABC12345678901"},
+        },
+        {
+            "type": "company",
+            "id": "12345678901",
+            "document_id": "12345678901",
+            "properties": {"cnpj": "ABC12345678901"},
+        },
+    ]
+    result = json.loads(mask_cpfs_in_json(json.dumps(payload)))
+    assert result[0]["id"] == result[0]["document_id"] == "ABC12345678901"
+    for record in result[1:]:
+        assert record["id"] == record["document_id"] == "*******8901"
