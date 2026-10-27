@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import csv
-import ftplib
 import hashlib
 import http.client
 import json
@@ -173,7 +172,7 @@ class Acquisition:
                 self._publish(partial, target, kind, checksum)
                 metadata.unlink(missing_ok=True)
                 return
-            except (OSError, URLError, ftplib.Error, http.client.HTTPException) as exc:
+            except (OSError, URLError, http.client.HTTPException) as exc:
                 if isinstance(exc, HTTPError) and exc.code < 500 and exc.code not in {408, 429}:
                     raise AcquisitionError(f"HTTP {exc.code}") from exc
                 if attempt == self.retries:

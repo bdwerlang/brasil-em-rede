@@ -184,3 +184,32 @@ def test_changed_source_reacquires_page(server, tmp_path):
     assert (tmp_path / "page").read_bytes() != original
     assert [call[0] for call in handler.calls] == ["/one", "/two"]
     assert base not in manifest.path.read_text()
+
+
+def test_ftp_errors_are_wrapped_and_retried(monkeypatch, tmp_path):
+    import ftplib
+    import urllib.request
+
+    import bracc_etl.acquisition.client as module
+
+    attempts = []
+
+    def fail_ftp(*args, **kwargs):
+        attempts.append(1)
+        raise ftplib.error_temp("temporary FTP failure")
+
+    monkeypatch.setattr(urllib.request.socket, "gethostbyname", lambda host: "127.0.0.1")
+    monkeypatch.setattr(urllib.request.FTPHandler, "connect_ftp", fail_ftp)
+    def open_ftp(url, timeout):
+        request = urllib.request.Request(url)
+        request.timeout = timeout
+        return urllib.request.FTPHandler().ftp_open(request)
+
+    monkeypatch.setattr(module, "urlopen", open_ftp)
+    manifest = Manifest.open(tmp_path / "manifest.json", "source", "partition")
+    with pytest.raises(AcquisitionError, match="transfer failed"):
+        Acquisition(retries=2, backoff=0).acquire_pages(
+            manifest, [("page", "ftp://example.test/file")], tmp_path, "binary",
+        )
+    assert len(attempts) == 3
+    assert not manifest.pages
