@@ -25,6 +25,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: python scripts/generate_source_implementation_plan.py --check
+      - run: python scripts/generate_unification_plan.py --check
       - run: python scripts/generate_data_sources_summary.py --check
       - run: python scripts/check_public_claims.py --repo-root .
       - run: python scripts/check_pipeline_contracts.py
