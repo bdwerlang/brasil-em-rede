@@ -11,6 +11,10 @@ de cada informação e navegar pelos vínculos documentados com sanções e
 contratos públicos. A primeira entrega usa um recorte pequeno e reproduzível.
 Expandir a cobertura exige repetir os mesmos critérios por fonte.
 
+O [plano de ação](action-plan.md) organiza a execução em cinco rodadas, com
+primeira fila de quatro tarefas, limite de duas implementações em andamento e
+oito gates para concluir a v0.1. Ele reaproveita os marcos e planos técnicos abaixo.
+
 ## Marcos
 
 | Marco | Resultado e condição de conclusão |
@@ -24,6 +28,12 @@ Os itens F01–F10 têm escopo e critérios completos na
 [arquitetura](../implementation/architecture.md). A expansão tem uma
 [ficha para cada fonte](../implementation/README.md) e
 [21 planos de cruzamentos](../implementation/crossings.md).
+
+A [unificação das bases](../unification/README.md) detalha como as fontes
+convergem para identidades, fatos e consultas comuns. Suas doze etapas reutilizam
+as issues de fundação/piloto existentes e incluem o mapa de todas as fontes e
+o procedimento de migração/publicação. Os novos serviços estão propostos, sem
+implantação realizada por esse plano.
 
 ## Ordem de execução
 
