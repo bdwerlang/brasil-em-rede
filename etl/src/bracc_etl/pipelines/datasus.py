@@ -8,6 +8,7 @@ import pandas as pd
 from bracc_etl.base import Pipeline
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     format_cnpj,
     normalize_cnpj,
     normalize_name,
@@ -66,7 +67,9 @@ class DatasusPipeline(Pipeline):
                 cnpj_raw = str(row.get("numero_cnpj", "")).strip()
 
             cnpj_digits = normalize_cnpj(cnpj_raw)
-            cnpj_formatted = format_cnpj(cnpj_raw) if len(cnpj_digits) == 14 else ""
+            cnpj_formatted = (
+                format_cnpj(cnpj_raw) if classify_document(cnpj_digits) == "cnpj_valid" else ""
+            )
 
             razao = normalize_name(str(row.get("nome_razao_social", "")))
             fantasia = normalize_name(str(row.get("nome_fantasia", "")))

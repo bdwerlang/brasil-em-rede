@@ -12,6 +12,7 @@ from bracc_etl.base import Pipeline
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
     cap_contract_value,
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     normalize_cnpj,
@@ -57,7 +58,7 @@ def _pick(row: pd.Series, *keys: str) -> str:
 
 def _valid_cnpj(value: str) -> str:
     digits = normalize_cnpj(value)
-    if len(digits) != 14:
+    if classify_document(digits) != "cnpj_valid":
         return ""
     return format_cnpj(digits)
 
