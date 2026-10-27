@@ -727,3 +727,24 @@ def test_unknown_partner_root_fails_batch() -> None:
     }])
     with pytest.raises(ValueError, match="Missing establishment for 1 partner rows"):
         pipeline._transform_socios_rf(rows)
+
+
+def test_incomplete_establishment_components_fail_instead_of_padding() -> None:
+    pipeline = _make_pipeline()
+    rows = pd.DataFrame([{
+        "cnpj_basico": "1234567", "cnpj_ordem": "0001", "cnpj_dv": "35",
+        "cnae_principal": "", "uf": "", "municipio": "",
+    }])
+    with pytest.raises(ValueError, match="Incomplete or invalid establishment"):
+        pipeline._build_estab_lookup(rows)
+    assert pipeline._estab_lookup == {}
+
+
+def test_complete_establishment_preserves_all_leading_zeros() -> None:
+    pipeline = _make_pipeline()
+    rows = pd.DataFrame([{
+        "cnpj_basico": "00000123", "cnpj_ordem": "0001", "cnpj_dv": "00",
+        "cnae_principal": "", "uf": "", "municipio": "",
+    }])
+    pipeline._build_estab_lookup(rows)
+    assert pipeline._estab_lookup["00000123"][0] == "00.000.123/0001-00"

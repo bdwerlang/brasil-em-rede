@@ -9,7 +9,7 @@ import pandas as pd
 
 from bracc_etl.base import Pipeline
 from bracc_etl.loader import Neo4jBatchLoader
-from bracc_etl.transforms import deduplicate_rows, normalize_name
+from bracc_etl.transforms import classify_document, deduplicate_rows, normalize_cnpj, normalize_name
 
 if TYPE_CHECKING:
     from neo4j import Driver
@@ -136,8 +136,8 @@ class TesouroEmendasPipeline(Pipeline):
                 str(getattr(row, "nome_favorecido", ""))
             )
 
-            cnpj = cnpj_raw.zfill(14) if cnpj_raw else ""
-            if len(cnpj) == 14:
+            cnpj = normalize_cnpj(cnpj_raw)
+            if classify_document(cnpj_raw) == "cnpj_valid":
                 companies.append({
                     "cnpj": cnpj,
                     "razao_social": nome_fav,

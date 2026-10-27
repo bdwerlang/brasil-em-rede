@@ -188,3 +188,18 @@ class TestSanctionsLoad:
                 assert "razao_social" not in row, (
                     f"Person node should not have razao_social: {row}"
                 )
+
+
+def test_alphanumeric_company_and_partial_cpf_are_distinct() -> None:
+    pipeline = _make_pipeline()
+    rows = pd.DataFrame([
+        {"cpf_cnpj": "00ABC123000135", "nome": "Empresa", "data_inicio": "",
+         "data_fim": "", "motivo": ""},
+        {"cpf_cnpj": "***.123.456-**", "nome": "Pessoa", "data_inicio": "",
+         "data_fim": "", "motivo": ""},
+    ])
+    sanctions, entities = pipeline._process_rows(rows, "CEIS")
+    assert len(sanctions) == 2
+    assert len(entities) == 1
+    assert entities[0]["entity_label"] == "Company"
+    assert entities[0]["entity_doc"] == "00.ABC.123/0001-35"
