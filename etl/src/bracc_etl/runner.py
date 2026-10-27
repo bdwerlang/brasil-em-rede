@@ -4,6 +4,7 @@ import os
 import click
 from neo4j import GraphDatabase
 
+from bracc_etl.base import Pipeline
 from bracc_etl.linking_hooks import run_post_load_hooks
 from bracc_etl.pipelines.bcb import BcbPipeline
 from bracc_etl.pipelines.bndes import BndesPipeline
@@ -52,8 +53,9 @@ from bracc_etl.pipelines.tse_filiados import TseFiliadosPipeline
 from bracc_etl.pipelines.un_sanctions import UnSanctionsPipeline
 from bracc_etl.pipelines.viagens import ViagensPipeline
 from bracc_etl.pipelines.world_bank import WorldBankPipeline
+from bracc_etl.source_aliases import source_aliases
 
-PIPELINES: dict[str, type] = {
+PIPELINES: dict[str, type[Pipeline]] = {
     "cnpj": CNPJPipeline,
     "tse": TSEPipeline,
     "transparencia": TransparenciaPipeline,
@@ -111,7 +113,7 @@ def cli() -> None:
 
 
 @cli.command()
-@click.option("--source", required=True, help="Pipeline name (see 'sources' command)")
+@click.option("--source", required=True, help="Catalog ID, runner name or registered legacy alias")
 @click.option("--neo4j-uri", default="bolt://localhost:7687", help="Neo4j URI")
 @click.option("--neo4j-user", default="neo4j", help="Neo4j user")
 @click.option("--neo4j-password", required=True, help="Neo4j password")
@@ -146,13 +148,21 @@ def run(
     """Run an ETL pipeline."""
     os.environ["NEO4J_DATABASE"] = neo4j_database
 
-    if source not in PIPELINES:
-        available = ", ".join(PIPELINES.keys())
-        raise click.ClickException(f"Unknown source: {source}. Available: {available}")
+    try:
+        identity = source_aliases().resolve(source, require_runner=True)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+    runner_name = identity.runner_name
+    if runner_name not in PIPELINES:
+        raise click.ClickException(f"Registered runner unavailable: {runner_name}")
+    pipeline_cls = PIPELINES[runner_name]
+    try:
+        source_aliases().for_pipeline(pipeline_cls.name, pipeline_cls.source_id)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
 
     driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
     try:
-        pipeline_cls = PIPELINES[source]
         pipeline = pipeline_cls(
             driver=driver,
             data_dir=data_dir,
@@ -168,7 +178,7 @@ def run(
 
         run_post_load_hooks(
             driver=driver,
-            source=source,
+            source=runner_name,
             neo4j_database=neo4j_database,
             linking_tier=linking_tier,
         )
@@ -347,11 +357,22 @@ def sources(show_status: bool, neo4j_uri: str, neo4j_user: str, neo4j_password: 
         with driver.session() as session:
             result = session.run(
                 "MATCH (r:IngestionRun) "
-                "WITH r ORDER BY r.started_at DESC "
+                "WITH r ORDER BY r.started_at DESC, r.run_id DESC "
                 "WITH r.source_id AS sid, collect(r)[0] AS latest "
-                "RETURN latest ORDER BY sid"
+                "RETURN latest ORDER BY latest.started_at DESC, latest.run_id DESC"
             )
-            runs = {r["latest"]["source_id"]: dict(r["latest"]) for r in result}
+            runs: dict[str, dict[str, object]] = {}
+            for record in result:
+                latest = dict(record["latest"])
+                try:
+                    identity = source_aliases().for_run(latest)
+                except ValueError as exc:
+                    click.echo(
+                        f"Unmapped ingestion run {latest.get('run_id', '?')}: {exc}", err=True
+                    )
+                    continue
+                # Query orders the newest run first, including across old aliases.
+                runs.setdefault(identity.source_id, latest)
 
         click.echo(
             f"{'Source':<20} {'Status':<15} {'Rows In':>10} {'Loaded':>10} "
@@ -360,7 +381,8 @@ def sources(show_status: bool, neo4j_uri: str, neo4j_user: str, neo4j_password: 
         click.echo("-" * 100)
 
         for name in sorted(PIPELINES):
-            run = runs.get(name, {})
+            identity = source_aliases().resolve(name, require_runner=True)
+            run = runs.get(identity.source_id, {})
             click.echo(
                 f"{name:<20} "
                 f"{run.get('status', '-'):<15} "
