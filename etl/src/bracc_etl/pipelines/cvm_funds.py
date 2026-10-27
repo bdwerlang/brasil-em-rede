@@ -17,8 +17,8 @@ from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
     deduplicate_rows,
     format_cnpj,
+    normalize_cnpj,
     normalize_name,
-    strip_document,
 )
 
 if TYPE_CHECKING:
@@ -77,7 +77,7 @@ class CvmFundsPipeline(Pipeline):
         for _, row in self._raw.iterrows():
             # Fund CNPJ
             fund_cnpj_raw = str(row.get("CNPJ_FUNDO", "")).strip()
-            fund_digits = strip_document(fund_cnpj_raw)
+            fund_digits = normalize_cnpj(fund_cnpj_raw)
             if len(fund_digits) != 14:
                 continue
 
@@ -92,14 +92,14 @@ class CvmFundsPipeline(Pipeline):
 
             # Administrator CNPJ
             admin_cnpj_raw = str(row.get("CNPJ_ADMIN", "")).strip()
-            admin_digits = strip_document(admin_cnpj_raw)
+            admin_digits = normalize_cnpj(admin_cnpj_raw)
             admin_cnpj = format_cnpj(admin_digits) if len(admin_digits) == 14 else ""
             admin_name = normalize_name(str(row.get("ADMIN", "")))
 
             # Manager CNPJ (can be PF or PJ — only use PJ)
             pf_pj = str(row.get("PF_PJ_GESTOR", "")).strip().upper()
             manager_cnpj_raw = str(row.get("CPF_CNPJ_GESTOR", "")).strip()
-            manager_digits = strip_document(manager_cnpj_raw)
+            manager_digits = normalize_cnpj(manager_cnpj_raw)
             manager_cnpj = ""
             if pf_pj == "PJ" and len(manager_digits) == 14:
                 manager_cnpj = format_cnpj(manager_digits)

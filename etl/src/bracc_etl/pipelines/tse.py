@@ -12,9 +12,11 @@ if TYPE_CHECKING:
     from neo4j import Driver
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     format_cpf,
+    normalize_cnpj,
     normalize_name,
     strip_document,
 )
@@ -120,12 +122,14 @@ class TSEPipeline(Pipeline):
 
         for _, row in self._raw_doacoes.iterrows():
             candidate_sq = str(row["sq_candidato"]).strip()
-            donor_doc = strip_document(str(row["cpf_cnpj_doador"]))
+            donor_doc = normalize_cnpj(str(row["cpf_cnpj_doador"]))
+            if classify_document(donor_doc) not in {"cpf_valid", "cnpj_valid"}:
+                continue
             donor_name = normalize_name(str(row["nome_doador"]))
             valor = float(str(row["valor"]).replace(",", "."))
             ano = int(row["ano"])
 
-            is_company = len(donor_doc) == 14
+            is_company = classify_document(donor_doc) == "cnpj_valid"
             donor_doc_fmt = format_cnpj(donor_doc)
             if not is_company:
                 donor_doc_fmt = format_cpf(donor_doc)

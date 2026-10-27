@@ -12,11 +12,11 @@ if TYPE_CHECKING:
     from neo4j import Driver
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     normalize_name,
     parse_date,
-    strip_document,
 )
 
 
@@ -168,14 +168,13 @@ class TransferegovPipeline(Pipeline):
                 continue
 
             doc_raw = str(row["Código do Favorecido"]).strip()
-            digits = strip_document(doc_raw)
             tipo = str(row["Tipo Favorecido"]).strip()
             nome = normalize_name(str(row["Favorecido"]))
             valor = _parse_brl(str(row["Valor Recebido"]))
             municipio = str(row["Município Favorecido"]).strip()
             uf = str(row["UF Favorecido"]).strip()
 
-            if tipo == "Pessoa Jurídica" and len(digits) == 14:
+            if tipo == "Pessoa Jurídica" and classify_document(doc_raw) == "cnpj_valid":
                 cnpj = format_cnpj(doc_raw)
                 companies.append({
                     "cnpj": cnpj,
@@ -190,7 +189,7 @@ class TransferegovPipeline(Pipeline):
                     "municipality": municipio,
                     "uf": uf,
                 })
-            elif tipo == "Pessoa Fisica" and len(digits) == 11:
+            elif tipo == "Pessoa Fisica" and classify_document(doc_raw) == "cpf_valid":
                 # Individual CPFs — we don't store raw CPFs for non-PEPs,
                 # but we still create Person nodes for graph linkage
                 from bracc_etl.transforms import format_cpf

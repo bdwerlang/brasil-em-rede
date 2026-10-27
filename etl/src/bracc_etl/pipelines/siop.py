@@ -12,10 +12,10 @@ if TYPE_CHECKING:
     from neo4j import Driver
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     deduplicate_rows,
     format_cpf,
     normalize_name,
-    strip_document,
 )
 
 
@@ -199,8 +199,7 @@ class SiopPipeline(Pipeline):
             })
 
             # Author linkage — only if CPF is present (11 digits)
-            author_digits = strip_document(author_doc)
-            if len(author_digits) == 11 and author_name:
+            if classify_document(author_doc) == "cpf_valid" and author_name:
                 cpf_formatted = format_cpf(author_doc)
                 authors.append({
                     "cpf": cpf_formatted,
