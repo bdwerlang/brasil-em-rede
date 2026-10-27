@@ -240,3 +240,125 @@ async def test_health_not_masked(client: AsyncClient) -> None:
     resp = await client.get("/health")
     assert resp.status_code == 200
     assert resp.json() == {"status": "ok"}
+
+
+def test_alphanumeric_cnpj_does_not_get_cpf_masked() -> None:
+    text = '{"cnpj":"ABC12345678901","cpf":"12345678901"}'
+    result = mask_cpfs_in_json(text)
+    assert '"cnpj":"ABC12345678901"' in result
+    assert '"cpf":"*******8901"' in result
+
+
+@pytest.mark.parametrize("text,expected", [
+    ("X12345678901", "X*******8901"),
+    ("12345678901X", "*******8901X"),
+    ("prefix12345678901suffix", "prefix*******8901suffix"),
+    ("ABC12345678901", "ABC*******8901"),
+    ("00123456789012", "00123456789012"),
+])
+def test_cpf_adjacent_to_letters_and_complete_cnpj(text: str, expected: str) -> None:
+    assert mask_cpfs_in_json(text) == expected
+
+
+def test_pep_cpf_adjacent_to_letters_remains_visible() -> None:
+    assert mask_cpfs_in_json("X12345678901", {"12345678901"}) == "X12345678901"
+
+
+def test_structured_cnpj_context_and_nested_lists() -> None:
+    data = {"cnpj": "ABC12345678901", "text": "ABC12345678901", "nested": [
+        {"company_cnpj": "ABC12345678901", "description": "X12345678901"},
+        {"cnpj": ["ABC12345678901", "12345678901"]},
+    ]}
+    result = json.loads(mask_cpfs_in_json(json.dumps(data)))
+    assert result["cnpj"] == "ABC12345678901"
+    assert result["text"] == "ABC*******8901"
+    assert result["nested"][0] == {
+        "company_cnpj": "ABC12345678901", "description": "X*******8901"
+    }
+    assert result["nested"][1]["cnpj"] == ["ABC12345678901", "*******8901"]
+
+
+@pytest.mark.anyio
+async def test_asgi_masks_ambiguous_text_and_sets_content_length() -> None:
+    from fastapi import FastAPI
+    from httpx import ASGITransport, AsyncClient
+
+    from bracc.middleware.cpf_masking import CPFMaskingMiddleware
+
+    app = FastAPI()
+    app.add_middleware(CPFMaskingMiddleware)
+
+    @app.get("/sample")
+    async def sample() -> dict[str, object]:
+        return {"cnpj": "ABC12345678901", "text": "ABC12345678901",
+                "pep": {"cpf": "12345678901", "is_pep": True}}
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/sample")
+    assert response.json()["cnpj"] == "ABC12345678901"
+    # The same CPF is explicitly marked PEP in this response.
+    assert response.json()["pep"]["cpf"] == "12345678901"
+    assert int(response.headers["content-length"]) == len(response.content)
+
+
+@pytest.mark.anyio
+async def test_asgi_masks_non_pep_text() -> None:
+    from fastapi import FastAPI
+    from httpx import ASGITransport, AsyncClient
+
+    from bracc.middleware.cpf_masking import CPFMaskingMiddleware
+
+    app = FastAPI()
+    app.add_middleware(CPFMaskingMiddleware)
+
+    @app.get("/sample")
+    async def sample() -> dict[str, str]:
+        return {"cnpj": "ABC12345678901", "text": "ABC12345678901"}
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/sample")
+    assert response.json() == {"cnpj": "ABC12345678901", "text": "ABC*******8901"}
+    assert int(response.headers["content-length"]) == len(response.content)
+
+
+def test_generic_document_without_matching_company_cnpj_is_masked() -> None:
+    payload = {"type": "company", "document": "ABC12345678901",
+               "properties": {"cnpj": "XYZ12345678902"}}
+    result = json.loads(mask_cpfs_in_json(json.dumps(payload)))
+    assert result["document"] == "ABC*******8901"
+
+
+def test_company_document_mismatch_preserves_privacy_for_all_fields() -> None:
+    payload = {"type": "company", "document": "ABC12345678901",
+               "properties": {"cnpj": "XYZ12345678902", "cpf": "52998224725"}}
+    result = json.loads(mask_cpfs_in_json(json.dumps(payload)))
+    assert result["document"] == "ABC*******8901"
+    assert result["properties"]["cnpj"] == "XYZ12345678902"
+    assert result["properties"]["cpf"] == "*******4725"
+
+
+def test_company_generic_ids_require_matching_typed_cnpj() -> None:
+    payload = [
+        {
+            "type": "company",
+            "id": "ABC12345678901",
+            "document_id": "ABC12345678901",
+            "properties": {"cnpj": "ABC12345678901"},
+        },
+        {
+            "type": "person",
+            "id": "12345678901",
+            "document_id": "12345678901",
+            "properties": {"cnpj": "ABC12345678901"},
+        },
+        {
+            "type": "company",
+            "id": "12345678901",
+            "document_id": "12345678901",
+            "properties": {"cnpj": "ABC12345678901"},
+        },
+    ]
+    result = json.loads(mask_cpfs_in_json(json.dumps(payload)))
+    assert result[0]["id"] == result[0]["document_id"] == "ABC12345678901"
+    for record in result[1:]:
+        assert record["id"] == record["document_id"] == "*******8901"

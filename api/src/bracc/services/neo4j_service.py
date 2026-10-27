@@ -66,6 +66,8 @@ def sanitize_props(
     """
     clean: dict[str, str | float | int | bool | None] = {}
     for k, v in props.items():
+        if k.startswith("identity_"):
+            continue
         if v is None or isinstance(v, (str, int, float, bool)):
             clean[k] = v
         elif isinstance(v, list):

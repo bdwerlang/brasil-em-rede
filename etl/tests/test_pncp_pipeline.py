@@ -360,3 +360,17 @@ class TestPncpLoad:
         # Bids have 3 unique agencies (SAUDE appears once in the valid set since
         # the 2nd SAUDE bid was zero-value)
         assert len(agencies) == 3
+
+
+def test_agency_alphanumeric_and_invalid_shape() -> None:
+    import copy
+
+    pipeline = _make_pipeline()
+    _load_fixture(pipeline)
+    valid = copy.deepcopy(pipeline._raw_records[0])
+    invalid = copy.deepcopy(valid)
+    valid["orgaoEntidade"]["cnpj"] = "00ABC123000135"
+    invalid["orgaoEntidade"]["cnpj"] = "00ABC1230001!5"
+    pipeline._raw_records = [valid, invalid]
+    pipeline.transform()
+    assert [row["agency_cnpj"] for row in pipeline.bids] == ["00.ABC.123/0001-35"]

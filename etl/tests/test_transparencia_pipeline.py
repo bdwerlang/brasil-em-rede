@@ -343,3 +343,17 @@ def test_transform_adds_cpf_partial_for_masked_cpf() -> None:
     agente = next(o for o in pipeline.offices if o["name"] == "AGENTE SIGILOSO")
     assert agente["cpf_partial"] is None
     assert agente["servidor_id"] == _make_servidor_id(None, "AGENTE SIGILOSO")
+
+
+def test_contract_company_alphanumeric_and_invalid_shape() -> None:
+    import pandas as pd
+
+    pipeline = _make_pipeline()
+    _extract_from_fixtures(pipeline)
+    valid = pipeline._raw_contratos.iloc[:1].copy()
+    invalid = valid.copy()
+    valid.loc[:, "cnpj_contratada"] = "00ABC123000135"
+    invalid.loc[:, "cnpj_contratada"] = "00ABC1230001!5"
+    pipeline._raw_contratos = pd.concat([valid, invalid], ignore_index=True)
+    pipeline.transform()
+    assert [row["cnpj"] for row in pipeline.contracts] == ["00.ABC.123/0001-35"]

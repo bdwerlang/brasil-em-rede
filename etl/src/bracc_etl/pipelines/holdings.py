@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from neo4j import Driver
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     format_cnpj,
     normalize_cnpj,
 )
@@ -87,7 +88,10 @@ class HoldingsPipeline(Pipeline):
             digits_empresa = normalize_cnpj(cnpj_empresa_raw)
             digits_socia = normalize_cnpj(cnpj_socia_raw)
 
-            if len(digits_empresa) != 14 or len(digits_socia) != 14:
+            if (
+                classify_document(digits_empresa) != "cnpj_valid"
+                or classify_document(digits_socia) != "cnpj_valid"
+            ):
                 continue
 
             cnpj_empresa = format_cnpj(digits_empresa)

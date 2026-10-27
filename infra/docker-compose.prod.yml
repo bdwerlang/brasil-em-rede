@@ -37,10 +37,18 @@ services:
       retries: 5
 
   api:
-    build: ../api
+    build:
+      context: ..
+      dockerfile: api/Dockerfile
     restart: unless-stopped
     environment:
       NEO4J_URI: bolt://neo4j:7687
+      PUBLIC_MODE: ${PUBLIC_MODE:-false}
+      PUBLIC_ALLOW_PERSON: ${PUBLIC_ALLOW_PERSON:-false}
+      PUBLIC_ALLOW_ENTITY_LOOKUP: ${PUBLIC_ALLOW_ENTITY_LOOKUP:-false}
+      PUBLIC_ALLOW_INVESTIGATIONS: ${PUBLIC_ALLOW_INVESTIGATIONS:-false}
+      PATTERNS_ENABLED: ${PATTERNS_ENABLED:-false}
+      PRODUCT_TIER: ${PRODUCT_TIER:-community}
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: ${NEO4J_PASSWORD}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
@@ -54,8 +62,20 @@ services:
       neo4j:
         condition: service_healthy
 
+    healthcheck:
+      test: ["CMD", "/app/.venv/bin/python", "/app/api-readiness.py"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
   frontend:
-    build: ../frontend
+    build:
+      context: ../frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-}
+        VITE_PUBLIC_MODE: ${PUBLIC_MODE:-false}
+        VITE_PATTERNS_ENABLED: ${PATTERNS_ENABLED:-false}
     restart: unless-stopped
     networks:
       - bracc
