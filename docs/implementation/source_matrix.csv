@@ -1,0 +1,170 @@
+sequence,source_id,name,execution_wave,initial_wave,mode,complexity,dependencies,registry_implementation_state,registry_load_state,primary_url,plan_path
+1,ceaf,CEAF expelled servants,1,1,harden_existing,M,,implemented,loaded,https://portaldatransparencia.gov.br/download-de-dados/ceaf,docs/implementation/sources/ceaf.md
+2,cnpj,Receita Federal CNPJ,1,1,harden_existing,XL,,implemented,loaded,https://dadosabertos.rfb.gov.br/CNPJ/dados_abertos_cnpj/,docs/implementation/sources/cnpj.md
+3,ans_health_plans,ANS operators,1,1,new_pipeline,M,cnpj,not_implemented,not_loaded,https://dados.gov.br/dados/conjuntos-dados/ans,docs/implementation/sources/ans_health_plans.md
+4,cepim,CEPIM barred NGOs,1,1,harden_existing,S,cnpj,implemented,loaded,https://portaldatransparencia.gov.br/download-de-dados/cepim,docs/implementation/sources/cepim.md
+5,cnpj_simples,Simples Nacional / MEI,1,1,new_pipeline,M,cnpj,not_implemented,not_loaded,https://www.gov.br/receitafederal/dados,docs/implementation/sources/cnpj_simples.md
+6,ibge_geosciences,IBGE Geociências — Limites Territoriais e Malhas Digitais,1,1,new_pipeline,M,,not_implemented,not_loaded,https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR,docs/implementation/sources/ibge_geosciences.md
+7,ibge_census,Censo Demográfico — Dados Populacionais por Município,1,1,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,https://servicodados.ibge.gov.br/api/v3/agregados,docs/implementation/sources/ibge_census.md
+8,leniency,Acordos de leniencia,1,1,harden_existing,M,cnpj,implemented,loaded,https://portaldatransparencia.gov.br/download-de-dados/acordos-leniencia,docs/implementation/sources/leniency.md
+9,pep_cgu,CGU PEP list,1,1,harden_existing,M,,implemented,loaded,https://portaldatransparencia.gov.br/download-de-dados/pep,docs/implementation/sources/pep_cgu.md
+10,sanctions,CEIS CNEP sanctions,1,1,harden_existing,M,cnpj,implemented,loaded,https://portaldatransparencia.gov.br/sancoes/consulta,docs/implementation/sources/sanctions.md
+11,siorg,SIORG — Estrutura Organizacional do Governo Federal,1,1,new_pipeline,L,,not_implemented,not_loaded,https://siorg.gov.br/,docs/implementation/sources/siorg.md
+12,tcu,TCU sanctions,1,1,harden_existing,M,cnpj,implemented,loaded,https://contas.tcu.gov.br/ords/f?p=INIDONEAS:INIDONEAS,docs/implementation/sources/tcu.md
+13,anp_royalties,ANP royalties and fuel,2,2,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dados.gov.br/dados/conjuntos-dados/anp,docs/implementation/sources/anp_royalties.md
+14,camara,Camara CEAP expenses,2,2,harden_existing,M,cnpj,implemented,loaded,https://dadosabertos.camara.leg.br/,docs/implementation/sources/camara.md
+15,comprasnet,ComprasNet contracts,2,2,harden_existing,L,cnpj,implemented,partial,https://dados.gov.br/dados/conjuntos-dados/comprasnet-contratos,docs/implementation/sources/comprasnet.md
+16,cpgf,CPGF gov card expenses,2,2,harden_existing,M,cnpj,implemented,loaded,https://portaldatransparencia.gov.br/download-de-dados/cpgf,docs/implementation/sources/cpgf.md
+17,fnde_transfers,FNDE (Repasses),2,2,new_pipeline,L,ibge_geosciences;cnpj,not_implemented,not_loaded,https://www.fnde.gov.br/dadosabertos/dataset,docs/implementation/sources/fnde_transfers.md
+18,pncp,PNCP bids and contracts,2,2,harden_existing,L,cnpj,implemented,partial,https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao,docs/implementation/sources/pncp.md
+19,senado,Senado CEAPS expenses,2,2,harden_existing,M,cnpj,implemented,loaded,https://www12.senado.leg.br/dados-abertos,docs/implementation/sources/senado.md
+20,siafi_budget_execution,SIAFI (Execução Orçamentária da União),2,2,new_pipeline,XL,siorg,not_implemented,not_loaded,https://apidatalake.tesouro.gov.br/docs/sadipem/,docs/implementation/sources/siafi_budget_execution.md
+21,siga_brasil,SIGA Brasil,2,2,new_pipeline,XL,,not_implemented,not_loaded,https://www12.senado.leg.br/orcamento/sigabrasil,docs/implementation/sources/siga_brasil.md
+22,siop,SIOP emendas,2,2,harden_existing,L,,implemented,partial,https://www.siop.planejamento.gov.br/,docs/implementation/sources/siop.md
+23,tesouro_emendas,Tesouro emendas,2,2,harden_existing,M,cnpj,implemented,not_loaded,https://www.tesourotransparente.gov.br/,docs/implementation/sources/tesouro_emendas.md
+24,transferegov,TransfereGov emendas e convenios,2,2,harden_existing,L,cnpj,implemented,loaded,https://www.transferegov.sistema.gov.br/portal/download-de-dados,docs/implementation/sources/transferegov.md
+25,transparencia,Portal da Transparencia contracts,2,2,harden_existing,L,cnpj,implemented,loaded,https://portaldatransparencia.gov.br/download-de-dados,docs/implementation/sources/transparencia.md
+26,viagens,Viagens a servico,2,2,harden_existing,M,,implemented,loaded,https://portaldatransparencia.gov.br/download-de-dados/viagens,docs/implementation/sources/viagens.md
+27,camara_inquiries,Camara inquiries and requirements,3,3,harden_existing,L,camara,implemented,partial,https://dadosabertos.camara.leg.br/,docs/implementation/sources/camara_inquiries.md
+28,camara_votes_bills,Camara votes and bills,3,3,new_pipeline,L,camara,not_implemented,not_loaded,https://dadosabertos.camara.leg.br/api/v2,docs/implementation/sources/camara_votes_bills.md
+29,cvm_directors,CVM Administradores — Diretores e Conselheiros,3,3,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dados.cvm.gov.br/dataset/cia_aberta-doc-fre,docs/implementation/sources/cvm_directors.md
+30,dou,Diario Oficial da Uniao,3,3,harden_existing,XL,cnpj,implemented,loaded,https://www.in.gov.br/leiturajornal,docs/implementation/sources/dou.md
+31,senado_cpis,Senado CPIs,3,3,harden_existing,XL,senado,implemented,partial,https://www12.senado.leg.br/dados-abertos,docs/implementation/sources/senado_cpis.md
+32,senado_votes_bills,Senado votes and bills,3,3,new_pipeline,L,senado,not_implemented,not_loaded,https://legis.senado.leg.br/dadosabertos,docs/implementation/sources/senado_votes_bills.md
+33,tse,TSE elections and donations,3,3,harden_existing,XL,cnpj,implemented,loaded,https://dadosabertos.tse.jus.br/,docs/implementation/sources/tse.md
+34,tse_ballot_boxes,Boletins de Urna,3,3,new_pipeline,M,tse,not_implemented,not_loaded,https://dadosabertos.tse.jus.br/,docs/implementation/sources/tse_ballot_boxes.md
+35,tse_bens,TSE candidate assets,3,3,harden_existing,M,tse,implemented,loaded,https://dadosabertos.tse.jus.br/dataset/candidatos-2024,docs/implementation/sources/tse_bens.md
+36,tse_electorate,Eleitorado,3,3,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,https://dadosabertos.tse.jus.br/,docs/implementation/sources/tse_electorate.md
+37,tse_filiados,TSE party memberships,3,3,harden_existing,L,tse,implemented,loaded,https://dadosabertos.tse.jus.br/dataset/delegados-partidarios,docs/implementation/sources/tse_filiados.md
+38,tse_results,Resultados Eleitorais,3,3,new_pipeline,M,tse,not_implemented,not_loaded,https://dadosabertos.tse.jus.br/,docs/implementation/sources/tse_results.md
+39,anac_aviation_concessions,ANAC concessions,4,4,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dados.gov.br/dados/conjuntos-dados/anac,docs/implementation/sources/anac_aviation_concessions.md
+40,anatel_telecom_licenses,ANATEL licenses,4,4,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dados.gov.br/dados/conjuntos-dados/anatel,docs/implementation/sources/anatel_telecom_licenses.md
+41,aneel_concessions,ANEEL concessions,4,4,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dadosabertos.aneel.gov.br/,docs/implementation/sources/aneel_concessions.md
+42,antaq_port_contracts,ANTAQ contracts,4,4,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dados.gov.br/dados/conjuntos-dados/antaq,docs/implementation/sources/antaq_port_contracts.md
+43,antt_transport_concessions,ANTT concessions,4,4,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dados.gov.br/dados/conjuntos-dados/antt,docs/implementation/sources/antt_transport_concessions.md
+44,b3_trades,B3 Negociações — Dados de Negociação em Bolsa,4,4,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/,docs/implementation/sources/b3_trades.md
+45,bcb,BCB penalties,4,4,harden_existing,M,cnpj,implemented,loaded,https://dadosabertos.bcb.gov.br/dataset/processo-administrativo-sancionador---penalidades-aplicadas,docs/implementation/sources/bcb.md
+46,bcb_liquidacao,BCB bank liquidation acts,4,4,new_pipeline,M,cnpj,not_implemented,not_loaded,https://dadosabertos.bcb.gov.br/dataset/intervencao-e-liquidacao,docs/implementation/sources/bcb_liquidacao.md
+47,bcb_sgs_base_monetaria,SGS/API BCB - Base Monetária,4,4,new_pipeline,M,,not_implemented,not_loaded,https://dadosabertos.bcb.gov.br/,docs/implementation/sources/bcb_sgs_base_monetaria.md
+48,bcb_sgs_cambio,SGS/API BCB - Câmbio,4,4,new_pipeline,M,,not_implemented,not_loaded,https://dadosabertos.bcb.gov.br/,docs/implementation/sources/bcb_sgs_cambio.md
+49,bcb_sgs_credito,SGS/API BCB - Crédito,4,4,new_pipeline,M,,not_implemented,not_loaded,https://dadosabertos.bcb.gov.br/,docs/implementation/sources/bcb_sgs_credito.md
+50,bcb_sgs_indices,SGS/API BCB - Índices,4,4,new_pipeline,M,,not_implemented,not_loaded,https://dadosabertos.bcb.gov.br/,docs/implementation/sources/bcb_sgs_indices.md
+51,bcb_sgs_juros,SGS/API BCB - Juros,4,4,new_pipeline,M,,not_implemented,not_loaded,https://dadosabertos.bcb.gov.br/,docs/implementation/sources/bcb_sgs_juros.md
+52,bcb_sgs_meios_pagamento,SGS/API BCB - Meios de Pagamento,4,4,new_pipeline,M,,not_implemented,not_loaded,https://dadosabertos.bcb.gov.br/,docs/implementation/sources/bcb_sgs_meios_pagamento.md
+53,bcb_sgs_pix,SGS/API BCB - PIX,4,4,new_pipeline,M,,not_implemented,not_loaded,https://dadosabertos.bcb.gov.br/,docs/implementation/sources/bcb_sgs_pix.md
+54,bcb_sgs_reservas_internacionais,SGS/API BCB - Reservas Internacionais,4,4,new_pipeline,M,,not_implemented,not_loaded,https://dadosabertos.bcb.gov.br/,docs/implementation/sources/bcb_sgs_reservas_internacionais.md
+55,bndes,BNDES financings,4,4,harden_existing,M,cnpj,implemented,loaded,https://www.bndes.gov.br/wps/portal/site/home/transparencia/dados,docs/implementation/sources/bndes.md
+56,cvm,CVM proceedings,4,4,harden_existing,L,cnpj,implemented,loaded,https://dados.cvm.gov.br/,docs/implementation/sources/cvm.md
+57,cvm_financial_statements,CVM DFP/ITR — Demonstrações Financeiras de Empresas Abertas,4,4,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dados.cvm.gov.br/,docs/implementation/sources/cvm_financial_statements.md
+58,cvm_full_ownership_chain,CVM ownership chains,4,4,new_pipeline,XL,cnpj,not_implemented,not_loaded,https://dados.cvm.gov.br/,docs/implementation/sources/cvm_full_ownership_chain.md
+59,cvm_funds,CVM fund registry,4,4,harden_existing,M,cnpj,implemented,loaded,https://dados.cvm.gov.br/dados/FI/,docs/implementation/sources/cvm_funds.md
+60,cvm_material_disclosures,CVM Fatos Relevantes — Comunicados ao Mercado,4,4,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dados.cvm.gov.br/dataset/cia_aberta-doc-fato_relevante,docs/implementation/sources/cvm_material_disclosures.md
+61,estban,BCB ESTBAN balances,4,4,new_pipeline,L,,not_implemented,not_loaded,https://dadosabertos.bcb.gov.br/dataset/estban,docs/implementation/sources/estban.md
+62,holdings,Brasil IO holdings,4,4,harden_existing,M,cnpj,implemented,loaded,https://brasil.io/dataset/socios-brasil/holdings/,docs/implementation/sources/holdings.md
+63,ibge_ipca,IPCA/Inflação — Índice Nacional de Preços ao Consumidor Amplo,4,4,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,https://servicodados.ibge.gov.br/api/v3/agregados,docs/implementation/sources/ibge_ipca.md
+64,if_data,BCB IF data indicators,4,4,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dadosabertos.bcb.gov.br/dataset/if-data,docs/implementation/sources/if_data.md
+65,ipeadata,Ipeadata — Séries Econômicas e Indicadores Sociais,4,4,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,http://www.ipeadata.gov.br/api/,docs/implementation/sources/ipeadata.md
+66,pgfn,PGFN divida ativa,4,4,harden_existing,L,cnpj,implemented,loaded,https://www.regularize.pgfn.gov.br/dados-abertos,docs/implementation/sources/pgfn.md
+67,previc_pension_funds,PREVIC — Previdência Complementar Fechada,4,4,new_pipeline,M,cnpj,not_implemented,not_loaded,https://www.gov.br/previc/pt-br/acesso-a-informacao/dados-abertos,docs/implementation/sources/previc_pension_funds.md
+68,receita_dirbi,Receita DIRBI,4,4,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dados.gov.br/dados/conjuntos-dados/declaracao-dirbi,docs/implementation/sources/receita_dirbi.md
+69,renuncias,Renuncias fiscais,4,4,harden_existing,M,cnpj,implemented,loaded,https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/dados-abertos,docs/implementation/sources/renuncias.md
+70,siconfi,SICONFI municipal finance,4,4,harden_existing,L,,implemented,partial,https://apidatalake.tesouro.gov.br/docs/siconfi/,docs/implementation/sources/siconfi.md
+71,susep_insurance_market,SUSEP insurance market,4,4,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dados.gov.br/dados/conjuntos-dados/susep,docs/implementation/sources/susep_insurance_market.md
+72,ana_water_grants,ANA water grants,5,5,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dados.gov.br/dados/conjuntos-dados/ana,docs/implementation/sources/ana_water_grants.md
+73,ana_water_resources,Recursos Hídricos — ANA (Agência Nacional de Águas),5,5,new_pipeline,L,ibge_geosciences,not_implemented,not_loaded,https://dadosabertos.ana.gov.br/,docs/implementation/sources/ana_water_resources.md
+74,anac_flights,"ANAC Aviação Civil — Voos, Passageiros e Aeroportos",5,5,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,https://www.gov.br/anac/pt-br/assuntos/dados-e-estatisticas,docs/implementation/sources/anac_flights.md
+75,anatel_access,ANATEL Telecomunicações — Banda Larga e Telefonia,5,5,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,https://www.anatel.gov.br/paineis/acessos,docs/implementation/sources/anatel_access.md
+76,ancine_audiovisual,"ANCINE/OCA — Audiovisual, Bilheteria e Produção",5,5,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,https://www.gov.br/ancine/pt-br/oca,docs/implementation/sources/ancine_audiovisual.md
+77,aneel_energy,"ANEEL Energia Elétrica — Geração, Distribuição e Tarifas",5,5,new_pipeline,M,ibge_geosciences;cnpj,not_implemented,not_loaded,https://dadosabertos.aneel.gov.br/,docs/implementation/sources/aneel_energy.md
+78,anm_mining_rights,ANM mining rights,5,5,new_pipeline,XL,cnpj,not_implemented,not_loaded,https://dados.gov.br/dados/conjuntos-dados/anm,docs/implementation/sources/anm_mining_rights.md
+79,antaq_water_transport,ANTAQ Transporte Aquaviário — Portos e Navegação,5,5,new_pipeline,L,ibge_geosciences,not_implemented,not_loaded,https://web3.antaq.gov.br/ea/sense/,docs/implementation/sources/antaq_water_transport.md
+80,anvisa_registrations,ANVISA products,5,5,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dados.gov.br/dados/conjuntos-dados/anvisa,docs/implementation/sources/anvisa_registrations.md
+81,bolsa_familia_bpc,Bolsa Familia and BPC,5,5,new_pipeline,L,,not_implemented,not_loaded,https://portaldatransparencia.gov.br/download-de-dados/bolsa-familia-pagamentos,docs/implementation/sources/bolsa_familia_bpc.md
+82,caged,CAGED labor movements,5,5,harden_existing,L,,implemented,partial,https://ftp.mtps.gov.br/pdet/microdados/NOVO%20CAGED/,docs/implementation/sources/caged.md
+83,cprm_geology,"SGB-CPRM — Geologia, Recursos Minerais e Hidrogeologia",5,5,new_pipeline,L,ibge_geosciences,not_implemented,not_loaded,https://geosgb.sgb.gov.br/,docs/implementation/sources/cprm_geology.md
+84,datasus,DATASUS CNES,5,5,harden_existing,L,cnpj,implemented,loaded,https://opendatasus.saude.gov.br/,docs/implementation/sources/datasus.md
+85,datasus_sih,SIH — Sistema de Informações Hospitalares,5,5,new_pipeline,L,ibge_geosciences;datasus,not_implemented,not_loaded,ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/,docs/implementation/sources/datasus_sih.md
+86,datasus_sim,SIM — Sistema de Informações sobre Mortalidade,5,5,new_pipeline,L,ibge_geosciences,not_implemented,not_loaded,ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/,docs/implementation/sources/datasus_sim.md
+87,datasus_sinan,SINAN — Sistema de Informação de Agravos de Notificação,5,5,new_pipeline,L,ibge_geosciences,not_implemented,not_loaded,ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/,docs/implementation/sources/datasus_sinan.md
+88,datasus_sinasc,SINASC — Sistema de Informações sobre Nascidos Vivos,5,5,new_pipeline,L,ibge_geosciences;datasus,not_implemented,not_loaded,ftp://ftp.datasus.gov.br/dissemin/publicos/SINASC/,docs/implementation/sources/datasus_sinasc.md
+89,datasus_tabnet,TabNet — Ferramenta de Tabulação de Dados do SUS,5,5,new_pipeline,L,ibge_geosciences,not_implemented,not_loaded,http://tabnet.datasus.gov.br/,docs/implementation/sources/datasus_tabnet.md
+90,dnit_roads,DNIT Malha Rodoviária — Infraestrutura Rodoviária Federal,5,5,new_pipeline,L,ibge_geosciences,not_implemented,not_loaded,https://servicos.dnit.gov.br/dadosabertos/,docs/implementation/sources/dnit_roads.md
+91,ibama,IBAMA embargos,5,5,harden_existing,L,cnpj,implemented,loaded,https://servicos.ibama.gov.br/ctf/publico/areasembargadas/,docs/implementation/sources/ibama.md
+92,ibge_municipal_gdp,PIB Municipal — Produto Interno Bruto dos Municípios,5,5,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,https://servicodados.ibge.gov.br/api/v3/agregados,docs/implementation/sources/ibge_municipal_gdp.md
+93,ibge_pnad,PNAD Contínua — Pesquisa Nacional por Amostra de Domicílios,5,5,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,https://servicodados.ibge.gov.br/api/v3/agregados,docs/implementation/sources/ibge_pnad.md
+94,icmbio_cnuc,ICMBio CNUC units,5,5,new_pipeline,L,,not_implemented,not_loaded,https://www.icmbio.gov.br/portal/faunabrasileira/cadastro-nacional-de-unidades-de-conservacao,docs/implementation/sources/icmbio_cnuc.md
+95,incra_land_registry,INCRA Estrutura Fundiária — Imóveis Rurais e Assentamentos,5,5,new_pipeline,L,ibge_geosciences,not_implemented,not_loaded,https://acervofundiario.incra.gov.br/,docs/implementation/sources/incra_land_registry.md
+96,inep,INEP school census,5,5,harden_existing,L,cnpj,implemented,loaded,https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-escolar,docs/implementation/sources/inep.md
+97,inep_enem,ENEM (Microdados),5,5,new_pipeline,L,ibge_geosciences,not_implemented,not_loaded,https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/enem,docs/implementation/sources/inep_enem.md
+98,inep_higher_education,Censo da Educação Superior,5,5,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-da-educacao-superior,docs/implementation/sources/inep_higher_education.md
+99,inpe_deter,DETER — Alertas de Desmatamento em Tempo Real (INPE),5,5,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,http://terrabrasilis.dpi.inpe.br/,docs/implementation/sources/inpe_deter.md
+100,inpe_fires,Focos de Calor / Queimadas — INPE (BDQUEIMADAS),5,5,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,https://terrabrasilis.dpi.inpe.br/queimadas/bdqueimadas/,docs/implementation/sources/inpe_fires.md
+101,inpe_prodes,PRODES — Desmatamento Anual da Amazônia Legal (INPE),5,5,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,http://terrabrasilis.dpi.inpe.br/,docs/implementation/sources/inpe_prodes.md
+102,inpe_satellite,"INPE Imagens de Satélite — Landsat, Sentinel, CBERS",5,5,new_pipeline,XL,ibge_geosciences,not_implemented,not_loaded,http://www.dgi.inpe.br/catalogo/,docs/implementation/sources/inpe_satellite.md
+103,inss_benefits,"Benefícios INSS — Aposentadorias, Pensões e Auxílios",5,5,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,https://dados.gov.br/dados/conjuntos-dados/inss-beneficios-concedidos,docs/implementation/sources/inss_benefits.md
+104,mapbiomas_alertas,MapBiomas Alerta,5,5,restricted,XL,,not_implemented,not_loaded,https://alerta.mapbiomas.org/api,docs/implementation/sources/mapbiomas_alertas.md
+105,prf_accidents,PRF Acidentes — Acidentes em Rodovias Federais,5,5,new_pipeline,L,dnit_roads,not_implemented,not_loaded,https://dados.gov.br/dados/conjuntos-dados/acidentes-de-transito-nas-rodovias-federais,docs/implementation/sources/prf_accidents.md
+106,rais,RAIS aggregated labor,5,5,harden_existing,L,,implemented,loaded,https://basedosdados.org/dataset/br-me-rais,docs/implementation/sources/rais.md
+107,senatran_fleet,DENATRAN/RENAVAM — Frota de Veículos,5,5,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,https://www.gov.br/transportes/pt-br/assuntos/transito/conteudo-Senatran/estatisticas-frota-de-veiculos-senatran,docs/implementation/sources/senatran_fleet.md
+108,sicar_rural_registry,SiCAR rural registry,5,5,restricted,XL,,not_implemented,not_loaded,https://www.car.gov.br/publico/municipios/downloads,docs/implementation/sources/sicar_rural_registry.md
+109,sinesp_statistics,SINESP — Estatísticas de Criminalidade,5,5,new_pipeline,M,ibge_geosciences,not_implemented,not_loaded,https://www.gov.br/mj/pt-br/assuntos/sua-seguranca/seguranca-publica/estatistica,docs/implementation/sources/sinesp_statistics.md
+110,carf_tax_appeals,CARF tax appeals,6,6,new_pipeline,L,,not_implemented,not_loaded,https://carf.economia.gov.br/dados-abertos,docs/implementation/sources/carf_tax_appeals.md
+111,cnciai_improbidade,CNIAI improbidade,6,6,restricted,L,,not_implemented,not_loaded,https://www.cnj.jus.br/sistemas/cnciai/,docs/implementation/sources/cnciai_improbidade.md
+112,cnj_justice_statistics,Justiça em Números,6,6,new_pipeline,M,,not_implemented,not_loaded,https://justica-em-numeros.cnj.jus.br/,docs/implementation/sources/cnj_justice_statistics.md
+113,datajud,CNJ DataJud,6,6,harden_existing,L,,implemented,not_loaded,https://api-publica.datajud.cnj.jus.br/,docs/implementation/sources/datajud.md
+114,eu_sanctions,EU sanctions,6,6,harden_existing,L,,implemented,loaded,https://data.europa.eu/data/datasets/consolidated-list-of-persons-groups-and-entities-subject-to-eu-financial-sanctions,docs/implementation/sources/eu_sanctions.md
+115,icij,ICIJ offshore leaks,6,6,harden_existing,XL,,implemented,loaded,https://offshoreleaks.icij.org/pages/database,docs/implementation/sources/icij.md
+116,interpol_red_notices,Interpol red notices,6,6,restricted,L,,not_implemented,not_loaded,https://www.interpol.int/How-we-work/Notices/Red-Notices,docs/implementation/sources/interpol_red_notices.md
+117,ofac,OFAC sanctions,6,6,harden_existing,M,,implemented,loaded,https://home.treasury.gov/policy-issues/financial-sanctions/sdn-list-data-files,docs/implementation/sources/ofac.md
+118,opensanctions,OpenSanctions global PEP,6,6,harden_existing,L,,implemented,loaded,https://www.opensanctions.org/datasets/peps/,docs/implementation/sources/opensanctions.md
+119,stf,STF court data,6,6,harden_existing,L,,implemented,loaded,https://basedosdados.org/dataset/br-stf-corte-aberta,docs/implementation/sources/stf.md
+120,stj_dados_abertos,STJ open data,6,6,harden_existing,L,,implemented,not_loaded,https://dadosabertos.stj.jus.br/,docs/implementation/sources/stj_dados_abertos.md
+121,un_sanctions,UN sanctions,6,6,harden_existing,M,,implemented,loaded,https://scsanctions.un.org/resources/xml/en/consolidated.xml,docs/implementation/sources/un_sanctions.md
+122,world_bank,World Bank debarment,6,6,harden_existing,M,,implemented,loaded,https://www.worldbank.org/en/projects-operations/procurement/debarred-firms,docs/implementation/sources/world_bank.md
+123,mides,MiDES municipal procurement,7,7,harden_existing,XL,cnpj,implemented,loaded,https://basedosdados.org/dataset/world-wb-mides,docs/implementation/sources/mides.md
+124,querido_diario,Querido Diario gazettes,7,7,harden_existing,XL,cnpj,implemented,partial,https://queridodiario.ok.org.br/api,docs/implementation/sources/querido_diario.md
+125,state_gazettes,DOEs Estaduais — Diários Oficiais dos Estados,7,7,new_pipeline,XL,,not_implemented,not_loaded,https://queridodiario.ok.org.br/,docs/implementation/sources/state_gazettes.md
+126,state_portal_ba,Bahia transparency portal,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.transparencia.ba.gov.br/,docs/implementation/sources/state_portal_ba.md
+127,state_portal_ce,Ceara transparency portal,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.transparencia.ce.gov.br/,docs/implementation/sources/state_portal_ce.md
+128,state_portal_go,Goias transparency portal,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.transparencia.go.gov.br/,docs/implementation/sources/state_portal_go.md
+129,state_portal_mg,Minas Gerais transparency portal,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.transparencia.mg.gov.br/,docs/implementation/sources/state_portal_mg.md
+130,state_portal_pe,Pernambuco transparency portal,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.transparencia.pe.gov.br/,docs/implementation/sources/state_portal_pe.md
+131,state_portal_pr,Parana transparency portal,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.transparencia.pr.gov.br/,docs/implementation/sources/state_portal_pr.md
+132,state_portal_rs,Rio Grande do Sul transparency portal,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.transparencia.rs.gov.br/,docs/implementation/sources/state_portal_rs.md
+133,state_portal_sc,Santa Catarina transparency portal,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.transparencia.sc.gov.br/,docs/implementation/sources/state_portal_sc.md
+134,tce_am,TCE Amazonas,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tce.am.gov.br/,docs/implementation/sources/tce_am.md
+135,tce_ce,TCE Ceara,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tce.ce.gov.br/,docs/implementation/sources/tce_ce.md
+136,tce_es,TCE Espirito Santo,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tcees.tc.br/,docs/implementation/sources/tce_es.md
+137,tce_ma,TCE Maranhao,7,7,new_pipeline,XL,cnpj,not_implemented,not_loaded,https://www.tcema.tc.br/,docs/implementation/sources/tce_ma.md
+138,tce_mg,TCE Minas Gerais,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tce.mg.gov.br/,docs/implementation/sources/tce_mg.md
+139,tce_pe,TCE Pernambuco,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://sistemas.tce.pe.gov.br/,docs/implementation/sources/tce_pe.md
+140,tce_pi,TCE Piaui,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tce.pi.gov.br/,docs/implementation/sources/tce_pi.md
+141,tce_pr,TCE Parana,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www1.tce.pr.gov.br/,docs/implementation/sources/tce_pr.md
+142,tce_rn,TCE Rio Grande do Norte,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tce.rn.gov.br/,docs/implementation/sources/tce_rn.md
+143,tce_ro,TCE Rondonia,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tce.ro.gov.br/,docs/implementation/sources/tce_ro.md
+144,tce_rs,TCE Rio Grande do Sul,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://portal.tce.rs.gov.br/,docs/implementation/sources/tce_rs.md
+145,tce_se,TCE Sergipe,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tce.se.gov.br/,docs/implementation/sources/tce_se.md
+146,tce_sp,TCE Sao Paulo,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://transparencia.tce.sp.gov.br/,docs/implementation/sources/tce_sp.md
+147,tce_to,TCE Tocantins,7,7,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tceto.tc.br/,docs/implementation/sources/tce_to.md
+148,basedosdados_catalog,Base dos Dados,8,8,catalog_only,M,,not_implemented,not_loaded,https://basedosdados.org/,docs/implementation/sources/basedosdados_catalog.md
+149,cadin,CADIN — Cadastro de Devedores do Governo Federal,8,8,restricted,M,cnpj,not_implemented,not_loaded,https://cadin.pgfn.gov.br/,docs/implementation/sources/cadin.md
+150,cnj_bnmp,BNMP 3.0 — Banco Nacional de Medidas Penais e Prisões,8,8,restricted,M,datajud,not_implemented,not_loaded,https://portalbnmp.cnj.jus.br/,docs/implementation/sources/cnj_bnmp.md
+151,cnj_sisbajud,SISBAJUD — Sistema de Busca de Ativos do Poder Judiciário,8,8,restricted,XL,,not_implemented,not_loaded,https://sisbajud.cnj.jus.br/,docs/implementation/sources/cnj_sisbajud.md
+152,dados_gov_catalog,Portal Brasileiro de Dados Abertos,8,8,catalog_only,M,,not_implemented,not_loaded,https://dados.gov.br/swagger-ui/index.html,docs/implementation/sources/dados_gov_catalog.md
+153,inde,INDE — Infraestrutura Nacional de Dados Espaciais,8,8,catalog_only,M,,not_implemented,not_loaded,https://visualizador.inde.gov.br/,docs/implementation/sources/inde.md
+154,siape,SIAPE — Dados de Servidores Públicos Federais,8,8,restricted,M,siorg,not_implemented,not_loaded,https://www.gov.br/conecta/catalogo/,docs/implementation/sources/siape.md
+155,state_portal_rj,Rio de Janeiro transparency portal,8,8,new_pipeline,XL,cnpj,not_implemented,not_loaded,https://www.transparencia.rj.gov.br/,docs/implementation/sources/state_portal_rj.md
+156,state_portal_sp,Sao Paulo transparency portal,8,8,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.transparencia.sp.gov.br/,docs/implementation/sources/state_portal_sp.md
+157,tce_al,TCE Alagoas,8,8,new_pipeline,XL,cnpj,not_implemented,not_loaded,https://www.tceal.tc.br/,docs/implementation/sources/tce_al.md
+158,tce_ap,TCE Amapa,8,8,new_pipeline,XL,cnpj,not_implemented,not_loaded,https://www.tce.ap.gov.br/,docs/implementation/sources/tce_ap.md
+159,tce_ba,TCE Bahia,8,8,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tce.ba.gov.br/,docs/implementation/sources/tce_ba.md
+160,tce_go,TCE Goias,8,8,new_pipeline,L,cnpj,not_implemented,not_loaded,https://portal.tce.go.gov.br/,docs/implementation/sources/tce_go.md
+161,tce_ms,TCE Mato Grosso do Sul,8,8,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tce.ms.gov.br/,docs/implementation/sources/tce_ms.md
+162,tce_mt,TCE Mato Grosso,8,8,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tce.mt.gov.br/,docs/implementation/sources/tce_mt.md
+163,tce_pa,TCE Para,8,8,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tcepa.tc.br/,docs/implementation/sources/tce_pa.md
+164,tce_pb,TCE Paraiba,8,8,restricted,L,cnpj,not_implemented,not_loaded,https://tce.pb.gov.br/,docs/implementation/sources/tce_pb.md
+165,tce_rj,TCE Rio de Janeiro,8,8,new_pipeline,L,cnpj,not_implemented,not_loaded,https://dados.tce.rj.gov.br/,docs/implementation/sources/tce_rj.md
+166,tce_rr,TCE Roraima,8,8,new_pipeline,XL,cnpj,not_implemented,not_loaded,https://www.tcerr.tc.br/,docs/implementation/sources/tce_rr.md
+167,tce_sc,TCE Santa Catarina,8,8,new_pipeline,L,cnpj,not_implemented,not_loaded,https://www.tcesc.tc.br/,docs/implementation/sources/tce_sc.md
+168,tesouro_catalog,Tesouro Transparente,8,8,catalog_only,M,,not_implemented,not_loaded,https://apidatalake.tesouro.gov.br/docs/sadipem/,docs/implementation/sources/tesouro_catalog.md
+169,transparencia_api_catalog,Portal da Transparência,8,8,catalog_only,M,,not_implemented,not_loaded,https://api.portaldatransparencia.gov.br/swagger-ui/index.html,docs/implementation/sources/transparencia_api_catalog.md

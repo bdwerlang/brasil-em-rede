@@ -1,0 +1,212 @@
+{
+  "repository": "bdwerlang/brasil-em-rede",
+  "visibility": "public",
+  "description": "Infraestrutura aberta para integrar dados públicos brasileiros em um grafo rastreável. Plano individual de 169 fontes; piloto CNPJ, sanções e contratos.",
+  "milestones": [
+    {
+      "title": "M0 — Fundação verificável",
+      "description": "Fechar F01–F10 com testes, migração segura e evidência verificável."
+    },
+    {
+      "title": "M1 — Piloto CNPJ, sanções e contratos",
+      "description": "Recorte pequeno de ponta a ponta: aquisição, manifesto, carga, ligação, API e interface."
+    },
+    {
+      "title": "M2 — Expansão das fontes",
+      "description": "Oito ondas, aceite individual de cada fonte elegível e 21 planos de cruzamentos."
+    }
+  ],
+  "labels": [
+    {
+      "name": "foundation",
+      "color": "1D76DB",
+      "description": "Fundação comum antes da expansão"
+    },
+    {
+      "name": "pilot",
+      "color": "0E8A16",
+      "description": "Primeiro recorte utilizável"
+    },
+    {
+      "name": "data",
+      "color": "5319E7",
+      "description": "Aquisição, cadastro e cruzamentos"
+    },
+    {
+      "name": "quality",
+      "color": "FBCA04",
+      "description": "Testes, validação e evidência"
+    },
+    {
+      "name": "compliance",
+      "color": "BFDADC",
+      "description": "Revisão de políticas e limites de publicação"
+    },
+    {
+      "name": "privacy",
+      "color": "D4C5F9",
+      "description": "Questões de privacidade"
+    },
+    {
+      "name": "abuse",
+      "color": "B60205",
+      "description": "Relatos de uso abusivo"
+    },
+    {
+      "name": "correction",
+      "color": "C2E0C6",
+      "description": "Correções de dados e vínculos"
+    }
+  ],
+  "issues": [
+    {
+      "key": "F00",
+      "title": "[F00] Corrigir vulnerabilidades das dependências e fechar auditorias",
+      "milestone": "M0 — Fundação verificável",
+      "labels": [
+        "foundation",
+        "quality"
+      ],
+      "body": "A instalação inicial preservou os lockfiles e a suíte funcional passou. A auditoria npm identificou 17 alertas na árvore de dependências, incluindo altos/críticos. Não há release de produção suportada.\n\n- [ ] Reproduzir npm audit e auditorias Python em CI.\n- [ ] Atualizar dependências afetadas com revisão das alterações de versão.\n- [ ] Executar lint, tipos, testes e build após atualizações.\n- [ ] Fechar alertas altos/críticos ou documentar exceções justificadas e revisadas antes de release.\n- [ ] Anexar relatórios sem credenciais e não enfraquecer os gates para obter CI verde."
+    },
+    {
+      "key": "F01",
+      "title": "[F01] IDs de fontes",
+      "milestone": "M0 — Fundação verificável",
+      "labels": [
+        "foundation"
+      ],
+      "body": "Criar mapa versionado entre `source_id` do catálogo, nome do runner e identificador legado do provedor; armazenar os três explicitamente\n\nEvidência atual: `etl/src/bracc_etl/runner.py`, `etl/src/bracc_etl/base.py` e módulos de pipelines.\n\nCritério de aceite:\n\n- [ ] Cada módulo resolve para um único ID do catálogo; execuções históricas continuam rastreáveis\n- [ ] Anexar testes, evidências e limitações na PR.\n\nEscopo completo: [fundação F01](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/architecture.md)."
+    },
+    {
+      "key": "F02",
+      "title": "[F02] Documentos",
+      "milestone": "M0 — Fundação verificável",
+      "labels": [
+        "foundation"
+      ],
+      "body": "Separar normalização de CPF e CNPJ; suportar CNPJ alfanumérico em ETL, API e validações de interface; tratar CPF parcial como observação de identidade\n\nEvidência atual: `document_formatting.py` remove letras; `intelligence_provider.py` usa regex de 14 dígitos e rejeita CNPJ alfanumérico.\n\nCritério de aceite:\n\n- [ ] Fixtures numéricas/alfanuméricas passam; empresa alfanumérica é recuperada e analisada pelo endpoint, inclusive resolução por ID; nenhum zero/letra desaparece\n- [ ] Anexar testes, evidências e limitações na PR.\n\nEscopo completo: [fundação F02](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/architecture.md)."
+    },
+    {
+      "key": "F03",
+      "title": "[F03] Migração de identidade",
+      "milestone": "M0 — Fundação verificável",
+      "labels": [
+        "foundation"
+      ],
+      "body": "Introduzir chave canônica paralela, auditar colisões, fazer leitores aceitarem transição e só então promover a chave; preservar IDs e arestas antigas\n\nEvidência atual: Uso misto de CNPJ com e sem pontuação entre pipelines.\n\nCritério de aceite:\n\n- [ ] Ensaio de migração em cópia do grafo, relatório de colisões, reversão e comparação de contagens aprovados\n- [ ] Anexar testes, evidências e limitações na PR.\n\nEscopo completo: [fundação F03](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/architecture.md)."
+    },
+    {
+      "key": "F04",
+      "title": "[F04] Esquema",
+      "milestone": "M0 — Fundação verificável",
+      "labels": [
+        "foundation"
+      ],
+      "body": "Reconciliar `infra/neo4j/init.cypher` e `api/src/bracc/queries/schema_init.cypher`; criar constraints para todas as chaves usadas e aprovar labels novas\n\nEvidência atual: Os dois arquivos têm conjuntos diferentes de constraints; `Payment` e labels de séries/geografia precisam de desenho explícito.\n\nCritério de aceite:\n\n- [ ] Inicialização limpa e atualização de grafo existente resultam nas mesmas constraints; ingestão duplicada não duplica entidades\n- [ ] Anexar testes, evidências e limitações na PR.\n\nEscopo completo: [fundação F04](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/architecture.md)."
+    },
+    {
+      "key": "F05",
+      "title": "[F05] Aquisição",
+      "milestone": "M0 — Fundação verificável",
+      "labels": [
+        "foundation"
+      ],
+      "body": "Implementar biblioteca de manifesto, HTTP/FTP/exportação, retry limitado, backoff, retomada, checksum, paginação e limites por host\n\nEvidência atual: `scripts/bootstrap_all/adapters/registry.py`, downloaders em `etl/scripts/`.\n\nCritério de aceite:\n\n- [ ] Interrupção no meio de uma partição retoma sem corromper artefato ou saltar páginas; login HTML não passa por JSON/CSV\n- [ ] Anexar testes, evidências e limitações na PR.\n\nEscopo completo: [fundação F05](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/architecture.md)."
+    },
+    {
+      "key": "F06",
+      "title": "[F06] Escrita e métricas",
+      "milestone": "M0 — Fundação verificável",
+      "labels": [
+        "foundation"
+      ],
+      "body": "Fazer o loader confirmar transações, propagar erro ao esgotar retries e medir escritas reais, não apenas linhas tentadas\n\nEvidência atual: `etl/src/bracc_etl/loader.py` pode saltar lote após retries; `Pipeline.run` pode terminar sem dados e marcar `loaded`.\n\nCritério de aceite:\n\n- [ ] Falha em lote falha a execução; contadores discriminam tentativas, rejeições, nós, arestas e não resolvidos; vazio só é aceito com justificativa verificável\n- [ ] Anexar testes, evidências e limitações na PR.\n\nEscopo completo: [fundação F06](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/architecture.md)."
+    },
+    {
+      "key": "F07",
+      "title": "[F07] Ligações",
+      "milestone": "M0 — Fundação verificável",
+      "labels": [
+        "foundation"
+      ],
+      "body": "Substituir ou implementar os hooks referenciados e ausentes; separar vínculo exato de candidato; adicionar evidência e validade temporal\n\nEvidência atual: `linking_hooks.py` procura `scripts/link_persons.cypher` e `scripts/link_partners_probable.cypher`, ausentes no inventário auditado.\n\nCritério de aceite:\n\n- [ ] Hook ausente gera falha explícita ou estado de ligação pendente; homônimos não são unidos; queries de padrão usam evidência rastreável\n- [ ] Anexar testes, evidências e limitações na PR.\n\nEscopo completo: [fundação F07](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/architecture.md)."
+    },
+    {
+      "key": "F08",
+      "title": "[F08] Orquestração",
+      "milestone": "M0 — Fundação verificável",
+      "labels": [
+        "foundation"
+      ],
+      "body": "Atualizar contrato de bootstrap para os 47 módulos atuais, eliminar comandos de scripts inexistentes e cadastrar novas fontes somente após seus testes\n\nEvidência atual: `config/bootstrap_all_contract.yml` ainda declara 45; comandos de Comprasnet e DATASUS apontam a arquivos ausentes.\n\nCritério de aceite:\n\n- [ ] Catálogo, runner e contrato concordam; `doctor` valida existência de comandos/inputs sem iniciar uma carga nem resetar o grafo\n- [ ] Anexar testes, evidências e limitações na PR.\n\nEscopo completo: [fundação F08](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/architecture.md)."
+    },
+    {
+      "key": "F09",
+      "title": "[F09] Dimensões",
+      "milestone": "M0 — Fundação verificável",
+      "labels": [
+        "foundation"
+      ],
+      "body": "Materializar geografia IBGE, órgão/UG/ente, moedas/unidades, CNAE e demais vocabulários efetivamente usados\n\nEvidência atual: A maioria das ligações atuais concentra-se em `Company` e `Person`; agregados requerem dimensões próprias.\n\nCritério de aceite:\n\n- [ ] Código IBGE, UF, exercício, versão territorial e unidade são verificáveis; nenhum agregado vira pessoa ou empresa por inferência\n- [ ] Anexar testes, evidências e limitações na PR.\n\nEscopo completo: [fundação F09](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/architecture.md)."
+    },
+    {
+      "key": "F10",
+      "title": "[F10] Ambiente e evidência",
+      "milestone": "M0 — Fundação verificável",
+      "labels": [
+        "foundation"
+      ],
+      "body": "Disponibilizar configuração coerente nos contêineres; obter credenciais pelos canais exigidos; definir disco/RAM e medir uma partição antes de ampliar\n\nEvidência atual: Configuração Compose e placeholders já registrados no diagnóstico do projeto.\n\nCritério de aceite:\n\n- [ ] Preflight mostra capacidade, acessos e destino; amostra representativa mede bytes/linha e custo; nenhum segredo aparece em logs ou manifestos\n- [ ] Anexar testes, evidências e limitações na PR.\n\nEscopo completo: [fundação F10](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/architecture.md)."
+    },
+    {
+      "key": "P01",
+      "title": "[P01] Entregar CNPJ no recorte do piloto",
+      "milestone": "M1 — Piloto CNPJ, sanções e contratos",
+      "labels": [
+        "pilot",
+        "data"
+      ],
+      "body": "Escolher snapshot e partições delimitadas; preservar empresas, estabelecimentos e sócios segundo chaves e evidência.\n\nConsultar [ficha da fonte](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/sources/cnpj.md). Executar após os pré-requisitos de fundação aplicáveis.\n\n- [ ] Download e manifesto de uma partição validados.\n- [ ] Carga reconciliada e idempotente.\n- [ ] Ligações positivas e negativas verificadas.\n- [ ] Origem e data consultáveis pela API.\n- [ ] Evidências e atualização do catálogo somente após execução."
+    },
+    {
+      "key": "P02",
+      "title": "[P02] Entregar sanções empresariais no piloto",
+      "milestone": "M1 — Piloto CNPJ, sanções e contratos",
+      "labels": [
+        "pilot",
+        "data"
+      ],
+      "body": "Delimitar CEIS/CNEP, preservar sanção, autoridade, vigência e vínculo com empresa por documento exato.\n\nConsultar [ficha da fonte](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/sources/sanctions.md). Executar após os pré-requisitos de fundação aplicáveis.\n\n- [ ] Download e manifesto de uma partição validados.\n- [ ] Carga reconciliada e idempotente.\n- [ ] Ligações positivas e negativas verificadas.\n- [ ] Origem e data consultáveis pela API.\n- [ ] Evidências e atualização do catálogo somente após execução."
+    },
+    {
+      "key": "P03",
+      "title": "[P03] Entregar contratos públicos no piloto",
+      "milestone": "M1 — Piloto CNPJ, sanções e contratos",
+      "labels": [
+        "pilot",
+        "data"
+      ],
+      "body": "Preservar contrato, comprador, fornecedor e valores; alinhar Contract/VENCEU às consultas, sem tratar licitação como contrato.\n\nConsultar [ficha da fonte](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/sources/pncp.md). Executar após os pré-requisitos de fundação aplicáveis.\n\n- [ ] Download e manifesto de uma partição validados.\n- [ ] Carga reconciliada e idempotente.\n- [ ] Ligações positivas e negativas verificadas.\n- [ ] Origem e data consultáveis pela API.\n- [ ] Evidências e atualização do catálogo somente após execução."
+    },
+    {
+      "key": "P04",
+      "title": "[P04] Validar o piloto pela API e interface",
+      "milestone": "M1 — Piloto CNPJ, sanções e contratos",
+      "labels": [
+        "pilot",
+        "quality"
+      ],
+      "body": "Entregar busca de empresa e navegação por sanções e contratos com origem e data.\n\nReferência: [roteiro](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/project/README.md).\n\n- [ ] Teste de ponta a ponta: aquisição → manifesto → grafo → API → interface.\n- [ ] Reexecutar a mesma carga sem duplicar entidades ou vínculos.\n- [ ] Validar falha de lote, fonte indisponível, empresa sem resultados e homônimos.\n- [ ] Apresentar partições e períodos cobertos; nenhuma contagem nacional sem evidência."
+    },
+    {
+      "key": "E01",
+      "title": "[E01] Executar expansão por ondas e aceite individual",
+      "milestone": "M2 — Expansão das fontes",
+      "labels": [
+        "data"
+      ],
+      "body": "Coordenar as oito ondas do [plano de 169 fontes](https://github.com/bdwerlang/brasil-em-rede/blob/main/docs/implementation/README.md) após o piloto.\n\n- [ ] Criar issues de execução a partir das fichas conforme cada onda for iniciada.\n- [ ] Manter IDs, dependências e critérios individuais.\n- [ ] Distinguir conector, download, carga e cruzamentos.\n- [ ] Registrar restrições, catálogos e fontes derivadas sem prometer download universal.\n- [ ] Disponibilizar os 21 cruzamentos somente quando os requisitos e testes próprios passarem."
+    }
+  ]
+}

@@ -1,0 +1,4622 @@
+{
+  "repository": "https://github.com/nferdica/brazil-visible",
+  "revision": "cad147d28695d2faaa01fa0667ae53b7fef5e776",
+  "imported_on": "2026-10-26",
+  "license": "MIT",
+  "license_file": "brazil_visible_LICENSE.txt",
+  "health_updated_at": "2026-10-26T22:33:16.294Z",
+  "health_scope": "Upstream URL reachability only; FTP was not probed. This is not an ingestion or data-quality check.",
+  "summary": {
+    "documentation_pages": 92,
+    "categories": 22,
+    "pages_mapped_to_existing_sources": 31,
+    "existing_sources_enriched": 25,
+    "new_registry_sources": 61,
+    "new_public_universe_sources": 60,
+    "upstream_url_count": 62,
+    "upstream_url_status_counts": {
+      "ftp": 5,
+      "online": 46,
+      "offline": 11
+    }
+  },
+  "sources": [
+    {
+      "key": "agencias-reguladoras/anatel",
+      "registry_source_id": "anatel_access",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/agencias-reguladoras/anatel.md",
+      "metadata": {
+        "title": "ANATEL Telecomunicações — Banda Larga e Telefonia",
+        "slug": "anatel",
+        "orgao": "ANATEL",
+        "url_base": "https://www.anatel.gov.br/paineis/acessos",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "municipio",
+          "operadora",
+          "tecnologia",
+          "acessos",
+          "tipo_servico"
+        ],
+        "tags": [
+          "ANATEL",
+          "telecomunicações",
+          "banda larga",
+          "telefonia",
+          "celular",
+          "internet",
+          "fibra óptica",
+          "5G",
+          "inclusão digital"
+        ],
+        "cruzamento_com": [
+          "ibge-estatisticas/censo-demografico",
+          "ibge-estatisticas/pib-municipal",
+          "educacao/censo-escolar"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.anatel.gov.br/paineis/acessos",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:16.941Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "agencias-reguladoras/aneel",
+      "registry_source_id": "aneel_energy",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/agencias-reguladoras/aneel.md",
+      "metadata": {
+        "title": "ANEEL Energia Elétrica — Geração, Distribuição e Tarifas",
+        "slug": "aneel",
+        "orgao": "ANEEL",
+        "url_base": "https://dadosabertos.aneel.gov.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "empreendimento",
+          "potencia_kw",
+          "tipo_geracao",
+          "distribuidora",
+          "tarifa",
+          "consumo_mwh"
+        ],
+        "tags": [
+          "ANEEL",
+          "energia elétrica",
+          "geração",
+          "distribuição",
+          "tarifas",
+          "usinas",
+          "energia solar",
+          "energia eólica",
+          "matriz energética"
+        ],
+        "cruzamento_com": [
+          "agencias-reguladoras/anp",
+          "ibge-estatisticas/pib-municipal",
+          "ibge-estatisticas/censo-demografico",
+          "dados-geoespaciais/ibge-geociencias"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.aneel.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:17.454Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "agencias-reguladoras/anp",
+      "registry_source_id": "anp_royalties",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/agencias-reguladoras/anp.md",
+      "metadata": {
+        "title": "ANP Petróleo e Gás — Produção e Preços de Combustíveis",
+        "slug": "anp",
+        "orgao": "ANP",
+        "url_base": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "XLSX"
+        ],
+        "frequencia_atualizacao": "Semanal",
+        "campos_chave": [
+          "municipio",
+          "produto",
+          "preco_revenda",
+          "preco_distribuicao",
+          "bandeira",
+          "producao_petroleo",
+          "producao_gas"
+        ],
+        "tags": [
+          "ANP",
+          "petróleo",
+          "gás natural",
+          "combustíveis",
+          "gasolina",
+          "diesel",
+          "etanol",
+          "preços",
+          "biocombustíveis",
+          "postos"
+        ],
+        "cruzamento_com": [
+          "ibge-estatisticas/ipca-inflacao",
+          "infraestrutura-transportes/denatran-renavam",
+          "ibge-estatisticas/pib-municipal",
+          "agencias-reguladoras/aneel"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:16.933Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "agencias-reguladoras/anvisa",
+      "registry_source_id": "anvisa_registrations",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/agencias-reguladoras/anvisa.md",
+      "metadata": {
+        "title": "ANVISA Saúde — Registros de Medicamentos e Alimentos",
+        "slug": "anvisa",
+        "orgao": "ANVISA",
+        "url_base": "https://www.gov.br/anvisa/pt-br/acessoainformacao/dadosabertos",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "XLSX",
+          "PDF"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "numero_registro",
+          "nome_produto",
+          "principio_ativo",
+          "empresa_detentora",
+          "categoria_regulatoria",
+          "data_vencimento"
+        ],
+        "tags": [
+          "ANVISA",
+          "medicamentos",
+          "alimentos",
+          "vigilância sanitária",
+          "registro de produtos",
+          "saúde",
+          "insumos farmacêuticos"
+        ],
+        "cruzamento_com": [
+          "saude-datasus/sih",
+          "saude-datasus/cnes",
+          "receita-federal/cnpj-completa"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/anvisa/pt-br/acessoainformacao/dadosabertos",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:16.962Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "apis-governamentais/cadin",
+      "registry_source_id": "cadin",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/apis-governamentais/cadin.md",
+      "metadata": {
+        "title": "CADIN — Cadastro de Devedores do Governo Federal",
+        "slug": "cadin",
+        "orgao": "PGFN / Ministério da Fazenda",
+        "url_base": "https://cadin.pgfn.gov.br/",
+        "tipo_acesso": "API REST (Gov.br Conecta) / Portal web",
+        "autenticacao": "OAuth 2.0 (Gov.br Conecta) / Gov.br (consulta cidadã)",
+        "formato_dados": [
+          "JSON"
+        ],
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "cpf_cnpj",
+          "nome_devedor",
+          "orgao_credor",
+          "valor_debito",
+          "data_inclusao"
+        ],
+        "tags": [
+          "CADIN",
+          "devedores",
+          "dívida",
+          "governo federal",
+          "cadastro",
+          "inadimplência",
+          "PGFN",
+          "Gov.br Conecta"
+        ],
+        "cruzamento_com": [
+          "receita-federal/cnpj-completa",
+          "transparencia-cgu/ceis",
+          "transparencia-cgu/cepim",
+          "transparencia-cgu/cnep",
+          "transparencia-cgu/contratos-federais"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://cadin.pgfn.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:17.444Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "apis-governamentais/siape",
+      "registry_source_id": "siape",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/apis-governamentais/siape.md",
+      "metadata": {
+        "title": "SIAPE — Dados de Servidores Públicos Federais",
+        "slug": "siape",
+        "orgao": "Gov.br Conecta",
+        "url_base": "https://www.gov.br/conecta/catalogo/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "OAuth",
+        "formato_dados": [
+          "JSON"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "cpf",
+          "matricula",
+          "nome",
+          "orgao_lotacao",
+          "cargo",
+          "remuneracao"
+        ],
+        "tags": [
+          "SIAPE",
+          "servidores públicos",
+          "governo federal",
+          "folha de pagamento",
+          "funcionalismo público",
+          "Gov.br Conecta"
+        ],
+        "cruzamento_com": [
+          "transparencia-cgu/servidores-federais",
+          "diarios-oficiais/dou",
+          "apis-governamentais/siorg"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/conecta/catalogo",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:17.750Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "apis-governamentais/siorg",
+      "registry_source_id": "siorg",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/apis-governamentais/siorg.md",
+      "metadata": {
+        "title": "SIORG — Estrutura Organizacional do Governo Federal",
+        "slug": "siorg",
+        "orgao": "Gov.br Conecta",
+        "url_base": "https://siorg.gov.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "codigo_orgao",
+          "nome_orgao",
+          "sigla",
+          "orgao_superior",
+          "tipo_unidade",
+          "dirigente"
+        ],
+        "tags": [
+          "SIORG",
+          "estrutura organizacional",
+          "organograma",
+          "governo federal",
+          "órgãos públicos",
+          "Gov.br Conecta"
+        ],
+        "cruzamento_com": [
+          "apis-governamentais/siape",
+          "transparencia-cgu/servidores-federais",
+          "transparencia-cgu/contratos-federais"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://siorg.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:18.000Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "banco-central/ifdata",
+      "registry_source_id": "if_data",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/banco-central/ifdata.md",
+      "metadata": {
+        "title": "IFData",
+        "slug": "ifdata",
+        "orgao": "BCB",
+        "url_base": "https://www3.bcb.gov.br/ifdata/",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "HTML"
+        ],
+        "frequencia_atualizacao": "Trimestral",
+        "campos_chave": [
+          "cnpj",
+          "instituicao",
+          "tipo_instituicao",
+          "ativo_total",
+          "patrimonio_liquido"
+        ],
+        "tags": [
+          "bancos",
+          "instituições financeiras",
+          "balanços",
+          "demonstrações financeiras",
+          "IFData",
+          "supervisão bancária"
+        ],
+        "cruzamento_com": [
+          "sgs-juros",
+          "sgs-credito",
+          "receita-federal/cnpj-completa",
+          "transparencia-cgu/ceis"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www3.bcb.gov.br/ifdata",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:18.474Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "banco-central/sgs-base-monetaria",
+      "registry_source_id": "bcb_sgs_base_monetaria",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/banco-central/sgs-base-monetaria.md",
+      "metadata": {
+        "title": "SGS/API BCB - Base Monetária",
+        "slug": "sgs-base-monetaria",
+        "orgao": "BCB",
+        "url_base": "https://dadosabertos.bcb.gov.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV",
+          "XML"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "data",
+          "valor",
+          "base_monetaria",
+          "M1",
+          "M2",
+          "M3",
+          "M4"
+        ],
+        "tags": [
+          "base monetária",
+          "M1",
+          "M2",
+          "M3",
+          "M4",
+          "papel-moeda",
+          "emissão",
+          "agregados monetários",
+          "política monetária"
+        ],
+        "cruzamento_com": [
+          "sgs-juros",
+          "sgs-indices",
+          "sgs-cambio",
+          "sgs-meios-pagamento"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.bcb.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:18.372Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "banco-central/sgs-cambio",
+      "registry_source_id": "bcb_sgs_cambio",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/banco-central/sgs-cambio.md",
+      "metadata": {
+        "title": "SGS/API BCB - Câmbio",
+        "slug": "sgs-cambio",
+        "orgao": "BCB",
+        "url_base": "https://dadosabertos.bcb.gov.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV",
+          "XML"
+        ],
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "data",
+          "valor",
+          "cotacao_compra",
+          "cotacao_venda",
+          "moeda"
+        ],
+        "tags": [
+          "câmbio",
+          "PTAX",
+          "dólar",
+          "euro",
+          "moedas",
+          "cotação",
+          "taxa de conversão"
+        ],
+        "cruzamento_com": [
+          "sgs-juros",
+          "sgs-indices",
+          "sgs-reservas-internacionais",
+          "tesouro-nacional/siafi"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.bcb.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:18.372Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "banco-central/sgs-credito",
+      "registry_source_id": "bcb_sgs_credito",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/banco-central/sgs-credito.md",
+      "metadata": {
+        "title": "SGS/API BCB - Crédito",
+        "slug": "sgs-credito",
+        "orgao": "BCB",
+        "url_base": "https://dadosabertos.bcb.gov.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV",
+          "XML"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "data",
+          "valor",
+          "inadimplencia",
+          "spread",
+          "volume_credito"
+        ],
+        "tags": [
+          "crédito",
+          "inadimplência",
+          "spread bancário",
+          "empréstimos",
+          "financiamentos",
+          "operações de crédito"
+        ],
+        "cruzamento_com": [
+          "sgs-juros",
+          "sgs-indices",
+          "sgs-pix",
+          "ifdata"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.bcb.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:18.372Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "banco-central/sgs-indices",
+      "registry_source_id": "bcb_sgs_indices",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/banco-central/sgs-indices.md",
+      "metadata": {
+        "title": "SGS/API BCB - Índices",
+        "slug": "sgs-indices",
+        "orgao": "BCB",
+        "url_base": "https://dadosabertos.bcb.gov.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV",
+          "XML"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "data",
+          "valor",
+          "indice",
+          "indicador"
+        ],
+        "tags": [
+          "IBC-Br",
+          "IPCA",
+          "atividade econômica",
+          "expectativas",
+          "inflação",
+          "índices"
+        ],
+        "cruzamento_com": [
+          "sgs-cambio",
+          "sgs-juros",
+          "sgs-credito",
+          "ibge-estatisticas/ipca-inflacao"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.bcb.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:18.372Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "banco-central/sgs-juros",
+      "registry_source_id": "bcb_sgs_juros",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/banco-central/sgs-juros.md",
+      "metadata": {
+        "title": "SGS/API BCB - Juros",
+        "slug": "sgs-juros",
+        "orgao": "BCB",
+        "url_base": "https://dadosabertos.bcb.gov.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV",
+          "XML"
+        ],
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "data",
+          "valor",
+          "taxa_selic",
+          "cdi"
+        ],
+        "tags": [
+          "juros",
+          "Selic",
+          "CDI",
+          "taxa de juros",
+          "política monetária",
+          "crédito"
+        ],
+        "cruzamento_com": [
+          "sgs-cambio",
+          "sgs-indices",
+          "sgs-credito",
+          "tesouro-nacional/siafi"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.bcb.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:18.372Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "banco-central/sgs-meios-pagamento",
+      "registry_source_id": "bcb_sgs_meios_pagamento",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/banco-central/sgs-meios-pagamento.md",
+      "metadata": {
+        "title": "SGS/API BCB - Meios de Pagamento",
+        "slug": "sgs-meios-pagamento",
+        "orgao": "BCB",
+        "url_base": "https://dadosabertos.bcb.gov.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV",
+          "XML"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "data",
+          "valor",
+          "quantidade_cartoes",
+          "volume_transacoes",
+          "cheques"
+        ],
+        "tags": [
+          "meios de pagamento",
+          "cartões de crédito",
+          "cartões de débito",
+          "cheques",
+          "boletos",
+          "transferências"
+        ],
+        "cruzamento_com": [
+          "sgs-pix",
+          "sgs-credito",
+          "sgs-base-monetaria",
+          "sgs-juros"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.bcb.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:18.372Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "banco-central/sgs-pix",
+      "registry_source_id": "bcb_sgs_pix",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/banco-central/sgs-pix.md",
+      "metadata": {
+        "title": "SGS/API BCB - PIX",
+        "slug": "sgs-pix",
+        "orgao": "BCB",
+        "url_base": "https://dadosabertos.bcb.gov.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV",
+          "XML"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "data",
+          "valor",
+          "quantidade_transacoes",
+          "chaves_cadastradas"
+        ],
+        "tags": [
+          "PIX",
+          "pagamentos instantâneos",
+          "transferências",
+          "chaves PIX",
+          "estatísticas"
+        ],
+        "cruzamento_com": [
+          "sgs-meios-pagamento",
+          "sgs-credito",
+          "sgs-base-monetaria",
+          "ifdata"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.bcb.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:18.372Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "banco-central/sgs-reservas-internacionais",
+      "registry_source_id": "bcb_sgs_reservas_internacionais",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/banco-central/sgs-reservas-internacionais.md",
+      "metadata": {
+        "title": "SGS/API BCB - Reservas Internacionais",
+        "slug": "sgs-reservas-internacionais",
+        "orgao": "BCB",
+        "url_base": "https://dadosabertos.bcb.gov.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV",
+          "XML"
+        ],
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "data",
+          "valor",
+          "posicao_reservas",
+          "composicao"
+        ],
+        "tags": [
+          "reservas internacionais",
+          "câmbio",
+          "dólar",
+          "ativos externos",
+          "posição diária",
+          "ouro",
+          "títulos"
+        ],
+        "cruzamento_com": [
+          "sgs-cambio",
+          "sgs-juros",
+          "sgs-base-monetaria",
+          "tesouro-nacional/siafi"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.bcb.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:18.372Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "dados-geoespaciais/cprm-geologia",
+      "registry_source_id": "cprm_geology",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/dados-geoespaciais/cprm-geologia.md",
+      "metadata": {
+        "title": "SGB-CPRM — Geologia, Recursos Minerais e Hidrogeologia",
+        "slug": "cprm-geologia",
+        "orgao": "SGB-CPRM (Serviço Geológico do Brasil)",
+        "url_base": "https://geosgb.sgb.gov.br/",
+        "tipo_acesso": "WMS/WFS / REST API (ArcGIS Server)",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "WMS",
+          "WFS",
+          "SHP",
+          "GeoJSON",
+          "JSON"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "unidade_geologica",
+          "tipo_rocha",
+          "idade_geologica",
+          "recurso_mineral",
+          "bacia_hidrografica"
+        ],
+        "tags": [
+          "CPRM",
+          "SGB",
+          "geologia",
+          "recursos minerais",
+          "hidrogeologia",
+          "águas subterrâneas",
+          "mapa geológico",
+          "geoespacial",
+          "SIAGAS"
+        ],
+        "cruzamento_com": [
+          "dados-geoespaciais/ibge-geociencias",
+          "dados-geoespaciais/inde",
+          "dados-geoespaciais/incra-fundiario",
+          "meio-ambiente/recursos-hidricos"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://geosgb.sgb.gov.br",
+        "status": "offline",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:47.456Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "dados-geoespaciais/ibge-geociencias",
+      "registry_source_id": "ibge_geosciences",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/dados-geoespaciais/ibge-geociencias.md",
+      "metadata": {
+        "title": "IBGE Geociências — Limites Territoriais e Malhas Digitais",
+        "slug": "ibge-geociencias",
+        "orgao": "IBGE",
+        "url_base": "https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "GeoJSON",
+          "TopoJSON",
+          "SVG",
+          "SHP"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "codigo_municipio",
+          "nome_municipio",
+          "codigo_uf",
+          "area_km2",
+          "geometry"
+        ],
+        "tags": [
+          "IBGE",
+          "geociências",
+          "malhas digitais",
+          "limites territoriais",
+          "shapefiles",
+          "GeoJSON",
+          "municípios",
+          "estados",
+          "cartografia"
+        ],
+        "cruzamento_com": [
+          "ibge-estatisticas/censo-demografico",
+          "ibge-estatisticas/pib-municipal",
+          "dados-geoespaciais/inde",
+          "infraestrutura-transportes/dnit-malha-rodoviaria"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR",
+        "status": "offline",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:47.751Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "dados-geoespaciais/incra-fundiario",
+      "registry_source_id": "incra_land_registry",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/dados-geoespaciais/incra-fundiario.md",
+      "metadata": {
+        "title": "INCRA Estrutura Fundiária — Imóveis Rurais e Assentamentos",
+        "slug": "incra-fundiario",
+        "orgao": "INCRA",
+        "url_base": "https://acervofundiario.incra.gov.br/",
+        "tipo_acesso": "Download (SHP, CSV, GeoJSON) / WMS / Portal web",
+        "autenticacao": "Gov.br (Silver ou Gold) para portais interativos / Não requerida para downloads",
+        "formato_dados": [
+          "SHP",
+          "CSV",
+          "GeoJSON",
+          "GML",
+          "WMS",
+          "KML",
+          "XLS"
+        ],
+        "frequencia_atualizacao": "Diária (WMS) / Anual (dumps)",
+        "campos_chave": [
+          "codigo_imovel",
+          "area_hectares",
+          "municipio",
+          "uf",
+          "tipo_imovel",
+          "assentamento"
+        ],
+        "tags": [
+          "INCRA",
+          "fundiário",
+          "imóveis rurais",
+          "assentamentos",
+          "reforma agrária",
+          "georreferenciamento",
+          "CAR",
+          "SIGEF",
+          "SNCR"
+        ],
+        "cruzamento_com": [
+          "dados-geoespaciais/ibge-geociencias",
+          "dados-geoespaciais/cprm-geologia",
+          "ibge-estatisticas/censo-demografico",
+          "ibge-estatisticas/pib-municipal",
+          "meio-ambiente/car"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://acervofundiario.incra.gov.br",
+        "status": "offline",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:19.539Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "dados-geoespaciais/inde",
+      "registry_source_id": "inde",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/dados-geoespaciais/inde.md",
+      "metadata": {
+        "title": "INDE — Infraestrutura Nacional de Dados Espaciais",
+        "slug": "inde",
+        "orgao": "Governo Federal (coordenação IBGE)",
+        "url_base": "https://visualizador.inde.gov.br/",
+        "tipo_acesso": "WMS/WFS/CSW (padrões OGC)",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "WMS",
+          "WFS",
+          "SHP",
+          "GeoJSON",
+          "KML"
+        ],
+        "frequencia_atualizacao": "Variável (por instituição provedora)",
+        "campos_chave": [
+          "camada",
+          "metadado",
+          "organizacao",
+          "geometria",
+          "tema"
+        ],
+        "tags": [
+          "INDE",
+          "dados espaciais",
+          "geoespacial",
+          "WMS",
+          "WFS",
+          "geoserviços",
+          "OGC",
+          "IDE"
+        ],
+        "cruzamento_com": [
+          "dados-geoespaciais/ibge-geociencias",
+          "dados-geoespaciais/inpe-satelite",
+          "dados-geoespaciais/cprm-geologia",
+          "dados-geoespaciais/incra-fundiario"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://visualizador.inde.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:19.671Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "dados-geoespaciais/inpe-satelite",
+      "registry_source_id": "inpe_satellite",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/dados-geoespaciais/inpe-satelite.md",
+      "metadata": {
+        "title": "INPE Imagens de Satélite — Landsat, Sentinel, CBERS",
+        "slug": "inpe-satelite",
+        "orgao": "INPE",
+        "url_base": "http://www.dgi.inpe.br/catalogo/",
+        "tipo_acesso": "Web Interface",
+        "autenticacao": "Cadastro gratuito",
+        "formato_dados": [
+          "GeoTIFF",
+          "HDF",
+          "JP2"
+        ],
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "satelite",
+          "sensor",
+          "data_imagem",
+          "orbita_ponto",
+          "resolucao_espacial",
+          "cobertura_nuvens"
+        ],
+        "tags": [
+          "INPE",
+          "satélite",
+          "sensoriamento remoto",
+          "Landsat",
+          "Sentinel",
+          "CBERS",
+          "imagens",
+          "geoprocessamento",
+          "desmatamento",
+          "PRODES",
+          "DETER"
+        ],
+        "cruzamento_com": [
+          "dados-geoespaciais/ibge-geociencias",
+          "dados-geoespaciais/inde",
+          "meio-ambiente/prodes"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "http://www.dgi.inpe.br/catalogo",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:20.401Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "diarios-oficiais/does-estaduais",
+      "registry_source_id": "state_gazettes",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/diarios-oficiais/does-estaduais.md",
+      "metadata": {
+        "title": "DOEs Estaduais — Diários Oficiais dos Estados",
+        "slug": "does-estaduais",
+        "orgao": "Governos Estaduais / Open Knowledge Brasil",
+        "url_base": "https://queridodiario.ok.org.br/",
+        "tipo_acesso": "API REST (Querido Diário) / Web portals",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "PDF",
+          "TXT",
+          "HTML"
+        ],
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "territory_id",
+          "date",
+          "querystring",
+          "txt_url",
+          "edition"
+        ],
+        "tags": [
+          "diário oficial",
+          "DOE",
+          "estados",
+          "legislação estadual",
+          "atos oficiais",
+          "Querido Diário",
+          "transparência",
+          "Open Knowledge Brasil"
+        ],
+        "cruzamento_com": [
+          "diarios-oficiais/dou",
+          "transparencia-cgu/contratos-federais",
+          "ibge-estatisticas/censo-demografico"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://queridodiario.ok.org.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:20.377Z"
+      },
+      "review_notes": "Reference points to Querido Diario; state-gazette coverage has not been verified."
+    },
+    {
+      "key": "diarios-oficiais/dou",
+      "registry_source_id": "dou",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/diarios-oficiais/dou.md",
+      "metadata": {
+        "title": "DOU — Diário Oficial da União",
+        "slug": "dou",
+        "orgao": "Imprensa Nacional",
+        "url_base": "https://www.in.gov.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "HTML"
+        ],
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "data_publicacao",
+          "secao",
+          "orgao",
+          "titulo",
+          "tipo_ato",
+          "conteudo"
+        ],
+        "tags": [
+          "DOU",
+          "Diário Oficial",
+          "legislação",
+          "nomeações",
+          "decretos",
+          "leis",
+          "contratos",
+          "atos oficiais",
+          "Imprensa Nacional"
+        ],
+        "cruzamento_com": [
+          "transparencia-cgu/servidores-federais",
+          "transparencia-cgu/contratos-federais",
+          "apis-governamentais/siape"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.in.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:21.102Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "educacao/censo-educacao-superior",
+      "registry_source_id": "inep_higher_education",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/educacao/censo-educacao-superior.md",
+      "metadata": {
+        "title": "Censo da Educação Superior",
+        "slug": "censo-educacao-superior",
+        "orgao": "INEP / MEC",
+        "url_base": "https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-da-educacao-superior",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "código IES",
+          "código curso",
+          "código município",
+          "categoria administrativa",
+          "organização acadêmica",
+          "vagas",
+          "ingressos",
+          "matrículas",
+          "concluintes"
+        ],
+        "tags": [
+          "educação",
+          "ensino superior",
+          "universidades",
+          "faculdades",
+          "cursos",
+          "vagas",
+          "docentes",
+          "graduação",
+          "INEP",
+          "microdados"
+        ],
+        "cruzamento_com": [
+          "censo-escolar",
+          "enem",
+          "fnde-repasses",
+          "receita-federal/cnpj-completa",
+          "ibge-estatisticas/censo-demografico"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-da-educacao-superior",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:20.541Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "educacao/censo-escolar",
+      "registry_source_id": "inep",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/educacao/censo-escolar.md",
+      "metadata": {
+        "title": "Censo Escolar (Microdados)",
+        "slug": "censo-escolar",
+        "orgao": "INEP / MEC",
+        "url_base": "https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-escolar",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "código escola",
+          "código município",
+          "código turma",
+          "matrícula",
+          "código docente",
+          "dependência administrativa",
+          "etapa ensino"
+        ],
+        "tags": [
+          "educação",
+          "censo escolar",
+          "escolas",
+          "matrículas",
+          "turmas",
+          "docentes",
+          "educação básica",
+          "INEP",
+          "microdados"
+        ],
+        "cruzamento_com": [
+          "enem",
+          "censo-educacao-superior",
+          "fnde-repasses",
+          "ibge-estatisticas/censo-demografico",
+          "ibge-estatisticas/pib-municipal"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-escolar",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:20.560Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "educacao/enem",
+      "registry_source_id": "inep_enem",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/educacao/enem.md",
+      "metadata": {
+        "title": "ENEM (Microdados)",
+        "slug": "enem",
+        "orgao": "INEP / MEC",
+        "url_base": "https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/enem",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "inscrição",
+          "código escola",
+          "código município",
+          "notas TRI",
+          "nota redação",
+          "perfil socioeconômico",
+          "tipo prova"
+        ],
+        "tags": [
+          "educação",
+          "ENEM",
+          "vestibular",
+          "notas",
+          "desempenho",
+          "redação",
+          "perfil socioeconômico",
+          "INEP",
+          "microdados",
+          "ensino médio"
+        ],
+        "cruzamento_com": [
+          "censo-escolar",
+          "censo-educacao-superior",
+          "fnde-repasses",
+          "ibge-estatisticas/censo-demografico"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/enem",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:20.701Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "educacao/fnde-repasses",
+      "registry_source_id": "fnde_transfers",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/educacao/fnde-repasses.md",
+      "metadata": {
+        "title": "FNDE (Repasses)",
+        "slug": "fnde-repasses",
+        "orgao": "FNDE / MEC",
+        "url_base": "https://www.fnde.gov.br/dadosabertos/dataset",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "código município",
+          "UF",
+          "programa",
+          "valor repasse",
+          "ano referência",
+          "ente federativo",
+          "ação orçamentária"
+        ],
+        "tags": [
+          "educação",
+          "FNDE",
+          "FUNDEB",
+          "merenda escolar",
+          "PNAE",
+          "transporte escolar",
+          "PNATE",
+          "repasses",
+          "financiamento educação",
+          "dados abertos"
+        ],
+        "cruzamento_com": [
+          "censo-escolar",
+          "enem",
+          "censo-educacao-superior",
+          "transparencia-cgu/emendas-parlamentares",
+          "tesouro-nacional/siafi",
+          "ibge-estatisticas/pib-municipal"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.fnde.gov.br/dadosabertos/dataset",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:21.711Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "ibge-estatisticas/censo-demografico",
+      "registry_source_id": "ibge_census",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/ibge-estatisticas/censo-demografico.md",
+      "metadata": {
+        "title": "Censo Demográfico — Dados Populacionais por Município",
+        "slug": "censo-demografico",
+        "orgao": "IBGE",
+        "url_base": "https://servicodados.ibge.gov.br/api/v3/agregados",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Decenal",
+        "campos_chave": [
+          "codigo_municipio",
+          "populacao",
+          "domicilios",
+          "renda_media",
+          "escolaridade",
+          "idade",
+          "sexo",
+          "cor_raca"
+        ],
+        "tags": [
+          "IBGE",
+          "censo",
+          "população",
+          "demografia",
+          "domicílios",
+          "renda",
+          "escolaridade",
+          "município",
+          "microdados"
+        ],
+        "cruzamento_com": [
+          "ibge-estatisticas/pib-municipal",
+          "ibge-estatisticas/pnad-continua",
+          "educacao/censo-escolar",
+          "saude-datasus/tabnet",
+          "trabalho-emprego/rais"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://servicodados.ibge.gov.br/api/v3/agregados",
+        "status": "offline",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:50.702Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "ibge-estatisticas/ipca-inflacao",
+      "registry_source_id": "ibge_ipca",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/ibge-estatisticas/ipca-inflacao.md",
+      "metadata": {
+        "title": "IPCA/Inflação — Índice Nacional de Preços ao Consumidor Amplo",
+        "slug": "ipca-inflacao",
+        "orgao": "IBGE",
+        "url_base": "https://servicodados.ibge.gov.br/api/v3/agregados",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "variacao_mensal",
+          "variacao_acumulada_ano",
+          "variacao_acumulada_12m",
+          "grupo_produto",
+          "subitem",
+          "numero_indice"
+        ],
+        "tags": [
+          "IBGE",
+          "IPCA",
+          "inflação",
+          "preços",
+          "custo de vida",
+          "índice de preços",
+          "cesta básica"
+        ],
+        "cruzamento_com": [
+          "banco-central/sgs-juros",
+          "banco-central/sgs-indices",
+          "ibge-estatisticas/pnad-continua",
+          "ipea/ipeadata"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://servicodados.ibge.gov.br/api/v3/agregados",
+        "status": "offline",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:50.702Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "ibge-estatisticas/pib-municipal",
+      "registry_source_id": "ibge_municipal_gdp",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/ibge-estatisticas/pib-municipal.md",
+      "metadata": {
+        "title": "PIB Municipal — Produto Interno Bruto dos Municípios",
+        "slug": "pib-municipal",
+        "orgao": "IBGE",
+        "url_base": "https://servicodados.ibge.gov.br/api/v3/agregados",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "codigo_municipio",
+          "pib_total",
+          "pib_per_capita",
+          "vab_agropecuaria",
+          "vab_industria",
+          "vab_servicos",
+          "vab_administracao_publica"
+        ],
+        "tags": [
+          "IBGE",
+          "PIB",
+          "produto interno bruto",
+          "economia municipal",
+          "valor adicionado bruto",
+          "renda per capita",
+          "município"
+        ],
+        "cruzamento_com": [
+          "ibge-estatisticas/censo-demografico",
+          "trabalho-emprego/rais",
+          "educacao/censo-escolar",
+          "tesouro-nacional/siconfi",
+          "receita-federal/cnpj-completa"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://servicodados.ibge.gov.br/api/v3/agregados",
+        "status": "offline",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:50.702Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "ibge-estatisticas/pnad-continua",
+      "registry_source_id": "ibge_pnad",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/ibge-estatisticas/pnad-continua.md",
+      "metadata": {
+        "title": "PNAD Contínua — Pesquisa Nacional por Amostra de Domicílios",
+        "slug": "pnad-continua",
+        "orgao": "IBGE",
+        "url_base": "https://servicodados.ibge.gov.br/api/v3/agregados",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Trimestral",
+        "campos_chave": [
+          "taxa_desocupacao",
+          "populacao_ocupada",
+          "rendimento_medio",
+          "taxa_informalidade",
+          "nivel_instrucao"
+        ],
+        "tags": [
+          "IBGE",
+          "PNAD",
+          "emprego",
+          "desemprego",
+          "renda",
+          "informalidade",
+          "mercado de trabalho",
+          "pesquisa amostral"
+        ],
+        "cruzamento_com": [
+          "trabalho-emprego/caged",
+          "trabalho-emprego/rais",
+          "ibge-estatisticas/censo-demografico",
+          "ibge-estatisticas/ipca-inflacao"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://servicodados.ibge.gov.br/api/v3/agregados",
+        "status": "offline",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:50.702Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "infraestrutura-transportes/anac-aviacao",
+      "registry_source_id": "anac_flights",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/infraestrutura-transportes/anac-aviacao.md",
+      "metadata": {
+        "title": "ANAC Aviação Civil — Voos, Passageiros e Aeroportos",
+        "slug": "anac-aviacao",
+        "orgao": "ANAC",
+        "url_base": "https://www.gov.br/anac/pt-br/assuntos/dados-e-estatisticas",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "empresa_aerea",
+          "aeroporto_origem",
+          "aeroporto_destino",
+          "passageiros_pagos",
+          "carga_kg",
+          "assentos_ofertados",
+          "RPK",
+          "ASK"
+        ],
+        "tags": [
+          "ANAC",
+          "aviação civil",
+          "voos",
+          "passageiros",
+          "aeroportos",
+          "RAB",
+          "companhias aéreas",
+          "transporte aéreo"
+        ],
+        "cruzamento_com": [
+          "ibge-estatisticas/pib-municipal",
+          "ibge-estatisticas/censo-demografico",
+          "infraestrutura-transportes/antt-concessoes"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/anac/pt-br/assuntos/dados-e-estatisticas",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:21.250Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "infraestrutura-transportes/antt-concessoes",
+      "registry_source_id": "antt_transport_concessions",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/infraestrutura-transportes/antt-concessoes.md",
+      "metadata": {
+        "title": "ANTT Concessões Rodoviárias — Frotas, Tarifas e Concessões",
+        "slug": "antt-concessoes",
+        "orgao": "ANTT",
+        "url_base": "https://dados.antt.gov.br/",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "concessionaria",
+          "rodovia",
+          "praca_pedagio",
+          "tarifa",
+          "volume_trafego"
+        ],
+        "tags": [
+          "ANTT",
+          "concessões rodoviárias",
+          "pedágio",
+          "transporte rodoviário",
+          "frotas",
+          "tarifas",
+          "rodovias"
+        ],
+        "cruzamento_com": [
+          "infraestrutura-transportes/dnit-malha-rodoviaria",
+          "infraestrutura-transportes/denatran-renavam",
+          "infraestrutura-transportes/prf-acidentes"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dados.antt.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:22.115Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "infraestrutura-transportes/denatran-renavam",
+      "registry_source_id": "senatran_fleet",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/infraestrutura-transportes/denatran-renavam.md",
+      "metadata": {
+        "title": "DENATRAN/RENAVAM — Frota de Veículos",
+        "slug": "denatran-renavam",
+        "orgao": "DENATRAN / SENATRAN",
+        "url_base": "https://www.gov.br/transportes/pt-br/assuntos/transito/conteudo-Senatran/estatisticas-frota-de-veiculos-senatran",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "XLSX"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "uf",
+          "municipio",
+          "tipo_veiculo",
+          "quantidade",
+          "combustivel",
+          "ano_fabricacao"
+        ],
+        "tags": [
+          "DENATRAN",
+          "SENATRAN",
+          "RENAVAM",
+          "frota de veículos",
+          "automóveis",
+          "motos",
+          "CNH",
+          "trânsito"
+        ],
+        "cruzamento_com": [
+          "ibge-estatisticas/censo-demografico",
+          "ibge-estatisticas/pib-municipal",
+          "infraestrutura-transportes/prf-acidentes",
+          "agencias-reguladoras/anp"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/transportes/pt-br/assuntos/transito/conteudo-Senatran/estatisticas-frota-de-veiculos-senatran",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:22.320Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "infraestrutura-transportes/dnit-malha-rodoviaria",
+      "registry_source_id": "dnit_roads",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/infraestrutura-transportes/dnit-malha-rodoviaria.md",
+      "metadata": {
+        "title": "DNIT Malha Rodoviária — Infraestrutura Rodoviária Federal",
+        "slug": "dnit-malha-rodoviaria",
+        "orgao": "DNIT",
+        "url_base": "https://servicos.dnit.gov.br/dadosabertos/",
+        "tipo_acesso": "Download (SHP, CSV, Excel) / WMS (VGEO)",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "SHP",
+          "GeoJSON",
+          "CSV",
+          "KML",
+          "XLSX"
+        ],
+        "frequencia_atualizacao": "Anual (SNV atualizado fev/2026)",
+        "campos_chave": [
+          "rodovia",
+          "tipo_trecho",
+          "extensao_km",
+          "superficie",
+          "uf",
+          "condicao"
+        ],
+        "tags": [
+          "DNIT",
+          "malha rodoviária",
+          "rodovias federais",
+          "infraestrutura",
+          "SNV",
+          "geoespacial",
+          "VGEO"
+        ],
+        "cruzamento_com": [
+          "infraestrutura-transportes/antt-concessoes",
+          "infraestrutura-transportes/prf-acidentes",
+          "dados-geoespaciais/ibge-geociencias"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://servicos.dnit.gov.br/dadosabertos",
+        "status": "offline",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:52.114Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "infraestrutura-transportes/prf-acidentes",
+      "registry_source_id": "prf_accidents",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/infraestrutura-transportes/prf-acidentes.md",
+      "metadata": {
+        "title": "PRF Acidentes — Acidentes em Rodovias Federais",
+        "slug": "prf-acidentes",
+        "orgao": "PRF",
+        "url_base": "https://dados.gov.br/dados/conjuntos-dados/acidentes-de-transito-nas-rodovias-federais",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "data_hora",
+          "rodovia",
+          "km",
+          "municipio",
+          "causa_acidente",
+          "tipo_acidente",
+          "mortos",
+          "feridos",
+          "latitude",
+          "longitude"
+        ],
+        "tags": [
+          "PRF",
+          "acidentes",
+          "rodovias federais",
+          "trânsito",
+          "mortes no trânsito",
+          "segurança viária"
+        ],
+        "cruzamento_com": [
+          "infraestrutura-transportes/dnit-malha-rodoviaria",
+          "infraestrutura-transportes/antt-concessoes",
+          "infraestrutura-transportes/denatran-renavam",
+          "ibge-estatisticas/censo-demografico"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dados.gov.br/dados/conjuntos-dados/acidentes-de-transito-nas-rodovias-federais",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:22.767Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "ipea/ipeadata",
+      "registry_source_id": "ipeadata",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/ipea/ipeadata.md",
+      "metadata": {
+        "title": "Ipeadata — Séries Econômicas e Indicadores Sociais",
+        "slug": "ipeadata",
+        "orgao": "IPEA",
+        "url_base": "http://www.ipeadata.gov.br/api/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON"
+        ],
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "serie_codigo",
+          "valor",
+          "data",
+          "tema",
+          "frequencia",
+          "unidade"
+        ],
+        "tags": [
+          "IPEA",
+          "séries temporais",
+          "indicadores econômicos",
+          "indicadores sociais",
+          "Atlas do Desenvolvimento Humano",
+          "IDH",
+          "macroeconomia"
+        ],
+        "cruzamento_com": [
+          "banco-central/sgs-juros",
+          "banco-central/sgs-indices",
+          "ibge-estatisticas/ipca-inflacao",
+          "ibge-estatisticas/pib-municipal"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "http://www.ipeadata.gov.br/api",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:24.158Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "justica-eleitoral-tse/bens-declarados",
+      "registry_source_id": "tse_bens",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/justica-eleitoral-tse/bens-declarados.md",
+      "metadata": {
+        "title": "Bens Declarados",
+        "slug": "bens-declarados",
+        "orgao": "TSE",
+        "url_base": "https://dadosabertos.tse.jus.br/",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Por eleição",
+        "campos_chave": [
+          "CPF_candidato",
+          "sequencial_candidato",
+          "tipo_bem",
+          "valor_bem",
+          "descricao_bem"
+        ],
+        "tags": [
+          "eleições",
+          "patrimônio",
+          "bens",
+          "candidatos",
+          "declaração de bens",
+          "evolução patrimonial"
+        ],
+        "cruzamento_com": [
+          "justica-eleitoral-tse/candidaturas",
+          "justica-eleitoral-tse/prestacao-contas",
+          "receita-federal/qsa",
+          "receita-federal/cnpj-completa",
+          "transparencia-cgu/servidores-federais"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.tse.jus.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:24.550Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "justica-eleitoral-tse/boletins-urna",
+      "registry_source_id": "tse_ballot_boxes",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/justica-eleitoral-tse/boletins-urna.md",
+      "metadata": {
+        "title": "Boletins de Urna",
+        "slug": "boletins-urna",
+        "orgao": "TSE",
+        "url_base": "https://dadosabertos.tse.jus.br/",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Por eleição",
+        "campos_chave": [
+          "numero_urna",
+          "zona_eleitoral",
+          "secao_eleitoral",
+          "codigo_municipio",
+          "hash_arquivo",
+          "quantidade_votos"
+        ],
+        "tags": [
+          "eleições",
+          "boletim de urna",
+          "urna eletrônica",
+          "auditoria",
+          "apuração",
+          "transparência eleitoral",
+          "dados brutos"
+        ],
+        "cruzamento_com": [
+          "justica-eleitoral-tse/resultados-eleitorais",
+          "justica-eleitoral-tse/candidaturas",
+          "justica-eleitoral-tse/eleitorado"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.tse.jus.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:24.550Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "justica-eleitoral-tse/candidaturas",
+      "registry_source_id": "tse",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/justica-eleitoral-tse/candidaturas.md",
+      "metadata": {
+        "title": "Candidaturas",
+        "slug": "candidaturas",
+        "orgao": "TSE",
+        "url_base": "https://dadosabertos.tse.jus.br/",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Por eleição",
+        "campos_chave": [
+          "CPF",
+          "numero_candidato",
+          "nome_candidato",
+          "sigla_partido",
+          "cargo",
+          "ano_eleicao"
+        ],
+        "tags": [
+          "eleições",
+          "candidatos",
+          "partidos",
+          "cargos eletivos",
+          "CPF",
+          "dados eleitorais",
+          "políticos"
+        ],
+        "cruzamento_com": [
+          "receita-federal/qsa",
+          "receita-federal/cnpj-completa",
+          "transparencia-cgu/servidores-federais",
+          "transparencia-cgu/contratos-federais",
+          "transparencia-cgu/emendas-parlamentares",
+          "justica-eleitoral-tse/prestacao-contas",
+          "justica-eleitoral-tse/bens-declarados",
+          "justica-eleitoral-tse/resultados-eleitorais"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.tse.jus.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:24.550Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "justica-eleitoral-tse/eleitorado",
+      "registry_source_id": "tse_electorate",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/justica-eleitoral-tse/eleitorado.md",
+      "metadata": {
+        "title": "Eleitorado",
+        "slug": "eleitorado",
+        "orgao": "TSE",
+        "url_base": "https://dadosabertos.tse.jus.br/",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "codigo_municipio",
+          "zona_eleitoral",
+          "secao_eleitoral",
+          "faixa_etaria",
+          "genero",
+          "grau_instrucao",
+          "quantidade_eleitores"
+        ],
+        "tags": [
+          "eleições",
+          "eleitorado",
+          "perfil demográfico",
+          "eleitores",
+          "seção eleitoral",
+          "faixa etária",
+          "escolaridade"
+        ],
+        "cruzamento_com": [
+          "justica-eleitoral-tse/resultados-eleitorais",
+          "justica-eleitoral-tse/boletins-urna",
+          "justica-eleitoral-tse/filiados-partidos",
+          "justica-eleitoral-tse/candidaturas"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.tse.jus.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:24.550Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "justica-eleitoral-tse/filiados-partidos",
+      "registry_source_id": "tse_filiados",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/justica-eleitoral-tse/filiados-partidos.md",
+      "metadata": {
+        "title": "Filiados a Partidos",
+        "slug": "filiados-partidos",
+        "orgao": "TSE",
+        "url_base": "https://dadosabertos.tse.jus.br/",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "nome_filiado",
+          "sigla_partido",
+          "data_filiacao",
+          "situacao_registro",
+          "municipio",
+          "zona_eleitoral",
+          "secao_eleitoral"
+        ],
+        "tags": [
+          "eleições",
+          "filiação partidária",
+          "partidos políticos",
+          "filiados",
+          "militância",
+          "base partidária"
+        ],
+        "cruzamento_com": [
+          "justica-eleitoral-tse/candidaturas",
+          "justica-eleitoral-tse/eleitorado",
+          "transparencia-cgu/servidores-federais"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.tse.jus.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:24.550Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "justica-eleitoral-tse/prestacao-contas",
+      "registry_source_id": "tse",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/justica-eleitoral-tse/prestacao-contas.md",
+      "metadata": {
+        "title": "Prestação de Contas",
+        "slug": "prestacao-contas",
+        "orgao": "TSE",
+        "url_base": "https://dadosabertos.tse.jus.br/",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Por eleição",
+        "campos_chave": [
+          "CPF_candidato",
+          "CNPJ_prestador_conta",
+          "CPF_CNPJ_doador",
+          "CPF_CNPJ_fornecedor",
+          "valor_receita",
+          "valor_despesa",
+          "sequencial_candidato"
+        ],
+        "tags": [
+          "eleições",
+          "prestação de contas",
+          "financiamento de campanha",
+          "doações",
+          "receitas",
+          "despesas",
+          "fornecedores",
+          "campanha eleitoral"
+        ],
+        "cruzamento_com": [
+          "receita-federal/cnpj-completa",
+          "receita-federal/qsa",
+          "transparencia-cgu/contratos-federais",
+          "transparencia-cgu/emendas-parlamentares",
+          "justica-eleitoral-tse/candidaturas",
+          "justica-eleitoral-tse/resultados-eleitorais"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.tse.jus.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:24.550Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "justica-eleitoral-tse/resultados-eleitorais",
+      "registry_source_id": "tse_results",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/justica-eleitoral-tse/resultados-eleitorais.md",
+      "metadata": {
+        "title": "Resultados Eleitorais",
+        "slug": "resultados-eleitorais",
+        "orgao": "TSE",
+        "url_base": "https://dadosabertos.tse.jus.br/",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Por eleição",
+        "campos_chave": [
+          "numero_candidato",
+          "codigo_municipio",
+          "zona_eleitoral",
+          "secao_eleitoral",
+          "quantidade_votos",
+          "ano_eleicao"
+        ],
+        "tags": [
+          "eleições",
+          "votação",
+          "apuração",
+          "resultados",
+          "seção eleitoral",
+          "votos",
+          "urna eletrônica"
+        ],
+        "cruzamento_com": [
+          "justica-eleitoral-tse/candidaturas",
+          "justica-eleitoral-tse/boletins-urna",
+          "justica-eleitoral-tse/eleitorado",
+          "justica-eleitoral-tse/prestacao-contas"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.tse.jus.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:24.550Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "meio-ambiente/car",
+      "registry_source_id": "sicar_rural_registry",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/meio-ambiente/car.md",
+      "metadata": {
+        "title": "CAR — Cadastro Ambiental Rural (SICAR/MMA)",
+        "slug": "car",
+        "orgao": "SICAR / MMA",
+        "url_base": "https://www.car.gov.br/",
+        "tipo_acesso": "Web Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "Shapefile",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Contínua",
+        "campos_chave": [
+          "codigo_imovel_car",
+          "CPF_CNPJ",
+          "municipio",
+          "UF",
+          "area_total_ha",
+          "area_reserva_legal",
+          "area_app",
+          "coordenadas_poligono"
+        ],
+        "tags": [
+          "meio ambiente",
+          "CAR",
+          "cadastro ambiental",
+          "propriedade rural",
+          "reserva legal",
+          "APP",
+          "SICAR",
+          "georreferenciamento",
+          "uso do solo"
+        ],
+        "cruzamento_com": [
+          "meio-ambiente/prodes",
+          "meio-ambiente/deter",
+          "meio-ambiente/ibama-infracoes",
+          "meio-ambiente/unidades-conservacao",
+          "meio-ambiente/focos-calor",
+          "receita-federal/cnpj-completa"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.car.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:25.277Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "meio-ambiente/deter",
+      "registry_source_id": "inpe_deter",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/meio-ambiente/deter.md",
+      "metadata": {
+        "title": "DETER — Alertas de Desmatamento em Tempo Real (INPE)",
+        "slug": "deter",
+        "orgao": "INPE",
+        "url_base": "http://terrabrasilis.dpi.inpe.br/",
+        "tipo_acesso": "Web Download / API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "Shapefile",
+          "GeoJSON",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "data_alerta",
+          "area_km2",
+          "municipio",
+          "UF",
+          "classe_alerta",
+          "coordenadas_poligono"
+        ],
+        "tags": [
+          "meio ambiente",
+          "desmatamento",
+          "DETER",
+          "INPE",
+          "alertas",
+          "tempo real",
+          "Amazônia Legal",
+          "Cerrado",
+          "sensoriamento remoto",
+          "TerraBrasilis"
+        ],
+        "cruzamento_com": [
+          "meio-ambiente/prodes",
+          "meio-ambiente/ibama-infracoes",
+          "meio-ambiente/car",
+          "meio-ambiente/unidades-conservacao",
+          "meio-ambiente/focos-calor"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "http://terrabrasilis.dpi.inpe.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:26.898Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "meio-ambiente/focos-calor",
+      "registry_source_id": "inpe_fires",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/meio-ambiente/focos-calor.md",
+      "metadata": {
+        "title": "Focos de Calor / Queimadas — INPE (BDQUEIMADAS)",
+        "slug": "focos-calor",
+        "orgao": "INPE",
+        "url_base": "https://terrabrasilis.dpi.inpe.br/queimadas/bdqueimadas/",
+        "tipo_acesso": "API REST / CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "JSON",
+          "Shapefile",
+          "KML"
+        ],
+        "frequencia_atualizacao": "Diária (tempo real)",
+        "campos_chave": [
+          "data_hora_gmt",
+          "latitude",
+          "longitude",
+          "satelite",
+          "municipio",
+          "UF",
+          "bioma",
+          "FRP"
+        ],
+        "tags": [
+          "meio ambiente",
+          "queimadas",
+          "focos de calor",
+          "incêndio",
+          "INPE",
+          "BDQUEIMADAS",
+          "satélite",
+          "tempo real",
+          "fogo",
+          "monitoramento"
+        ],
+        "cruzamento_com": [
+          "meio-ambiente/prodes",
+          "meio-ambiente/deter",
+          "meio-ambiente/ibama-infracoes",
+          "meio-ambiente/car",
+          "meio-ambiente/unidades-conservacao",
+          "meio-ambiente/recursos-hidricos"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://terrabrasilis.dpi.inpe.br/queimadas/bdqueimadas",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:28.145Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "meio-ambiente/ibama-infracoes",
+      "registry_source_id": "ibama",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/meio-ambiente/ibama-infracoes.md",
+      "metadata": {
+        "title": "IBAMA — Autos de Infração e Embargos Ambientais",
+        "slug": "ibama-infracoes",
+        "orgao": "IBAMA",
+        "url_base": "https://servicos.ibama.gov.br/",
+        "tipo_acesso": "CSV Download / API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "JSON"
+        ],
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "numero_auto_infracao",
+          "CPF_CNPJ",
+          "municipio",
+          "UF",
+          "tipo_infracao",
+          "valor_multa",
+          "data_auto",
+          "area_embargada"
+        ],
+        "tags": [
+          "meio ambiente",
+          "IBAMA",
+          "multas ambientais",
+          "autos de infração",
+          "embargos",
+          "desmatamento",
+          "DOF",
+          "fiscalização ambiental",
+          "crimes ambientais"
+        ],
+        "cruzamento_com": [
+          "meio-ambiente/prodes",
+          "meio-ambiente/deter",
+          "meio-ambiente/car",
+          "meio-ambiente/unidades-conservacao",
+          "receita-federal/cnpj-completa",
+          "transparencia-cgu/ceis"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://servicos.ibama.gov.br",
+        "status": "offline",
+        "code": 403,
+        "checkedAt": "2026-10-26T22:33:28.386Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "meio-ambiente/prodes",
+      "registry_source_id": "inpe_prodes",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/meio-ambiente/prodes.md",
+      "metadata": {
+        "title": "PRODES — Desmatamento Anual da Amazônia Legal (INPE)",
+        "slug": "prodes",
+        "orgao": "INPE",
+        "url_base": "http://terrabrasilis.dpi.inpe.br/",
+        "tipo_acesso": "Web Download / API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "Shapefile",
+          "GeoJSON",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "ano_desmatamento",
+          "area_km2",
+          "municipio",
+          "UF",
+          "classe_uso",
+          "coordenadas_poligono"
+        ],
+        "tags": [
+          "meio ambiente",
+          "desmatamento",
+          "PRODES",
+          "INPE",
+          "Amazônia Legal",
+          "floresta",
+          "sensoriamento remoto",
+          "satélite",
+          "TerraBrasilis"
+        ],
+        "cruzamento_com": [
+          "meio-ambiente/deter",
+          "meio-ambiente/ibama-infracoes",
+          "meio-ambiente/car",
+          "meio-ambiente/unidades-conservacao",
+          "meio-ambiente/focos-calor"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "http://terrabrasilis.dpi.inpe.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:26.898Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "meio-ambiente/recursos-hidricos",
+      "registry_source_id": "ana_water_resources",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/meio-ambiente/recursos-hidricos.md",
+      "metadata": {
+        "title": "Recursos Hídricos — ANA (Agência Nacional de Águas)",
+        "slug": "recursos-hidricos",
+        "orgao": "ANA",
+        "url_base": "https://dadosabertos.ana.gov.br/",
+        "tipo_acesso": "API REST / CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV",
+          "Shapefile",
+          "GeoJSON"
+        ],
+        "frequencia_atualizacao": "Diária a Mensal",
+        "campos_chave": [
+          "codigo_estacao",
+          "bacia_hidrografica",
+          "sub_bacia",
+          "codigo_outorga",
+          "vazao",
+          "nivel_rio",
+          "municipio",
+          "UF"
+        ],
+        "tags": [
+          "meio ambiente",
+          "recursos hídricos",
+          "ANA",
+          "água",
+          "outorgas",
+          "bacias hidrográficas",
+          "monitoramento hídrico",
+          "rios",
+          "reservatórios",
+          "hidroweb"
+        ],
+        "cruzamento_com": [
+          "meio-ambiente/unidades-conservacao",
+          "meio-ambiente/car",
+          "meio-ambiente/ibama-infracoes",
+          "meio-ambiente/focos-calor"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.ana.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:28.686Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "meio-ambiente/unidades-conservacao",
+      "registry_source_id": "icmbio_cnuc",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/meio-ambiente/unidades-conservacao.md",
+      "metadata": {
+        "title": "Unidades de Conservação — ICMBio",
+        "slug": "unidades-conservacao",
+        "orgao": "ICMBio",
+        "url_base": "https://www.gov.br/icmbio/",
+        "tipo_acesso": "Web Download / WFS",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "Shapefile",
+          "GeoJSON",
+          "CSV",
+          "KML"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "codigo_uc",
+          "nome_uc",
+          "categoria_manejo",
+          "esfera_administrativa",
+          "area_ha",
+          "UF",
+          "coordenadas_poligono"
+        ],
+        "tags": [
+          "meio ambiente",
+          "unidades de conservação",
+          "ICMBio",
+          "áreas protegidas",
+          "parques nacionais",
+          "reservas biológicas",
+          "SNUC",
+          "biodiversidade",
+          "geoespacial"
+        ],
+        "cruzamento_com": [
+          "meio-ambiente/prodes",
+          "meio-ambiente/deter",
+          "meio-ambiente/ibama-infracoes",
+          "meio-ambiente/car",
+          "meio-ambiente/focos-calor",
+          "meio-ambiente/recursos-hidricos"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/icmbio",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:29.583Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "mercado-financeiro/b3-negociacoes",
+      "registry_source_id": "b3_trades",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/mercado-financeiro/b3-negociacoes.md",
+      "metadata": {
+        "title": "B3 Negociações — Dados de Negociação em Bolsa",
+        "slug": "b3-negociacoes",
+        "orgao": "B3",
+        "url_base": "https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "TXT"
+        ],
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "codigo_negociacao",
+          "data_pregao",
+          "preco_abertura",
+          "preco_fechamento",
+          "volume_negociado",
+          "quantidade_negocios"
+        ],
+        "tags": [
+          "B3",
+          "bolsa de valores",
+          "ações",
+          "negociações",
+          "pregão",
+          "cotações",
+          "market data",
+          "derivativos",
+          "fundos imobiliários"
+        ],
+        "cruzamento_com": [
+          "cvm-dfp-itr",
+          "cvm-administradores",
+          "cvm-fatos-relevantes",
+          "banco-central/sgs-cambio"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:30.111Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "mercado-financeiro/cvm-administradores",
+      "registry_source_id": "cvm_directors",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/mercado-financeiro/cvm-administradores.md",
+      "metadata": {
+        "title": "CVM Administradores — Diretores e Conselheiros",
+        "slug": "cvm-administradores",
+        "orgao": "CVM",
+        "url_base": "https://dados.cvm.gov.br/dataset/cia_aberta-doc-fre",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "cnpj_cia",
+          "nome_administrador",
+          "cargo",
+          "data_posse",
+          "cpf"
+        ],
+        "tags": [
+          "CVM",
+          "administradores",
+          "diretores",
+          "conselheiros",
+          "governança corporativa",
+          "empresas abertas",
+          "FRE"
+        ],
+        "cruzamento_com": [
+          "cvm-dfp-itr",
+          "cvm-fatos-relevantes",
+          "b3-negociacoes",
+          "receita-federal/cnpj-completa"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dados.cvm.gov.br/dataset/cia_aberta-doc-fre",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:30.868Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "mercado-financeiro/cvm-dfp-itr",
+      "registry_source_id": "cvm_financial_statements",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/mercado-financeiro/cvm-dfp-itr.md",
+      "metadata": {
+        "title": "CVM DFP/ITR — Demonstrações Financeiras de Empresas Abertas",
+        "slug": "cvm-dfp-itr",
+        "orgao": "CVM",
+        "url_base": "https://dados.cvm.gov.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Trimestral",
+        "campos_chave": [
+          "cnpj_cia",
+          "denominacao_cia",
+          "cd_conta",
+          "ds_conta",
+          "vl_conta",
+          "dt_refer"
+        ],
+        "tags": [
+          "CVM",
+          "demonstrações financeiras",
+          "DFP",
+          "ITR",
+          "balanço patrimonial",
+          "DRE",
+          "empresas abertas",
+          "bolsa de valores",
+          "contabilidade"
+        ],
+        "cruzamento_com": [
+          "cvm-administradores",
+          "cvm-fatos-relevantes",
+          "b3-negociacoes",
+          "receita-federal/cnpj-completa"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dados.cvm.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:31.166Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "mercado-financeiro/cvm-fatos-relevantes",
+      "registry_source_id": "cvm_material_disclosures",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/mercado-financeiro/cvm-fatos-relevantes.md",
+      "metadata": {
+        "title": "CVM Fatos Relevantes — Comunicados ao Mercado",
+        "slug": "cvm-fatos-relevantes",
+        "orgao": "CVM",
+        "url_base": "https://dados.cvm.gov.br/dataset/cia_aberta-doc-fato_relevante",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "cnpj_cia",
+          "denominacao_cia",
+          "data_referencia",
+          "assunto",
+          "link_documento"
+        ],
+        "tags": [
+          "CVM",
+          "fatos relevantes",
+          "comunicados",
+          "mercado de capitais",
+          "eventos corporativos",
+          "empresas abertas",
+          "disclosure"
+        ],
+        "cruzamento_com": [
+          "cvm-dfp-itr",
+          "cvm-administradores",
+          "b3-negociacoes"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dados.cvm.gov.br/dataset/cia_aberta-doc-fato_relevante",
+        "status": "offline",
+        "code": 404,
+        "checkedAt": "2026-10-26T22:33:31.343Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "outros/ancine",
+      "registry_source_id": "ancine_audiovisual",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/outros/ancine.md",
+      "metadata": {
+        "title": "ANCINE/OCA — Audiovisual, Bilheteria e Produção",
+        "slug": "ancine",
+        "orgao": "ANCINE",
+        "url_base": "https://www.gov.br/ancine/pt-br/oca",
+        "tipo_acesso": "Download (CSV, XLSX) / API parcial (CRT)",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "XLSX",
+          "PDF",
+          "JSON"
+        ],
+        "frequencia_atualizacao": "Semanal (bilheteria) / Anual (consolidados)",
+        "campos_chave": [
+          "titulo_filme",
+          "publico",
+          "renda",
+          "distribuidora",
+          "pais_origem",
+          "ano_lancamento"
+        ],
+        "tags": [
+          "ANCINE",
+          "audiovisual",
+          "cinema",
+          "bilheteria",
+          "produção",
+          "fomento",
+          "TV paga",
+          "OCA"
+        ],
+        "cruzamento_com": [
+          "ibge-estatisticas/censo-demografico",
+          "ibge-estatisticas/pib-municipal"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/ancine/pt-br/oca",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:31.605Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "outros/ans",
+      "registry_source_id": "ans_health_plans",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/outros/ans.md",
+      "metadata": {
+        "title": "ANS Saúde Suplementar — Planos de Saúde e Operadoras",
+        "slug": "ans",
+        "orgao": "ANS",
+        "url_base": "https://dadosabertos.ans.gov.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "JSON",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "registro_ans",
+          "operadora",
+          "beneficiarios",
+          "tipo_plano",
+          "uf",
+          "faixa_etaria",
+          "reclamacoes"
+        ],
+        "tags": [
+          "ANS",
+          "saúde suplementar",
+          "planos de saúde",
+          "operadoras",
+          "beneficiários",
+          "reclamações"
+        ],
+        "cruzamento_com": [
+          "saude-datasus/sih",
+          "saude-datasus/cnes",
+          "ibge-estatisticas/censo-demografico",
+          "receita-federal/cnpj-completa"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dadosabertos.ans.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:32.675Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "outros/antaq",
+      "registry_source_id": "antaq_water_transport",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/outros/antaq.md",
+      "metadata": {
+        "title": "ANTAQ Transporte Aquaviário — Portos e Navegação",
+        "slug": "antaq",
+        "orgao": "ANTAQ",
+        "url_base": "https://web3.antaq.gov.br/ea/sense/",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "XLSX"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "porto",
+          "tipo_carga",
+          "toneladas",
+          "teus",
+          "sentido",
+          "bandeira"
+        ],
+        "tags": [
+          "ANTAQ",
+          "transporte aquaviário",
+          "portos",
+          "navegação",
+          "cargas",
+          "contêineres",
+          "cabotagem",
+          "longo curso"
+        ],
+        "cruzamento_com": [
+          "ibge-estatisticas/pib-municipal",
+          "infraestrutura-transportes/antt-concessoes",
+          "receita-federal/cnpj-completa"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://web3.antaq.gov.br/ea/sense",
+        "status": "offline",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:33.092Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "poder-judiciario-cnj/bnmp",
+      "registry_source_id": "cnj_bnmp",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/poder-judiciario-cnj/bnmp.md",
+      "metadata": {
+        "title": "BNMP 3.0 — Banco Nacional de Medidas Penais e Prisões",
+        "slug": "bnmp",
+        "orgao": "CNJ",
+        "url_base": "https://portalbnmp.cnj.jus.br/",
+        "tipo_acesso": "Portal web (consulta pública) / API (PDPJ-Br)",
+        "autenticacao": "Não requerida (consulta básica) / Token (API PDPJ-Br)",
+        "formato_dados": [
+          "HTML",
+          "JSON"
+        ],
+        "frequencia_atualizacao": "Tempo real",
+        "campos_chave": [
+          "numero_mandado",
+          "numero_processo",
+          "CPF",
+          "nome_pessoa",
+          "tipo_peca"
+        ],
+        "tags": [
+          "mandados de prisão",
+          "poder judiciário",
+          "CNJ",
+          "BNMP",
+          "prisão",
+          "segurança pública",
+          "foragidos",
+          "justiça criminal",
+          "PDPJ-Br"
+        ],
+        "cruzamento_com": [
+          "poder-judiciario-cnj/datajud",
+          "poder-judiciario-cnj/sisbajud",
+          "transparencia-cgu/servidores-federais",
+          "justica-eleitoral-tse/candidaturas",
+          "receita-federal/cnpj-completa"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://portalbnmp.cnj.jus.br",
+        "status": "offline",
+        "code": 403,
+        "checkedAt": "2026-10-26T22:33:34.874Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "poder-judiciario-cnj/datajud",
+      "registry_source_id": "datajud",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/poder-judiciario-cnj/datajud.md",
+      "metadata": {
+        "title": "DataJud — Base Nacional de Processos Judiciais",
+        "slug": "datajud",
+        "orgao": "CNJ",
+        "url_base": "https://datajud-wiki.cnj.jus.br/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "API Key (cadastro no portal do CNJ)",
+        "formato_dados": [
+          "JSON"
+        ],
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "numero_processo",
+          "CPF",
+          "CNPJ",
+          "classe_processual",
+          "orgao_julgador",
+          "movimentacao"
+        ],
+        "tags": [
+          "processos judiciais",
+          "poder judiciário",
+          "CNJ",
+          "DataJud",
+          "movimentações",
+          "partes",
+          "decisões",
+          "MNI",
+          "justiça"
+        ],
+        "cruzamento_com": [
+          "receita-federal/cnpj-completa",
+          "receita-federal/qsa",
+          "transparencia-cgu/servidores-federais",
+          "transparencia-cgu/ceis",
+          "justica-eleitoral-tse/candidaturas",
+          "poder-judiciario-cnj/bnmp",
+          "poder-judiciario-cnj/sisbajud"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://datajud-wiki.cnj.jus.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:35.476Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "poder-judiciario-cnj/justica-numeros",
+      "registry_source_id": "cnj_justice_statistics",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/poder-judiciario-cnj/justica-numeros.md",
+      "metadata": {
+        "title": "Justiça em Números",
+        "slug": "justica-numeros",
+        "orgao": "CNJ",
+        "url_base": "https://justica-em-numeros.cnj.jus.br/",
+        "tipo_acesso": "Download / Painel interativo",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "XLSX",
+          "PDF"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "tribunal",
+          "indicador",
+          "ano_referencia",
+          "casos_novos",
+          "casos_pendentes",
+          "taxa_congestionamento"
+        ],
+        "tags": [
+          "estatísticas judiciais",
+          "poder judiciário",
+          "CNJ",
+          "desempenho tribunais",
+          "produtividade",
+          "taxa de congestionamento",
+          "acervo processual",
+          "justiça em números"
+        ],
+        "cruzamento_com": [
+          "poder-judiciario-cnj/datajud",
+          "tesouro-nacional/siop",
+          "tesouro-nacional/siconfi",
+          "portais-centrais/portal-dados-abertos"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://justica-em-numeros.cnj.jus.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:36.266Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "poder-judiciario-cnj/sisbajud",
+      "registry_source_id": "cnj_sisbajud",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/poder-judiciario-cnj/sisbajud.md",
+      "metadata": {
+        "title": "SISBAJUD — Sistema de Busca de Ativos do Poder Judiciário",
+        "slug": "sisbajud",
+        "orgao": "CNJ / Banco Central",
+        "url_base": "https://sisbajud.cnj.jus.br/",
+        "tipo_acesso": "Sistema restrito (uso exclusivo do Poder Judiciário)",
+        "autenticacao": "Certificado digital (magistrados e servidores autorizados)",
+        "formato_dados": [
+          "JSON (interno)"
+        ],
+        "frequencia_atualizacao": "Tempo real",
+        "campos_chave": [
+          "numero_processo",
+          "CPF",
+          "CNPJ",
+          "valor_bloqueio",
+          "instituicao_financeira"
+        ],
+        "tags": [
+          "bloqueio judicial",
+          "contas bancárias",
+          "poder judiciário",
+          "CNJ",
+          "SISBAJUD",
+          "penhora online",
+          "execução",
+          "BacenJud",
+          "Teimosinha",
+          "PDPJ-Br"
+        ],
+        "cruzamento_com": [
+          "poder-judiciario-cnj/datajud",
+          "poder-judiciario-cnj/bnmp",
+          "banco-central/ifdata",
+          "receita-federal/cnpj-completa",
+          "receita-federal/qsa",
+          "transparencia-cgu/ceis"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://sisbajud.cnj.jus.br",
+        "status": "offline",
+        "code": 403,
+        "checkedAt": "2026-10-26T22:33:37.839Z"
+      },
+      "review_notes": "Restricted to authorized judiciary users; excluded from the public universe."
+    },
+    {
+      "key": "portais-centrais/base-dos-dados",
+      "registry_source_id": "basedosdados_catalog",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/portais-centrais/base-dos-dados.md",
+      "metadata": {
+        "title": "Base dos Dados",
+        "slug": "base-dos-dados",
+        "orgao": "Base dos Dados (Iniciativa Privada / ONG)",
+        "url_base": "https://basedosdados.org/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "API Key",
+        "formato_dados": "JSON, CSV",
+        "frequencia_atualizacao": "Variável (depende do conjunto)",
+        "campos_chave": [
+          "dataset_id",
+          "table_id",
+          "id_municipio",
+          "ano",
+          "sigla_uf",
+          "CNPJ",
+          "CPF"
+        ],
+        "tags": [
+          "dados abertos",
+          "BigQuery",
+          "data lake",
+          "dados tratados",
+          "cruzamento de bases",
+          "Python",
+          "SQL",
+          "iniciativa privada"
+        ],
+        "cruzamento_com": [
+          "ibge-estatisticas/censo-demografico",
+          "receita-federal/cnpj-completa",
+          "justica-eleitoral-tse/candidaturas",
+          "saude-datasus/cnes",
+          "tesouro-nacional/siafi"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://basedosdados.org",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:38.054Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "portais-centrais/portal-dados-abertos",
+      "registry_source_id": "dados_gov_catalog",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/portais-centrais/portal-dados-abertos.md",
+      "metadata": {
+        "title": "Portal Brasileiro de Dados Abertos",
+        "slug": "portal-dados-abertos",
+        "orgao": "Governo Federal (CGU / Secretaria de Governo Digital)",
+        "url_base": "https://dados.gov.br/swagger-ui/index.html",
+        "tipo_acesso": "CKAN",
+        "autenticacao": "Não requerida",
+        "formato_dados": "JSON, CSV, XML",
+        "frequencia_atualizacao": "Variável (depende do órgão publicador)",
+        "campos_chave": [
+          "id do conjunto",
+          "slug do órgão",
+          "título do recurso"
+        ],
+        "tags": [
+          "dados abertos",
+          "governo federal",
+          "CKAN",
+          "catálogo",
+          "metadados",
+          "transparência",
+          "open data"
+        ],
+        "cruzamento_com": [
+          "receita-federal/cnpj-completa",
+          "ibge-estatisticas/censo-demografico",
+          "tesouro-nacional/siafi",
+          "justica-eleitoral-tse/candidaturas"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dados.gov.br/swagger-ui/index.html",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:38.485Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "portais-centrais/portal-transparencia",
+      "registry_source_id": "transparencia_api_catalog",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/portais-centrais/portal-transparencia.md",
+      "metadata": {
+        "title": "Portal da Transparência",
+        "slug": "portal-transparencia",
+        "orgao": "Controladoria-Geral da União (CGU)",
+        "url_base": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "tipo_acesso": "API REST",
+        "autenticacao": "API Key",
+        "formato_dados": "JSON, CSV",
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "CPF",
+          "CNPJ",
+          "NIS",
+          "código SIAFI do órgão",
+          "código de município (IBGE)"
+        ],
+        "tags": [
+          "transparência",
+          "gastos públicos",
+          "servidores",
+          "licitações",
+          "contratos",
+          "bolsa família",
+          "convênios",
+          "viagens",
+          "cartões de pagamento",
+          "sanções",
+          "despesas",
+          "receitas"
+        ],
+        "cruzamento_com": [
+          "receita-federal/cnpj-completa",
+          "justica-eleitoral-tse/candidaturas",
+          "tesouro-nacional/siafi",
+          "previdencia-social/beneficios-inss",
+          "poder-judiciario-cnj/datajud"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:38.809Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "portais-centrais/tesouro-transparente",
+      "registry_source_id": "tesouro_catalog",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/portais-centrais/tesouro-transparente.md",
+      "metadata": {
+        "title": "Tesouro Transparente",
+        "slug": "tesouro-transparente",
+        "orgao": "Secretaria do Tesouro Nacional (STN)",
+        "url_base": "https://apidatalake.tesouro.gov.br/docs/sadipem/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": "JSON, CSV",
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "código IBGE",
+          "código SIAFI",
+          "exercício (ano)",
+          "UF"
+        ],
+        "tags": [
+          "tesouro nacional",
+          "finanças públicas",
+          "dívida pública",
+          "tesouro direto",
+          "RREO",
+          "RGF",
+          "transferências",
+          "receitas municipais",
+          "despesas municipais",
+          "SICONFI"
+        ],
+        "cruzamento_com": [
+          "ibge-estatisticas/censo-demografico",
+          "receita-federal/cnpj-completa",
+          "justica-eleitoral-tse/candidaturas",
+          "tesouro-nacional/siafi"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://apidatalake.tesouro.gov.br/docs/sadipem",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:39.644Z"
+      },
+      "review_notes": "Catalogue landing page; the reference points to SADIPem, not every Tesouro dataset."
+    },
+    {
+      "key": "previdencia-social/beneficios-inss",
+      "registry_source_id": "inss_benefits",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/previdencia-social/beneficios-inss.md",
+      "metadata": {
+        "title": "Benefícios INSS — Aposentadorias, Pensões e Auxílios",
+        "slug": "beneficios-inss",
+        "orgao": "DATAPREV / INSS",
+        "url_base": "https://dados.gov.br/dados/conjuntos-dados/inss-beneficios-concedidos",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "especie_beneficio",
+          "codigo_municipio",
+          "valor_beneficio",
+          "data_inicio_beneficio",
+          "clientela",
+          "sexo"
+        ],
+        "tags": [
+          "previdência",
+          "INSS",
+          "aposentadoria",
+          "pensão",
+          "auxílio-doença",
+          "BPC",
+          "benefícios sociais",
+          "DATAPREV"
+        ],
+        "cruzamento_com": [
+          "trabalho-emprego/rais",
+          "ibge-estatisticas/censo-demografico",
+          "ibge-estatisticas/pib-municipal",
+          "transparencia-cgu/servidores-federais"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://dados.gov.br/dados/conjuntos-dados/inss-beneficios-concedidos",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:40.091Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "previdencia-social/previc",
+      "registry_source_id": "previc_pension_funds",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/previdencia-social/previc.md",
+      "metadata": {
+        "title": "PREVIC — Previdência Complementar Fechada",
+        "slug": "previc",
+        "orgao": "PREVIC (Superintendência Nacional de Previdência Complementar)",
+        "url_base": "https://www.gov.br/previc/pt-br/acesso-a-informacao/dados-abertos",
+        "tipo_acesso": "Download (CSV, XLSX) / Portal web (CADPREVIC, PREVIC-Cidadão)",
+        "autenticacao": "Não requerida (dados públicos) / Gov.br (CADPREVIC restrito)",
+        "formato_dados": [
+          "CSV",
+          "XLSX",
+          "PDF",
+          "JSON (CADPREVIC)"
+        ],
+        "frequencia_atualizacao": "Trimestral (demonstrações) / Contínuo (CADPREVIC)",
+        "campos_chave": [
+          "cnpj_efpc",
+          "nome_entidade",
+          "patrocinador",
+          "total_ativos",
+          "patrimonio_liquido",
+          "numero_participantes"
+        ],
+        "tags": [
+          "previdência complementar",
+          "fundos de pensão",
+          "EFPC",
+          "PREVIC",
+          "investimentos",
+          "aposentadoria privada",
+          "CADPREVIC",
+          "PREVIC-Cidadão"
+        ],
+        "cruzamento_com": [
+          "previdencia-social/beneficios-inss",
+          "mercado-financeiro/cvm-dfp-itr",
+          "receita-federal/cnpj-completa",
+          "transparencia-cgu/servidores-federais"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/previc/pt-br/acesso-a-informacao/dados-abertos",
+        "status": "offline",
+        "code": 401,
+        "checkedAt": "2026-10-26T22:33:40.661Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "receita-federal/cnpj-completa",
+      "registry_source_id": "cnpj",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/receita-federal/cnpj-completa.md",
+      "metadata": {
+        "title": "Base CNPJ Completa",
+        "slug": "cnpj-completa",
+        "orgao": "Receita Federal",
+        "url_base": "https://www.gov.br/receitafederal/dados",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "CNPJ básico",
+          "razão social",
+          "natureza jurídica",
+          "capital social",
+          "porte empresa"
+        ],
+        "tags": [
+          "empresas",
+          "cnpj",
+          "razão social",
+          "situação cadastral",
+          "natureza jurídica",
+          "capital social",
+          "porte empresa",
+          "CNAE",
+          "dados abertos"
+        ],
+        "cruzamento_com": [
+          "portal-transparencia",
+          "base-dos-dados",
+          "portal-dados-abertos",
+          "ifdata",
+          "qsa",
+          "estabelecimentos",
+          "simples-nacional"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/receitafederal/dados",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:40.819Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "receita-federal/estabelecimentos",
+      "registry_source_id": "cnpj",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/receita-federal/estabelecimentos.md",
+      "metadata": {
+        "title": "Estabelecimentos",
+        "slug": "estabelecimentos",
+        "orgao": "Receita Federal",
+        "url_base": "https://www.gov.br/receitafederal/dados",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "CNPJ básico",
+          "CNPJ ordem",
+          "CNPJ DV",
+          "CNAE fiscal",
+          "CEP",
+          "UF",
+          "município",
+          "telefone",
+          "email"
+        ],
+        "tags": [
+          "estabelecimentos",
+          "cnpj",
+          "matrizes",
+          "filiais",
+          "endereço",
+          "telefone",
+          "email",
+          "CNAE",
+          "geolocalização"
+        ],
+        "cruzamento_com": [
+          "cnpj-completa",
+          "qsa",
+          "simples-nacional",
+          "portal-transparencia",
+          "base-dos-dados"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/receitafederal/dados",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:40.819Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "receita-federal/qsa",
+      "registry_source_id": "cnpj",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/receita-federal/qsa.md",
+      "metadata": {
+        "title": "QSA — Quadro Societário",
+        "slug": "qsa",
+        "orgao": "Receita Federal",
+        "url_base": "https://www.gov.br/receitafederal/dados",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "CNPJ básico",
+          "CPF/CNPJ do sócio",
+          "nome do sócio",
+          "qualificação do sócio"
+        ],
+        "tags": [
+          "sócios",
+          "quadro societário",
+          "QSA",
+          "cnpj",
+          "cpf",
+          "administradores",
+          "representante legal",
+          "participação societária"
+        ],
+        "cruzamento_com": [
+          "cnpj-completa",
+          "estabelecimentos",
+          "simples-nacional",
+          "portal-transparencia",
+          "base-dos-dados"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/receitafederal/dados",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:40.819Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "receita-federal/simples-nacional",
+      "registry_source_id": "cnpj_simples",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/receita-federal/simples-nacional.md",
+      "metadata": {
+        "title": "Simples Nacional / MEI",
+        "slug": "simples-nacional",
+        "orgao": "Receita Federal",
+        "url_base": "https://www.gov.br/receitafederal/dados",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "CNPJ básico",
+          "opção pelo Simples",
+          "opção pelo MEI"
+        ],
+        "tags": [
+          "simples nacional",
+          "MEI",
+          "microempreendedor individual",
+          "regime tributário",
+          "optantes",
+          "cnpj",
+          "pequenas empresas"
+        ],
+        "cruzamento_com": [
+          "cnpj-completa",
+          "qsa",
+          "estabelecimentos",
+          "portal-transparencia",
+          "base-dos-dados"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/receitafederal/dados",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:40.819Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "saude-datasus/cnes",
+      "registry_source_id": "datasus",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/saude-datasus/cnes.md",
+      "metadata": {
+        "title": "CNES — Cadastro Nacional de Estabelecimentos de Saúde",
+        "slug": "cnes",
+        "orgao": "DATASUS / MS",
+        "url_base": "ftp://ftp.datasus.gov.br/dissemin/publicos/CNES/",
+        "tipo_acesso": "FTP Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "DBC",
+          "DBF",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "CNES",
+          "CNPJ",
+          "codigo_municipio",
+          "tipo_estabelecimento",
+          "natureza_juridica"
+        ],
+        "tags": [
+          "saude",
+          "estabelecimentos",
+          "hospitais",
+          "UBS",
+          "profissionais de saude",
+          "leitos",
+          "equipamentos",
+          "infraestrutura",
+          "SUS",
+          "DATASUS"
+        ],
+        "cruzamento_com": [
+          "saude-datasus/sih",
+          "saude-datasus/sim",
+          "saude-datasus/sinasc",
+          "saude-datasus/sinan",
+          "saude-datasus/tabnet",
+          "receita-federal/cnpj-completa"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/CNES",
+        "status": "ftp",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:16.294Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "saude-datasus/sih",
+      "registry_source_id": "datasus_sih",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/saude-datasus/sih.md",
+      "metadata": {
+        "title": "SIH — Sistema de Informações Hospitalares",
+        "slug": "sih",
+        "orgao": "DATASUS / MS",
+        "url_base": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/",
+        "tipo_acesso": "FTP Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "DBC",
+          "DBF",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "AIH",
+          "CNES",
+          "CID-10",
+          "codigo_municipio",
+          "procedimento_SUS",
+          "valor_internacao"
+        ],
+        "tags": [
+          "saude",
+          "internacoes",
+          "hospitalar",
+          "AIH",
+          "SUS",
+          "procedimentos",
+          "leitos",
+          "DATASUS"
+        ],
+        "cruzamento_com": [
+          "saude-datasus/cnes",
+          "saude-datasus/sim",
+          "saude-datasus/sinan",
+          "saude-datasus/tabnet",
+          "ibge-estatisticas/censo-demografico"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS",
+        "status": "ftp",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:16.294Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "saude-datasus/sim",
+      "registry_source_id": "datasus_sim",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/saude-datasus/sim.md",
+      "metadata": {
+        "title": "SIM — Sistema de Informações sobre Mortalidade",
+        "slug": "sim",
+        "orgao": "DATASUS / MS",
+        "url_base": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/",
+        "tipo_acesso": "FTP Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "DBC",
+          "DBF",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "CID-10",
+          "codigo_municipio",
+          "data_obito",
+          "idade",
+          "sexo",
+          "tipo_obito"
+        ],
+        "tags": [
+          "saude",
+          "mortalidade",
+          "obitos",
+          "CID-10",
+          "causa mortis",
+          "epidemiologia",
+          "DATASUS"
+        ],
+        "cruzamento_com": [
+          "saude-datasus/sih",
+          "saude-datasus/sinasc",
+          "saude-datasus/sinan",
+          "saude-datasus/cnes",
+          "saude-datasus/tabnet",
+          "ibge-estatisticas/censo-demografico"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM",
+        "status": "ftp",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:16.294Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "saude-datasus/sinan",
+      "registry_source_id": "datasus_sinan",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/saude-datasus/sinan.md",
+      "metadata": {
+        "title": "SINAN — Sistema de Informação de Agravos de Notificação",
+        "slug": "sinan",
+        "orgao": "DATASUS / MS",
+        "url_base": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN/",
+        "tipo_acesso": "FTP Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "DBC",
+          "DBF",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "CID-10",
+          "codigo_municipio",
+          "data_notificacao",
+          "agravo",
+          "classificacao_final"
+        ],
+        "tags": [
+          "saude",
+          "epidemiologia",
+          "doencas",
+          "notificacao compulsoria",
+          "vigilancia epidemiologica",
+          "dengue",
+          "tuberculose",
+          "DATASUS"
+        ],
+        "cruzamento_com": [
+          "saude-datasus/sih",
+          "saude-datasus/sim",
+          "saude-datasus/cnes",
+          "saude-datasus/tabnet",
+          "ibge-estatisticas/censo-demografico"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINAN",
+        "status": "ftp",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:16.294Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "saude-datasus/sinasc",
+      "registry_source_id": "datasus_sinasc",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/saude-datasus/sinasc.md",
+      "metadata": {
+        "title": "SINASC — Sistema de Informações sobre Nascidos Vivos",
+        "slug": "sinasc",
+        "orgao": "DATASUS / MS",
+        "url_base": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINASC/",
+        "tipo_acesso": "FTP Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "DBC",
+          "DBF",
+          "CSV"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "codigo_municipio",
+          "CNES",
+          "peso_nascer",
+          "idade_mae",
+          "tipo_parto",
+          "semanas_gestacao"
+        ],
+        "tags": [
+          "saude",
+          "nascimentos",
+          "nascidos vivos",
+          "natalidade",
+          "parto",
+          "gestacao",
+          "DATASUS"
+        ],
+        "cruzamento_com": [
+          "saude-datasus/sim",
+          "saude-datasus/sih",
+          "saude-datasus/cnes",
+          "saude-datasus/tabnet",
+          "ibge-estatisticas/censo-demografico"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "ftp://ftp.datasus.gov.br/dissemin/publicos/SINASC",
+        "status": "ftp",
+        "code": 0,
+        "checkedAt": "2026-10-26T22:33:16.294Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "saude-datasus/tabnet",
+      "registry_source_id": "datasus_tabnet",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/saude-datasus/tabnet.md",
+      "metadata": {
+        "title": "TabNet — Ferramenta de Tabulação de Dados do SUS",
+        "slug": "tabnet",
+        "orgao": "DATASUS / MS",
+        "url_base": "http://tabnet.datasus.gov.br/",
+        "tipo_acesso": "Web Interface",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "HTML"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "CID-10",
+          "codigo_municipio",
+          "CNES",
+          "procedimento_SUS"
+        ],
+        "tags": [
+          "saude",
+          "tabulacao",
+          "indicadores",
+          "SUS",
+          "mortalidade",
+          "morbidade",
+          "nascimentos",
+          "epidemiologia",
+          "DATASUS"
+        ],
+        "cruzamento_com": [
+          "saude-datasus/sih",
+          "saude-datasus/sim",
+          "saude-datasus/sinasc",
+          "saude-datasus/sinan",
+          "saude-datasus/cnes"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "http://tabnet.datasus.gov.br",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:41.332Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "seguranca-publica/sinesp",
+      "registry_source_id": "sinesp_statistics",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/seguranca-publica/sinesp.md",
+      "metadata": {
+        "title": "SINESP — Estatísticas de Criminalidade",
+        "slug": "sinesp",
+        "orgao": "MJSP",
+        "url_base": "https://www.gov.br/mj/pt-br/assuntos/sua-seguranca/seguranca-publica/estatistica",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "XLSX"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "uf",
+          "municipio",
+          "tipo_crime",
+          "ocorrencias",
+          "vitimas",
+          "ano_mes"
+        ],
+        "tags": [
+          "SINESP",
+          "criminalidade",
+          "segurança pública",
+          "homicídios",
+          "ocorrências",
+          "armas",
+          "violência",
+          "MJSP"
+        ],
+        "cruzamento_com": [
+          "ibge-estatisticas/censo-demografico",
+          "ibge-estatisticas/pib-municipal",
+          "infraestrutura-transportes/prf-acidentes",
+          "ipea/ipeadata"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/mj/pt-br/assuntos/sua-seguranca/seguranca-publica/estatistica",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:41.492Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "tesouro-nacional/siafi",
+      "registry_source_id": "siafi_budget_execution",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/tesouro-nacional/siafi.md",
+      "metadata": {
+        "title": "SIAFI (Execução Orçamentária da União)",
+        "slug": "siafi",
+        "orgao": "Tesouro Nacional",
+        "url_base": "https://apidatalake.tesouro.gov.br/docs/sadipem/",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": "JSON, CSV",
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "codigo_orgao",
+          "codigo_uo",
+          "funcao",
+          "subfuncao",
+          "programa",
+          "acao",
+          "exercicio"
+        ],
+        "tags": [
+          "orçamento",
+          "execução orçamentária",
+          "despesas federais",
+          "receitas federais",
+          "empenho",
+          "liquidação",
+          "pagamento",
+          "SIAFI",
+          "governo federal"
+        ],
+        "cruzamento_com": [
+          "tesouro-nacional/siconfi",
+          "tesouro-nacional/siop",
+          "transparencia-cgu/contratos-federais",
+          "transparencia-cgu/servidores-federais",
+          "portais-centrais/tesouro-transparente"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://apidatalake.tesouro.gov.br/docs/sadipem",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:39.644Z"
+      },
+      "review_notes": "The reference points to SADIPem documentation; the SIAFI endpoint requires review before ingestion."
+    },
+    {
+      "key": "tesouro-nacional/siconfi",
+      "registry_source_id": "siconfi",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/tesouro-nacional/siconfi.md",
+      "metadata": {
+        "title": "SICONFI (Finanças de Estados e Municípios)",
+        "slug": "siconfi",
+        "orgao": "Tesouro Nacional",
+        "url_base": "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/entes",
+        "tipo_acesso": "API REST",
+        "autenticacao": "Não requerida",
+        "formato_dados": "JSON, CSV",
+        "frequencia_atualizacao": "Bimestral",
+        "campos_chave": [
+          "codigo_ibge",
+          "codigo_uf",
+          "exercicio",
+          "bimestre",
+          "quadrimestre",
+          "conta_contabil"
+        ],
+        "tags": [
+          "finanças públicas",
+          "receitas",
+          "despesas",
+          "dívida",
+          "estados",
+          "municípios",
+          "RREO",
+          "RGF",
+          "DCA",
+          "FINBRA",
+          "SICONFI"
+        ],
+        "cruzamento_com": [
+          "tesouro-nacional/siafi",
+          "tesouro-nacional/siop",
+          "portais-centrais/tesouro-transparente"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/entes",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:42.217Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "tesouro-nacional/siop",
+      "registry_source_id": "siop",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/tesouro-nacional/siop.md",
+      "metadata": {
+        "title": "SIOP (Planejamento e Orçamento Federal)",
+        "slug": "siop",
+        "orgao": "SOF / Ministério do Planejamento e Orçamento",
+        "url_base": "https://www.gov.br/planejamento/pt-br/assuntos/orcamento",
+        "tipo_acesso": "Web Interface",
+        "autenticacao": "Não requerida",
+        "formato_dados": "CSV, XLSX, PDF",
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "codigo_orgao",
+          "funcao",
+          "subfuncao",
+          "programa",
+          "acao",
+          "exercicio",
+          "autor_emenda"
+        ],
+        "tags": [
+          "orçamento",
+          "LOA",
+          "LDO",
+          "PPA",
+          "emendas parlamentares",
+          "planejamento",
+          "orçamento federal",
+          "créditos adicionais",
+          "SIOP"
+        ],
+        "cruzamento_com": [
+          "tesouro-nacional/siafi",
+          "tesouro-nacional/siconfi",
+          "transparencia-cgu/emendas-parlamentares",
+          "transparencia-cgu/contratos-federais"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://www.gov.br/planejamento/pt-br/assuntos/orcamento",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:42.588Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "trabalho-emprego/caged",
+      "registry_source_id": "caged",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/trabalho-emprego/caged.md",
+      "metadata": {
+        "title": "CAGED — Cadastro Geral de Empregados e Desempregados",
+        "slug": "caged",
+        "orgao": "MTE",
+        "url_base": "https://bi.mte.gov.br/bgcaged/",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "TXT"
+        ],
+        "frequencia_atualizacao": "Mensal",
+        "campos_chave": [
+          "competencia",
+          "codigo_municipio",
+          "cnae_2_0",
+          "cbo_2002",
+          "saldo_movimentacao",
+          "salario",
+          "grau_instrucao"
+        ],
+        "tags": [
+          "trabalho",
+          "emprego",
+          "admissões",
+          "demissões",
+          "CAGED",
+          "Novo CAGED",
+          "CLT",
+          "mercado de trabalho",
+          "saldo de empregos"
+        ],
+        "cruzamento_com": [
+          "rais",
+          "receita-federal/cnpj-completa",
+          "ibge-estatisticas/pnad-continua",
+          "ibge-estatisticas/pib-municipal"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://bi.mte.gov.br/bgcaged",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:45.426Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "trabalho-emprego/rais",
+      "registry_source_id": "rais",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/trabalho-emprego/rais.md",
+      "metadata": {
+        "title": "RAIS — Relação Anual de Informações Sociais",
+        "slug": "rais",
+        "orgao": "MTE",
+        "url_base": "https://bi.mte.gov.br/bgcaged/",
+        "tipo_acesso": "CSV Download",
+        "autenticacao": "Não requerida",
+        "formato_dados": [
+          "CSV",
+          "TXT"
+        ],
+        "frequencia_atualizacao": "Anual",
+        "campos_chave": [
+          "cnpj_raiz",
+          "codigo_municipio",
+          "cnae_2_0",
+          "cbo_2002",
+          "vinculo_ativo",
+          "remuneracao_media",
+          "grau_instrucao"
+        ],
+        "tags": [
+          "trabalho",
+          "emprego",
+          "vínculos formais",
+          "salários",
+          "RAIS",
+          "CLT",
+          "mercado de trabalho",
+          "microdados"
+        ],
+        "cruzamento_com": [
+          "caged",
+          "receita-federal/cnpj-completa",
+          "ibge-estatisticas/pib-municipal",
+          "ibge-estatisticas/censo-demografico",
+          "previdencia-social/beneficios-inss"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://bi.mte.gov.br/bgcaged",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:45.426Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "transparencia-cgu/ceaf",
+      "registry_source_id": "ceaf",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/transparencia-cgu/ceaf.md",
+      "metadata": {
+        "title": "CEAF — Cadastro de Expulsões da Administração Federal",
+        "slug": "ceaf",
+        "orgao": "CGU",
+        "url_base": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "tipo_acesso": "API REST",
+        "autenticacao": "API Key",
+        "formato_dados": "JSON",
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "CPF",
+          "cargo",
+          "orgao_lotacao",
+          "tipo_punicao",
+          "data_punicao"
+        ],
+        "tags": [
+          "sanções",
+          "servidores expulsos",
+          "CEAF",
+          "PAD",
+          "transparência",
+          "anticorrupção",
+          "administração federal"
+        ],
+        "cruzamento_com": [
+          "transparencia-cgu/servidores-federais",
+          "receita-federal/cnpj-completa",
+          "justica-eleitoral-tse/candidaturas",
+          "poder-judiciario-cnj/datajud",
+          "transparencia-cgu/ceis"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:38.809Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "transparencia-cgu/ceis",
+      "registry_source_id": "sanctions",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/transparencia-cgu/ceis.md",
+      "metadata": {
+        "title": "CEIS — Cadastro de Empresas Inidôneas e Suspensas",
+        "slug": "ceis",
+        "orgao": "CGU",
+        "url_base": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "tipo_acesso": "API REST",
+        "autenticacao": "API Key",
+        "formato_dados": "JSON",
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "CNPJ",
+          "CPF",
+          "orgao_sancionador",
+          "data_inicio_sancao",
+          "data_fim_sancao"
+        ],
+        "tags": [
+          "sanções",
+          "empresas inidôneas",
+          "empresas suspensas",
+          "CEIS",
+          "licitações",
+          "transparência",
+          "anticorrupção"
+        ],
+        "cruzamento_com": [
+          "receita-federal/cnpj-completa",
+          "transparencia-cgu/contratos-federais",
+          "transparencia-cgu/cnep",
+          "transparencia-cgu/cepim",
+          "justica-eleitoral-tse/candidaturas"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:38.809Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "transparencia-cgu/cepim",
+      "registry_source_id": "cepim",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/transparencia-cgu/cepim.md",
+      "metadata": {
+        "title": "CEPIM — Cadastro de Entidades sem Fins Lucrativos Impedidas",
+        "slug": "cepim",
+        "orgao": "CGU",
+        "url_base": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "tipo_acesso": "API REST",
+        "autenticacao": "API Key",
+        "formato_dados": "JSON",
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "CNPJ",
+          "orgao_concedente",
+          "motivo_impedimento",
+          "convenio"
+        ],
+        "tags": [
+          "sanções",
+          "entidades sem fins lucrativos",
+          "ONGs",
+          "CEPIM",
+          "convênios",
+          "transparência",
+          "terceiro setor"
+        ],
+        "cruzamento_com": [
+          "receita-federal/cnpj-completa",
+          "transparencia-cgu/ceis",
+          "transparencia-cgu/cnep",
+          "justica-eleitoral-tse/candidaturas",
+          "tesouro-nacional/siafi"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:38.809Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "transparencia-cgu/cnep",
+      "registry_source_id": "sanctions",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/transparencia-cgu/cnep.md",
+      "metadata": {
+        "title": "CNEP — Cadastro Nacional de Empresas Punidas",
+        "slug": "cnep",
+        "orgao": "CGU",
+        "url_base": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "tipo_acesso": "API REST",
+        "autenticacao": "API Key",
+        "formato_dados": "JSON",
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "CNPJ",
+          "orgao_sancionador",
+          "data_inicio_sancao",
+          "data_fim_sancao",
+          "valor_multa"
+        ],
+        "tags": [
+          "sanções",
+          "Lei Anticorrupção",
+          "empresas punidas",
+          "CNEP",
+          "transparência",
+          "anticorrupção"
+        ],
+        "cruzamento_com": [
+          "receita-federal/cnpj-completa",
+          "transparencia-cgu/ceis",
+          "transparencia-cgu/contratos-federais",
+          "justica-eleitoral-tse/candidaturas",
+          "transparencia-cgu/cepim"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:38.809Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "transparencia-cgu/contratos-federais",
+      "registry_source_id": "transparencia",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/transparencia-cgu/contratos-federais.md",
+      "metadata": {
+        "title": "Contratos Federais",
+        "slug": "contratos-federais",
+        "orgao": "CGU",
+        "url_base": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "tipo_acesso": "API REST",
+        "autenticacao": "API Key",
+        "formato_dados": "JSON",
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "CNPJ",
+          "codigo_orgao",
+          "numero_contrato",
+          "valor_contrato"
+        ],
+        "tags": [
+          "contratos",
+          "licitações",
+          "fornecedores",
+          "gastos públicos",
+          "transparência",
+          "governo federal"
+        ],
+        "cruzamento_com": [
+          "receita-federal/cnpj-completa",
+          "justica-eleitoral-tse/candidaturas",
+          "transparencia-cgu/ceis",
+          "transparencia-cgu/cnep",
+          "tesouro-nacional/siafi"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:38.809Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "transparencia-cgu/emendas-parlamentares",
+      "registry_source_id": "transparencia",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/transparencia-cgu/emendas-parlamentares.md",
+      "metadata": {
+        "title": "Emendas Parlamentares",
+        "slug": "emendas-parlamentares",
+        "orgao": "CGU",
+        "url_base": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "tipo_acesso": "API REST",
+        "autenticacao": "API Key",
+        "formato_dados": "JSON",
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "codigo_emenda",
+          "autor",
+          "valor_empenhado",
+          "valor_pago",
+          "codigo_orgao"
+        ],
+        "tags": [
+          "emendas parlamentares",
+          "orçamento",
+          "deputados",
+          "senadores",
+          "transferências",
+          "transparência",
+          "governo federal"
+        ],
+        "cruzamento_com": [
+          "justica-eleitoral-tse/candidaturas",
+          "justica-eleitoral-tse/prestacao-contas",
+          "receita-federal/cnpj-completa",
+          "transparencia-cgu/contratos-federais",
+          "tesouro-nacional/siafi"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:38.809Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "transparencia-cgu/servidores-federais",
+      "registry_source_id": "transparencia",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/transparencia-cgu/servidores-federais.md",
+      "metadata": {
+        "title": "Servidores Federais",
+        "slug": "servidores-federais",
+        "orgao": "CGU",
+        "url_base": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "tipo_acesso": "API REST",
+        "autenticacao": "API Key",
+        "formato_dados": "JSON",
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "CPF",
+          "codigo_orgao",
+          "cargo",
+          "remuneracao"
+        ],
+        "tags": [
+          "servidores públicos",
+          "remuneração",
+          "cargos",
+          "lotação",
+          "transparência",
+          "governo federal"
+        ],
+        "cruzamento_com": [
+          "receita-federal/cnpj-completa",
+          "justica-eleitoral-tse/candidaturas",
+          "poder-judiciario-cnj/datajud",
+          "transparencia-cgu/viagens-servico",
+          "previdencia-social/beneficios-inss"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:38.809Z"
+      },
+      "review_notes": ""
+    },
+    {
+      "key": "transparencia-cgu/viagens-servico",
+      "registry_source_id": "viagens",
+      "documentation_url": "https://github.com/nferdica/brazil-visible/blob/cad147d28695d2faaa01fa0667ae53b7fef5e776/docs/apis/transparencia-cgu/viagens-servico.md",
+      "metadata": {
+        "title": "Viagens a Serviço",
+        "slug": "viagens-servico",
+        "orgao": "CGU",
+        "url_base": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "tipo_acesso": "API REST",
+        "autenticacao": "API Key",
+        "formato_dados": "JSON",
+        "frequencia_atualizacao": "Diária",
+        "campos_chave": [
+          "CPF",
+          "codigo_orgao",
+          "valor_diarias",
+          "valor_passagens",
+          "destino"
+        ],
+        "tags": [
+          "viagens",
+          "diárias",
+          "passagens",
+          "servidores",
+          "transparência",
+          "gastos públicos",
+          "governo federal"
+        ],
+        "cruzamento_com": [
+          "transparencia-cgu/servidores-federais",
+          "receita-federal/cnpj-completa",
+          "justica-eleitoral-tse/candidaturas",
+          "transparencia-cgu/contratos-federais",
+          "tesouro-nacional/siafi"
+        ],
+        "status": "documentado"
+      },
+      "reported_health": {
+        "url": "https://api.portaldatransparencia.gov.br/swagger-ui/index.html",
+        "status": "online",
+        "code": 200,
+        "checkedAt": "2026-10-26T22:33:38.809Z"
+      },
+      "review_notes": ""
+    }
+  ]
+}
