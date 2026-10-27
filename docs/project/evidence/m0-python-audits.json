@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "recorded_at": "2026-10-27T10:43:51.905536-03:00",
+  "recorded_at": "2026-10-27T10:59:01.732545-03:00",
   "issue": 20,
   "executor": "Codex/OpenAI",
   "base_commit": "b4f0014650c1cf169426a8947b7063c8fa669982",
@@ -9,19 +9,19 @@
     "python": "3.12.3",
     "platform": "Linux x86_64"
   },
-  "scope": "Locked dependencies with all extras and all groups; markers evaluated on the recorded platform. No vulnerability suppressions.",
+  "scope": "Locked dependencies with all extras and all groups; query every exported pinned version after removing environment markers. Query-only list, not installed. No vulnerability suppressions.",
   "projects": {
     "api": {
       "lock_sha256_before": "062070188da2c622a64b4e86f3839b220b9ec51b5f95d12ef16ee4595bfae075",
-      "lock_sha256_after": "7d7d1ae52764f9fb8066673ab87bf3c8f02124486be6b15576f9d3d1117e7689",
+      "lock_sha256_after": "30e0bdc855f7be0034cd3261d69a356bd897c7fee27fea41f97f15a089a107ae",
       "before": {
-        "packages": 64,
-        "vulnerable_packages": 16,
-        "advisory_package_pairs": 106,
+        "packages": 67,
+        "vulnerable_packages": 17,
+        "advisory_package_pairs": 107,
         "skipped_packages": 0
       },
       "after": {
-        "packages": 65,
+        "packages": 68,
         "vulnerable_packages": 0,
         "advisory_package_pairs": 0,
         "skipped_packages": 0
@@ -44,6 +44,13 @@
           ]
         },
         {
+          "package": "brotlicffi",
+          "version": "1.2.0.0",
+          "advisories": [
+            "PYSEC-2026-4323"
+          ]
+        },
+        {
           "package": "certifi",
           "version": "2026.1.4",
           "advisories": [
@@ -59,17 +66,6 @@
             "PYSEC-2026-3553",
             "PYSEC-2026-3554",
             "PYSEC-2026-36"
-          ]
-        },
-        {
-          "package": "starlette",
-          "version": "0.52.1",
-          "advisories": [
-            "PYSEC-2026-161",
-            "PYSEC-2026-2280",
-            "PYSEC-2026-2281",
-            "PYSEC-2026-248",
-            "PYSEC-2026-249"
           ]
         },
         {
@@ -210,6 +206,17 @@
           ]
         },
         {
+          "package": "starlette",
+          "version": "0.52.1",
+          "advisories": [
+            "PYSEC-2026-161",
+            "PYSEC-2026-2280",
+            "PYSEC-2026-2281",
+            "PYSEC-2026-248",
+            "PYSEC-2026-249"
+          ]
+        },
+        {
           "package": "urllib3",
           "version": "2.6.3",
           "advisories": [
@@ -240,6 +247,11 @@
           "package": "brotli",
           "before": "1.2.0",
           "after": "1.2.1"
+        },
+        {
+          "package": "brotlicffi",
+          "before": "1.2.0.0",
+          "after": "1.2.1.0"
         },
         {
           "package": "certifi",
@@ -347,13 +359,13 @@
       "lock_sha256_before": "1422de90a2128a69b18e84e76a052c72824cf2aa1f29e083cba3447be3eaa7c0",
       "lock_sha256_after": "19539546402475f26a57ff6051b9e1dbfae0d0f15b4ac0fe37acf26651824015",
       "before": {
-        "packages": 78,
+        "packages": 80,
         "vulnerable_packages": 11,
         "advisory_package_pairs": 66,
         "skipped_packages": 0
       },
       "after": {
-        "packages": 78,
+        "packages": 80,
         "vulnerable_packages": 0,
         "advisory_package_pairs": 0,
         "skipped_packages": 0
@@ -387,28 +399,10 @@
           ]
         },
         {
-          "package": "requests",
-          "version": "2.32.5",
-          "advisories": [
-            "PYSEC-2026-2275"
-          ]
-        },
-        {
           "package": "idna",
           "version": "3.11",
           "advisories": [
             "PYSEC-2026-215"
-          ]
-        },
-        {
-          "package": "urllib3",
-          "version": "2.6.3",
-          "advisories": [
-            "PYSEC-2026-141",
-            "PYSEC-2026-142",
-            "PYSEC-2026-4175",
-            "PYSEC-2026-4176",
-            "PYSEC-2026-4177"
           ]
         },
         {
@@ -489,6 +483,24 @@
           "version": "1.2.1",
           "advisories": [
             "PYSEC-2026-2270"
+          ]
+        },
+        {
+          "package": "requests",
+          "version": "2.32.5",
+          "advisories": [
+            "PYSEC-2026-2275"
+          ]
+        },
+        {
+          "package": "urllib3",
+          "version": "2.6.3",
+          "advisories": [
+            "PYSEC-2026-141",
+            "PYSEC-2026-142",
+            "PYSEC-2026-4175",
+            "PYSEC-2026-4176",
+            "PYSEC-2026-4177"
           ]
         }
       ],

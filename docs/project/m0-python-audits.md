@@ -8,15 +8,16 @@ critérios do M0 continuam em suas tarefas.
 ## Resultado reproduzido
 
 Auditoria com `pip-audit 2.10.1`, Python 3.12.3 em Linux x86_64, dos requisitos
-exportados dos dois lockfiles com todos os extras e grupos. Os marcadores de
-plataforma são avaliados nesse ambiente; isto não certifica outras plataformas
-ou vulnerabilidades ainda desconhecidas. Nenhum pacote foi ignorado e nenhuma
-vulnerabilidade foi suprimida.
+exportados dos dois lockfiles com todos os extras e grupos. A lista usada apenas
+para consultar advisories remove marcadores de ambiente e inclui versões para
+outras plataformas e implementações de Python. Essa lista nunca é instalada.
+Isso não certifica execução em outras plataformas ou vulnerabilidades ainda
+desconhecidas. Nenhum pacote foi ignorado e nenhuma vulnerabilidade foi suprimida.
 
 | Projeto | Pacotes antes → depois | Pacotes com alertas antes → depois | Pares pacote/advisory antes → depois |
 |---|---|---|---|
-| API | 64 → 65 | 16 → 0 | 106 → 0 |
-| ETL | 78 → 78 | 11 → 0 | 66 → 0 |
+| API | 67 → 68 | 17 → 0 | 107 → 0 |
+| ETL | 80 → 80 | 11 → 0 | 66 → 0 |
 
 Um mesmo advisory pode ocorrer em registros duplicados do serviço de auditoria.
 Os totais acima deduplicam por pacote e ID retornado; aliases distintos não são
@@ -30,6 +31,9 @@ publicados separadamente como artefatos `pip-audit-api` e `pip-audit-etl` no CI.
 - Atualizadas as dependências afetadas e as transitivas necessárias, preservando
   os demais pacotes fixados. Os mínimos diretos de FastAPI, pydantic-settings,
   PyJWT, python-multipart, WeasyPrint e pypdf acompanham a correção.
+- A consulta além da plataforma local revelou também BrotliCFFI 1.2.0.0;
+  o lock agora fixa 1.2.1.0. A auditoria original do ambiente local não
+  consultava esse pacote.
 - FastAPI 0.162.0 permite Starlette 1.10.0. A
   [mudança de defaults de booleanos em formulários](https://fastapi.tiangolo.com/release-notes/#01620-2026-10-23)
   foi revisada: os endpoints atuais não declaram esses formulários. Os testes
@@ -52,7 +56,11 @@ publicados separadamente como artefatos `pip-audit-api` e `pip-audit-etl` no CI.
 O job Python de segurança agora usa matriz `api`/`etl` com `fail-fast: false`.
 Cada job exporta com `--locked`, audita com `--strict` e publica sua evidência
 com `if: always()`. Uma falha mantém o respectivo job vermelho e não impede a
-auditoria do outro projeto. Não há `continue-on-error` nem exclusões de alertas.
+auditoria do outro projeto. Um gate agregado só aceita o resultado `success`
+da matriz; falha, cancelamento e job pulado não são sucesso. Não há
+`continue-on-error` nem exclusões de alertas. `--no-deps --disable-pip` evita
+instalar/resolver a lista de consulta: todas as transitivas já constam do
+export completo e são consultadas individualmente.
 
 Resultados locais:
 
@@ -80,7 +88,9 @@ for project in api etl; do
     uv export --locked --all-extras --all-groups --format requirements-txt \
       --no-hashes --no-emit-project --no-emit-local \
       --output-file "/tmp/bracc-${project}-requirements.txt" &&
-    uvx pip-audit==2.10.1 -r "/tmp/bracc-${project}-requirements.txt" \
+    python3 -c 'import sys; from pathlib import Path; p=Path(sys.argv[1]); Path(sys.argv[2]).write_text("\n".join(line.split(";",1)[0].strip() for line in p.read_text().splitlines() if line.strip() and not line.lstrip().startswith("#"))+"\n")' \
+      "/tmp/bracc-${project}-requirements.txt" "/tmp/bracc-${project}-audit-only.txt" &&
+    uvx pip-audit==2.10.1 -r "/tmp/bracc-${project}-audit-only.txt" --no-deps --disable-pip \
       --strict --format json --output "/tmp/bracc-${project}-audit.json"
   ) || audit_status=1
 done
