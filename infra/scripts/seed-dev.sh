@@ -1,33 +1,17 @@
 #!/usr/bin/env bash
-# Seed Neo4j with development fixture data
-# Usage: bash infra/scripts/seed-dev.sh
-# Requires: Neo4j running on bolt://localhost:7687
-
+# Create a fresh, isolated demo graph and load fixtures into it.
 set -euo pipefail
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CYPHER_FILE="${SCRIPT_DIR}/seed-dev.cypher"
-NEO4J_URI="${NEO4J_URI:-bolt://localhost:7687}"
-NEO4J_USER="${NEO4J_USER:-neo4j}"
-NEO4J_PASSWORD="${NEO4J_PASSWORD:?NEO4J_PASSWORD must be set}"
-
-echo "Seeding Neo4j at ${NEO4J_URI}..."
-
-export NEO4J_PASSWORD
-
-if command -v cypher-shell &>/dev/null; then
-  cypher-shell \
-    -a "${NEO4J_URI}" \
-    -u "${NEO4J_USER}" \
-    -f "${CYPHER_FILE}"
-elif command -v docker &>/dev/null; then
-  docker exec -i -e NEO4J_PASSWORD="${NEO4J_PASSWORD}" bracc-neo4j cypher-shell \
-    -u "${NEO4J_USER}" \
-    < "${CYPHER_FILE}"
-else
-  echo "Error: cypher-shell not found and docker not available."
-  echo "Install cypher-shell or run 'docker compose up -d' first."
+: "${DEMO_NEO4J_PASSWORD:?Set DEMO_NEO4J_PASSWORD}"
+# A random project name ensures every run has a distinct Compose volume.
+DEMO_ID="$(python3 -c 'import secrets; print(secrets.token_hex(16))')"
+PROJECT="bracc-demo-${DEMO_ID}"
+VOLUME="${PROJECT}_demo-data"
+if docker volume inspect "$VOLUME" >/dev/null 2>&1; then
+  echo "Refusing to use an existing demo volume." >&2
   exit 1
 fi
-
-echo "Seed data loaded successfully."
+COMPOSE=(docker compose --project-name "$PROJECT" --file "${SCRIPT_DIR}/../docker-compose.demo.yml")
+"${COMPOSE[@]}" up -d --wait neo4j
+"${COMPOSE[@]}" exec -T neo4j sh -c 'exec cypher-shell -u neo4j -p "$DEMO_DB_PASSWORD"' < "${SCRIPT_DIR}/seed-dev.cypher"
+echo "Demo fixture loaded into isolated project ${PROJECT}."

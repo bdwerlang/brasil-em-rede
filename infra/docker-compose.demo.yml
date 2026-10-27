@@ -1,0 +1,16 @@
+# Dedicated graph for destructive local demo fixtures; no published ports.
+services:
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      DEMO_DB_PASSWORD: ${DEMO_NEO4J_PASSWORD:?Set DEMO_NEO4J_PASSWORD}
+      NEO4J_AUTH: neo4j/${DEMO_NEO4J_PASSWORD:?Set DEMO_NEO4J_PASSWORD}
+    volumes:
+      - demo-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p \"$$DEMO_DB_PASSWORD\" 'RETURN 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+volumes:
+  demo-data:
