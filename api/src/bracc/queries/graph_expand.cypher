@@ -1,6 +1,6 @@
 MATCH (center)
-WHERE elementId(center) = $entity_id
-  AND (center:Person OR center:Company OR center:Contract OR center:Sanction OR center:Election
+WHERE (center.entity_id = $entity_id OR elementId(center) = $entity_id)
+  AND (center:Person OR center:Partner OR center:Company OR center:Contract OR center:Sanction OR center:Election
        OR center:Amendment OR center:Finance OR center:Embargo OR center:Health OR center:Education
        OR center:Convenio OR center:LaborStats OR center:PublicOffice
        OR center:OffshoreEntity OR center:OffshoreOfficer OR center:GlobalPEP
@@ -18,4 +18,4 @@ UNWIND CASE WHEN size(raw_rels) = 0 THEN [NULL] ELSE raw_rels END AS r
 WITH center, nodes, collect(DISTINCT r) AS rels
 RETURN nodes,
        [x IN rels WHERE x IS NOT NULL] AS relationships,
-       elementId(center) AS center_id
+       coalesce(center.entity_id, elementId(center)) AS center_id
