@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 
@@ -11,12 +10,13 @@ from bracc_etl.pipelines.caged import (
     _generate_stats_id,
     _parse_salary,
 )
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> CagedPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return CagedPipeline(driver=driver, data_dir=str(FIXTURES))
 
 
@@ -144,7 +144,7 @@ class TestCagedLoad:
         pipeline.extract()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         laborstats_calls = [call for call in run_calls if "MERGE (n:LaborStats" in str(call)]

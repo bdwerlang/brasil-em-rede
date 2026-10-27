@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 
 from bracc_etl.pipelines.datasus import DatasusPipeline
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> DatasusPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return DatasusPipeline(driver, data_dir=str(FIXTURES))
 
 
@@ -28,7 +28,7 @@ def test_pipeline_name_and_source_id() -> None:
 
 
 def test_extract_raises_when_csv_missing() -> None:
-    driver = MagicMock()
+    driver = make_driver()
     pipeline = DatasusPipeline(driver, data_dir="/nonexistent/path")
     try:
         pipeline.extract()
@@ -138,7 +138,7 @@ def test_load_calls_batch_loader() -> None:
     pipeline.load()
 
     driver = pipeline.driver
-    session = driver.session.return_value.__enter__.return_value
+    session = transaction(driver)
     # Should have called session.run for:
     # Health nodes, Company nodes, OPERA_UNIDADE rels = 3 calls minimum
     assert session.run.call_count >= 3

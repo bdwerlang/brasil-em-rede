@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from bracc_etl.pipelines.mides import MidesPipeline
+from tests.neo4j_mocks import make_driver
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> MidesPipeline:
-    return MidesPipeline(driver=MagicMock(), data_dir=str(FIXTURES))
+    return MidesPipeline(driver=make_driver(), data_dir=str(FIXTURES))
 
 
 class TestMidesMetadata:

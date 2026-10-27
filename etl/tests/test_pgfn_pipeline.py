@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from bracc_etl.pipelines.pgfn import PgfnPipeline
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> PgfnPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return PgfnPipeline(driver, data_dir=str(FIXTURES))
 
 
@@ -100,6 +100,6 @@ def test_load_calls_session_run() -> None:
     pipeline.load()
 
     driver = pipeline.driver
-    session = driver.session.return_value.__enter__.return_value
+    session = transaction(driver)
     # load_nodes for Finance + _run_with_retry batches for relationships
     assert session.run.call_count >= 2

@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 
 from bracc_etl.pipelines.ibama import IbamaPipeline
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> IbamaPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return IbamaPipeline(driver, data_dir=str(FIXTURES))
 
 
@@ -128,7 +128,7 @@ def test_load_calls_batch_loader() -> None:
     pipeline.load()
 
     driver = pipeline.driver
-    session = driver.session.return_value.__enter__.return_value
+    session = transaction(driver)
     # Should have called session.run for:
     # Embargo nodes, Company nodes, Person nodes, EMBARGADA rels = 4 calls minimum
     assert session.run.call_count >= 4

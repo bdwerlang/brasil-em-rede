@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 
 from bracc_etl.pipelines.cepim import CepimPipeline, _generate_ngo_id
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> CepimPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     pipeline = CepimPipeline(driver=driver, data_dir=str(FIXTURES.parent))
     return pipeline
 
@@ -173,7 +173,7 @@ class TestCepimLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         ngo_calls = [
@@ -188,7 +188,7 @@ class TestCepimLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         company_calls = [
@@ -203,7 +203,7 @@ class TestCepimLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [
@@ -217,5 +217,5 @@ class TestCepimLoad:
         # Don't load fixture data — ngos and company_rels remain empty
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         assert session_mock.run.call_count == 0
