@@ -59,3 +59,63 @@ def test_pgfn_preserves_alphanumeric_company(tmp_path: Path) -> None:
     pipeline.extract()
     pipeline.transform()
     assert FORMATTED in repr(pipeline.relationships)
+
+
+@pytest.mark.parametrize(
+    "document,expected",
+    [
+        ("00ABC123000135", "00.ABC.123/0001-35"),
+        ("00.ABC.123/0001-35", "00.ABC.123/0001-35"),
+        ("00123456000199", "00.123.456/0001-99"),
+        ("00ABC1230001!5", ""),
+        ("00ABC1230001AA", ""),
+    ],
+)
+def test_cvm_secondary_documents_are_structural(document, expected) -> None:
+    from bracc_etl.pipelines.cvm_funds import CvmFundsPipeline
+
+    pipeline = CvmFundsPipeline(driver=make_driver(), data_dir=str(FIXTURES))
+    pipeline.extract()
+    pipeline._raw = pipeline._raw.iloc[:1].copy()
+    pipeline._raw.loc[:, "CNPJ_FUNDO"] = RAW
+    pipeline._raw.loc[:, "CNPJ_ADMIN"] = document
+    pipeline._raw.loc[:, "CPF_CNPJ_GESTOR"] = document
+    pipeline._raw.loc[:, "PF_PJ_GESTOR"] = "PJ"
+    pipeline._raw.loc[:, "SIT"] = "EM FUNCIONAMENTO"
+    pipeline.transform()
+    assert pipeline.funds[0]["administrator_cnpj"] == expected
+    assert pipeline.funds[0]["manager_cnpj"] == expected
+    assert bool(pipeline.admin_rels) == bool(expected)
+    assert bool(pipeline.manager_rels) == bool(expected)
+    pipeline._raw.loc[:, "PF_PJ_GESTOR"] = "PF"
+    pipeline.transform()
+    assert not pipeline.manager_rels
+
+
+def test_holdings_secondary_and_inep_maintainer() -> None:
+    from bracc_etl.pipelines.holdings import HoldingsPipeline
+
+    pipeline = HoldingsPipeline(driver=make_driver(), data_dir=str(FIXTURES))
+    pipeline.extract()
+    pipeline._raw = pipeline._raw.iloc[:1].copy()
+    pipeline._raw.loc[:, "cnpj_empresa"] = RAW
+    pipeline._raw.loc[:, "cnpj_socia"] = "00123456000199"
+    pipeline.transform()
+    assert pipeline.holding_rels == [{"source_key": "00.123.456/0001-99", "target_key": FORMATTED}]
+    pipeline._raw.loc[:, "cnpj_socia"] = "00ABC1230001!5"
+    pipeline.transform()
+    assert not pipeline.holding_rels
+
+    school = InepPipeline(driver=make_driver(), data_dir=str(FIXTURES))
+    school.extract()
+    school._raw_rows = school._raw_rows[:1]
+    school._raw_rows[0]["NU_CNPJ_ESCOLA_PRIVADA"] = RAW
+    school._raw_rows[0]["NU_CNPJ_MANTENEDORA"] = "00123456000199"
+    school.transform()
+    assert {r["source_key"] for r in school.school_company_links} == {
+        FORMATTED,
+        "00.123.456/0001-99",
+    }
+    school._raw_rows[0]["NU_CNPJ_MANTENEDORA"] = "00ABC1230001!5"
+    school.transform()
+    assert [r["source_key"] for r in school.school_company_links] == [FORMATTED]

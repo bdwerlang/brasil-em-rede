@@ -11,6 +11,7 @@ import pandas as pd
 from bracc_etl.base import Pipeline
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     format_cpf,
@@ -46,7 +47,7 @@ def _extract_cnpjs(text: str) -> list[str]:
 
     for match in formatted:
         digits = normalize_cnpj(match)
-        if len(digits) == 14 and digits not in seen:
+        if classify_document(digits) == "cnpj_valid" and digits not in seen:
             seen.add(digits)
             out.append(format_cnpj(match))
 
@@ -230,7 +231,7 @@ class CamaraInquiriesPipeline(Pipeline):
 
             explicit_mentioned = self._get(row, "mentioned_cnpj", "cnpj")
             explicit_digits = normalize_cnpj(explicit_mentioned)
-            if len(explicit_digits) == 14:
+            if classify_document(explicit_digits) == "cnpj_valid":
                 mentions.append({
                     "cnpj": format_cnpj(explicit_digits),
                     "target_key": requirement_id,
