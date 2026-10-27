@@ -15,6 +15,9 @@ npx tsc --noEmit || fail=1
 echo "[frontend-quality] tests"
 npm test -- --run || fail=1
 
+echo "[frontend-quality] build"
+npm run build || fail=1
+
 if [ "$fail" -ne 0 ]; then
   echo "[frontend-quality] one or more checks failed"
 fi
