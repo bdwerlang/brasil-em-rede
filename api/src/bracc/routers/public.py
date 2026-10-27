@@ -25,11 +25,11 @@ router = APIRouter(prefix="/api/v1/public", tags=["public"])
 _PUBLIC_PROVIDER = CommunityIntelligenceProvider()
 
 _CPF_KEYS = {"cpf", "doc_partial", "doc_raw"}
-_CNPJ_PATTERN = re.compile(r"^\d{14}$")
+_CNPJ_PATTERN = re.compile(r"^[A-Z0-9]{12}[0-9]{2}$")
 
 
 def _clean_identifier(raw: str) -> str:
-    return re.sub(r"[.\-/]", "", raw)
+    return re.sub(r"[.\-/]", "", raw).upper()
 
 
 def _format_cnpj(digits: str) -> str:

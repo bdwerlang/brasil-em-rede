@@ -14,9 +14,14 @@ def format_cpf(cpf: str | None) -> str:
     return f"{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}"
 
 
+def normalize_cnpj(cnpj: str | None) -> str:
+    """Remove CNPJ punctuation while preserving letters and leading zeros."""
+    return re.sub(r"[.\-/]", "", (cnpj or "").strip()).upper()
+
+
 def format_cnpj(cnpj: str | None) -> str:
-    digits = strip_document(cnpj)
-    if len(digits) != 14:
+    digits = normalize_cnpj(cnpj)
+    if not re.fullmatch(r"[A-Z0-9]{12}[0-9]{2}", digits):
         return digits
     return f"{digits[:2]}.{digits[2:5]}.{digits[5:8]}/{digits[8:12]}-{digits[12:]}"
 
@@ -36,28 +41,28 @@ def _cpf_check_digits(digits: str) -> bool:
 
 
 def validate_cpf(cpf: str | None) -> bool:
-    digits = strip_document(cpf)
-    return _cpf_check_digits(digits)
+    digits = re.sub(r"[.\-]", "", (cpf or "").strip())
+    return bool(re.fullmatch(r"[0-9]{11}", digits)) and _cpf_check_digits(digits)
 
 
 def _cnpj_check_digits(digits: str) -> bool:
-    if len(digits) != 14 or len(set(digits)) == 1:
+    if not re.fullmatch(r"[A-Z0-9]{12}[0-9]{2}", digits) or len(set(digits)) == 1:
         return False
     weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-    total = sum(int(digits[i]) * weights1[i] for i in range(12))
+    total = sum((ord(digits[i]) - 48) * weights1[i] for i in range(12))
     d1 = 11 - (total % 11)
     d1 = 0 if d1 >= 10 else d1
     if int(digits[12]) != d1:
         return False
     weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-    total = sum(int(digits[i]) * weights2[i] for i in range(13))
+    total = sum((ord(digits[i]) - 48) * weights2[i] for i in range(13))
     d2 = 11 - (total % 11)
     d2 = 0 if d2 >= 10 else d2
     return int(digits[13]) == d2
 
 
 def validate_cnpj(cnpj: str | None) -> bool:
-    digits = strip_document(cnpj)
+    digits = normalize_cnpj(cnpj)
     return _cnpj_check_digits(digits)
 
 
@@ -76,8 +81,8 @@ def classify_document(doc: str | None) -> str:
 
     if has_mask and len(digits) == 6:
         return "cpf_partial"
-    if len(digits) == 11:
+    if re.fullmatch(r"[0-9]{11}", re.sub(r"[.\-]", "", raw)):
         return "cpf_valid"
-    if len(digits) == 14:
+    if re.fullmatch(r"[A-Z0-9]{12}[0-9]{2}", normalize_cnpj(raw)):
         return "cnpj_valid"
     return "invalid"

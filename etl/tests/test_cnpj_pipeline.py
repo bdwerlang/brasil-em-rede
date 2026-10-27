@@ -683,3 +683,53 @@ def test_transform_socios_rf_normalizes_data_entrada() -> None:
 
     _, _, pf_rels, _, _ = pipeline._transform_socios_rf(pipeline._raw_socios)
     assert pf_rels[0]["data_entrada"] == "2020-01-15"
+
+
+def test_alphanumeric_establishment_and_unknown_root() -> None:
+    pipeline = _make_pipeline()
+    pipeline._build_estab_lookup(
+        pd.DataFrame(
+            [
+                {
+                    "cnpj_basico": "00ABC123",
+                    "cnpj_ordem": "0001",
+                    "cnpj_dv": "35",
+                    "cnae_principal": "",
+                    "uf": "",
+                    "municipio": "",
+                }
+            ]
+        )
+    )
+    companies = pd.DataFrame(
+        [
+            {
+                "cnpj_basico": "00ABC123",
+                "razao_social": "Exemplo",
+                "capital_social": "0",
+                "natureza_juridica": "",
+                "porte_empresa": "",
+            },
+            {
+                "cnpj_basico": "00ABC124",
+                "razao_social": "Sem estabelecimento",
+                "capital_social": "0",
+                "natureza_juridica": "",
+                "porte_empresa": "",
+            },
+        ]
+    )
+    rows = pipeline._transform_empresas_rf(companies.iloc[:1])
+    assert [row["cnpj"] for row in rows] == ["00.ABC.123/0001-35"]
+    with pytest.raises(ValueError, match="Missing establishment for 1 company rows"):
+        pipeline._transform_empresas_rf(companies)
+
+
+def test_unknown_partner_root_fails_batch() -> None:
+    pipeline = _make_pipeline()
+    rows = pd.DataFrame([{
+        "cnpj_basico": "00ABC123", "nome_socio": "Example", "identificador_socio": "2",
+        "qualificacao_socio": "", "data_entrada": "", "cpf_cnpj_socio": "***123456**",
+    }])
+    with pytest.raises(ValueError, match="Missing establishment for 1 partner rows"):
+        pipeline._transform_socios_rf(rows)

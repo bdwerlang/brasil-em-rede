@@ -14,6 +14,7 @@ from bracc_etl.transforms import (
     deduplicate_rows,
     format_cnpj,
     format_cpf,
+    normalize_cnpj,
     normalize_name,
     parse_date,
     strip_document,
@@ -24,8 +25,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_CNPJ_FMT_RE = re.compile(r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}")
-_CNPJ_RAW_RE = re.compile(r"\d{14}")
+_CNPJ_FMT_RE = re.compile(
+    r"(?<![A-Za-z0-9])[A-Za-z0-9]{2}\.[A-Za-z0-9]{3}\.[A-Za-z0-9]{3}/"
+    r"[A-Za-z0-9]{4}-[0-9]{2}(?![A-Za-z0-9])"
+)
+_CNPJ_RAW_RE = re.compile(r"(?<![A-Za-z0-9])[A-Za-z0-9]{12}[0-9]{2}(?![A-Za-z0-9])")
 _TEMPORAL_RULE = (
     "event_date>=inquiry.date_start and "
     "(inquiry.date_end is null or event_date<=inquiry.date_end)"
@@ -59,7 +63,7 @@ def _extract_cnpjs(text: str) -> list[str]:
     out: list[str] = []
 
     for match in formatted:
-        digits = strip_document(match)
+        digits = normalize_cnpj(match)
         if len(digits) == 14 and digits not in seen:
             seen.add(digits)
             out.append(format_cnpj(match))
@@ -391,7 +395,7 @@ class SenadoCpisPipeline(Pipeline):
             # Name is preserved on InquiryRequirement for exploratory analysis.
 
             explicit_mentioned = self._get_inquiry_value(row, "mentioned_cnpj", "cnpj")
-            explicit_digits = strip_document(explicit_mentioned)
+            explicit_digits = normalize_cnpj(explicit_mentioned)
             if len(explicit_digits) == 14:
                 mentions.append({
                     "cnpj": format_cnpj(explicit_digits),

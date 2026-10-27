@@ -30,11 +30,11 @@ from bracc.services.public_guard import (
 router = APIRouter(prefix="/api/v1/entity", tags=["entity"])
 
 CPF_PATTERN = re.compile(r"^\d{11}$")
-CNPJ_PATTERN = re.compile(r"^\d{14}$")
+CNPJ_PATTERN = re.compile(r"^[A-Z0-9]{12}[0-9]{2}$")
 
 
 def _clean_identifier(raw: str) -> str:
-    return re.sub(r"[.\-/]", "", raw)
+    return re.sub(r"[.\-/]", "", raw).upper()
 
 
 def _is_pep(properties: dict[str, Any]) -> bool:

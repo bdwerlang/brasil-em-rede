@@ -54,3 +54,12 @@ describe("SearchBar", () => {
     expect(onSearch).toHaveBeenCalledWith({ query: "Acme", type: "company" });
   });
 });
+
+it("preserves alphanumeric CNPJ and leading zeros in search", async () => {
+  const onSearch = vi.fn();
+  const user = userEvent.setup();
+  render(<SearchBar onSearch={onSearch} />);
+  await user.type(screen.getByPlaceholderText(/CPF/), "00.ABC.123/0001-35");
+  await user.click(screen.getByRole("button"));
+  expect(onSearch).toHaveBeenCalledWith({ query: "00.ABC.123/0001-35", type: "all" });
+});

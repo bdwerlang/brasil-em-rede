@@ -17,9 +17,11 @@ import pandas as pd
 from bracc_etl.base import Pipeline
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     format_cpf,
+    normalize_cnpj,
     normalize_name,
     parse_date,
     strip_document,
@@ -115,7 +117,7 @@ class CamaraPipeline(Pipeline):
             partido = str(row.get("sgPartido", "")).strip()
 
             supplier_doc_raw = str(row.get("txtCNPJCPF", ""))
-            supplier_digits = strip_document(supplier_doc_raw)
+            supplier_digits = normalize_cnpj(supplier_doc_raw)
             supplier_name = normalize_name(str(row.get("txtFornecedor", "")))
 
             # Must have supplier document and deputy ID
@@ -124,9 +126,9 @@ class CamaraPipeline(Pipeline):
                 continue
 
             # Format supplier document
-            if len(supplier_digits) == 14:
+            if classify_document(supplier_doc_raw) == "cnpj_valid":
                 supplier_doc = format_cnpj(supplier_doc_raw)
-            elif len(supplier_digits) == 11:
+            elif classify_document(supplier_doc_raw) == "cpf_valid":
                 supplier_doc = format_cpf(supplier_doc_raw)
             else:
                 skipped += 1
@@ -177,7 +179,7 @@ class CamaraPipeline(Pipeline):
                 })
 
             # Track supplier
-            if len(supplier_digits) == 14:
+            if classify_document(supplier_doc_raw) == "cnpj_valid":
                 suppliers_map[supplier_doc] = {
                     "cnpj": supplier_doc,
                     "razao_social": supplier_name,
@@ -186,7 +188,7 @@ class CamaraPipeline(Pipeline):
                     "source_key": supplier_doc,
                     "target_key": expense_id,
                 })
-            elif len(supplier_digits) == 11:
+            elif classify_document(supplier_doc_raw) == "cpf_valid":
                 # Individual supplier (CPF)
                 suppliers_map[supplier_doc] = {
                     "cpf": supplier_doc,

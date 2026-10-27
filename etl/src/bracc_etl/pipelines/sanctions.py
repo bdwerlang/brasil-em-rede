@@ -12,12 +12,13 @@ if TYPE_CHECKING:
     from neo4j import Driver
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     format_cpf,
+    normalize_cnpj,
     normalize_name,
     parse_date,
-    strip_document,
 )
 
 logger = logging.getLogger(__name__)
@@ -68,13 +69,13 @@ class SanctionsPipeline(Pipeline):
 
         for idx, row in df.iterrows():
             doc_raw = str(row["cpf_cnpj"])
-            digits = strip_document(doc_raw)
+            digits = normalize_cnpj(doc_raw)
             nome = normalize_name(str(row["nome"]))
-            is_company = len(digits) == 14
+            is_company = classify_document(doc_raw) == "cnpj_valid"
 
             if is_company:
                 doc_formatted = format_cnpj(doc_raw)
-            elif len(digits) == 11:
+            elif classify_document(doc_raw) == "cpf_valid":
                 doc_formatted = format_cpf(doc_raw)
             else:
                 doc_formatted = digits
@@ -92,6 +93,9 @@ class SanctionsPipeline(Pipeline):
                 "reason": str(row["motivo"]).strip(),
                 "source": sanction_type,
             })
+
+            if classify_document(doc_raw) not in {"cnpj_valid", "cpf_valid"}:
+                continue
 
             entity_label = "Company" if is_company else "Person"
             entity_key_field = "cnpj" if is_company else "cpf"
