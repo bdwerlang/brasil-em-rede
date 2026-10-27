@@ -211,5 +211,9 @@ describe("search to entity analysis", () => {
     await user.click(screen.getByRole("link", { name: /Empresa Exemplo/ }));
     expect(await screen.findByText(`Entity: ${elementId}`)).toBeInTheDocument();
     expect(mockGetEntity).toHaveBeenCalledWith(elementId);
+    await waitFor(() => {
+      expect(mockGetPatterns).toHaveBeenCalledWith(elementId);
+      expect(mockGetBaseline).toHaveBeenCalledWith(elementId);
+    });
   });
 });
