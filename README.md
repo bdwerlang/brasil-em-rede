@@ -22,6 +22,15 @@ The first deliverable is a reproducible **CNPJ → sanctions → public contract
 pilot. Foundation work and acceptance criteria are in the
 [project roadmap](docs/project/README.md). No production service is announced.
 
+The [action plan](docs/project/action-plan.md) defines the first executable
+queue, five delivery rounds and eight acceptance gates for the first usable
+v0.1, followed by expansion of the source catalog.
+
+The [database unification plan](docs/unification/README.md) defines a common
+identity and evidence model, storage responsibilities, migration and rollback,
+and an individual integration route for all 169 sources. It is a proposed
+implementation, with twelve delivery stages and explicit acceptance gates.
+
 ## What Is Included In This Public Repo
 
 - API, frontend, ETL modules, Neo4j schema and synthetic development fixtures.
