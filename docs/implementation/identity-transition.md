@@ -70,3 +70,9 @@ conflitos de identificadores por fonte podem existir.
 
 O ensaio não demonstrou reconstrução integral, concorrência, backup ou restore.
 A homologação U11 e a revisão dos possíveis conflitos permanecem pendentes.
+
+O ensaio na cópia local foi aceito como etapa parcialmente concluída da F03.
+Quando fontes reais forem introduzidas, a auditoria de identidade e o ensaio de
+migração e reversão deverão ser validados com esses dados, observando seus
+critérios próprios. A revisão do possível conflito textual, a homologação U11
+com restauração e a adaptação dos demais consumidores continuam pendentes.
