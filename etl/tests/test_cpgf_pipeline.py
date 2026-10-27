@@ -2,17 +2,17 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 
 from bracc_etl.pipelines.cpgf import CpgfPipeline, _make_expense_id, _parse_brl_value
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> CpgfPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     pipeline = CpgfPipeline(driver=driver, data_dir=str(FIXTURES.parent))
     return pipeline
 
@@ -263,7 +263,7 @@ class TestCpgfLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         node_calls = [
@@ -278,7 +278,7 @@ class TestCpgfLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         person_calls = [
@@ -293,7 +293,7 @@ class TestCpgfLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [
@@ -309,5 +309,5 @@ class TestCpgfLoad:
         pipeline.gastou_cartao_rels = []
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         assert session_mock.run.call_count == 0

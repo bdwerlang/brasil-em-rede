@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 
 from bracc_etl.pipelines.sanctions import SanctionsPipeline
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> SanctionsPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     pipeline = SanctionsPipeline(driver=driver, data_dir=str(FIXTURES.parent))
     return pipeline
 
@@ -141,7 +141,7 @@ class TestSanctionsLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         # Find Company MERGE calls
@@ -171,7 +171,7 @@ class TestSanctionsLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         person_merge_calls = [

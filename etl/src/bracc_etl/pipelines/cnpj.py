@@ -501,9 +501,11 @@ class CNPJPipeline(Pipeline):
         df = df.copy()
         df["basico"] = df["cnpj_basico"].astype(str).str.zfill(8)
         lookup = self._estab_lookup
-        df["cnpj"] = df["basico"].map(
-            lambda b: lookup[b][0] if b in lookup else format_cnpj(b + "000100"),
-        )
+        # A root alone cannot identify a complete establishment.
+        missing = ~df["basico"].isin(lookup)
+        if missing.any():
+            raise ValueError(f"Missing establishment for {int(missing.sum())} company rows")
+        df["cnpj"] = df["basico"].map(lambda b: lookup[b][0])
         df["capital_social"] = df["capital_social"].astype(str).map(parse_capital_social)
         df["razao_social"] = df["razao_social"].astype(str).map(normalize_name)
         df["natureza_juridica"] = df["natureza_juridica"].astype(str).map(
@@ -562,9 +564,10 @@ class CNPJPipeline(Pipeline):
         df = df.copy()
         lookup = self._estab_lookup
         df["basico"] = df["cnpj_basico"].astype(str).str.zfill(8)
-        df["cnpj"] = df["basico"].map(
-            lambda b: lookup[b][0] if b in lookup else format_cnpj(b + "000100"),
-        )
+        missing = ~df["basico"].isin(lookup)
+        if missing.any():
+            raise ValueError(f"Missing establishment for {int(missing.sum())} partner rows")
+        df["cnpj"] = df["basico"].map(lambda b: lookup[b][0])
         df["nome"] = df["nome_socio"].astype(str).map(normalize_name)
         df["tipo"] = df["identificador_socio"].astype(str)
         df["qualificacao"] = df["qualificacao_socio"].astype(str).map(

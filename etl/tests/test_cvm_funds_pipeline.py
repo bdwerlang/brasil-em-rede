@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
 
 from bracc_etl.pipelines.cvm_funds import CvmFundsPipeline
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline(*, limit: int | None = None) -> CvmFundsPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return CvmFundsPipeline(driver=driver, data_dir=str(FIXTURES.parent), limit=limit)
 
 
@@ -236,7 +236,7 @@ class TestCvmFundsLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         fund_calls = [c for c in run_calls if "MERGE (n:Fund" in str(c)]
@@ -248,7 +248,7 @@ class TestCvmFundsLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [c for c in run_calls if "ADMINISTRA" in str(c)]
@@ -260,7 +260,7 @@ class TestCvmFundsLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [c for c in run_calls if "GERE" in str(c)]
@@ -272,7 +272,7 @@ class TestCvmFundsLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         admin_calls = [c for c in run_calls if "ADMINISTRA" in str(c)]
@@ -287,7 +287,7 @@ class TestCvmFundsLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         gere_calls = [c for c in run_calls if "GERE" in str(c)]
@@ -302,7 +302,7 @@ class TestCvmFundsLoad:
         pipeline.manager_rels = []
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         assert session_mock.run.call_count == 0
 
     def test_company_on_create_sets_name(self) -> None:
@@ -311,7 +311,7 @@ class TestCvmFundsLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         admin_calls = [c for c in run_calls if "ADMINISTRA" in str(c)]

@@ -7,12 +7,13 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 from bracc_etl.pipelines.pncp import PncpPipeline
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> PncpPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return PncpPipeline(driver, data_dir=str(FIXTURES.parent))
 
 
@@ -290,7 +291,7 @@ class TestPncpLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         bid_calls = [
@@ -305,7 +306,7 @@ class TestPncpLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         company_calls = [
@@ -320,7 +321,7 @@ class TestPncpLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [
@@ -334,7 +335,7 @@ class TestPncpLoad:
         pipeline.bids = []
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         assert session_mock.run.call_count == 0
 
     def test_load_calls_correct_number_of_batches(self) -> None:
@@ -344,7 +345,7 @@ class TestPncpLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         # At minimum: 1 Bid batch + 1 Company batch + 1 LICITOU batch = 3
         assert session_mock.run.call_count >= 3
 

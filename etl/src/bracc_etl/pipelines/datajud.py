@@ -14,6 +14,7 @@ from bracc_etl.transforms import (
     deduplicate_rows,
     format_cnpj,
     format_cpf,
+    normalize_cnpj,
     normalize_name,
     parse_date,
     strip_document,
@@ -149,7 +150,7 @@ class DatajudPipeline(Pipeline):
             party_name = normalize_name(_pick(row, "party_name", "nome", "parte"))
 
             cpf_digits = strip_document(_pick(row, "party_cpf", "cpf"))
-            cnpj_digits = strip_document(_pick(row, "party_cnpj", "cnpj"))
+            cnpj_digits = normalize_cnpj(_pick(row, "party_cnpj", "cnpj"))
 
             if len(cpf_digits) == 11:
                 cpf = format_cpf(cpf_digits)
