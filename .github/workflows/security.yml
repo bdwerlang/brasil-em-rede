@@ -136,7 +136,15 @@ jobs:
         run: cd frontend && npm ci
 
       - name: Audit frontend dependencies
-        run: cd frontend && npm audit --audit-level=high
+        run: cd frontend && npm audit --audit-level=high --json > audit-report.json
+
+      - name: Preserve frontend audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-frontend
+          path: frontend/audit-report.json
+          if-no-files-found: error
 
   public-privacy-gate:
     name: Public Privacy Gate
