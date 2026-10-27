@@ -28,6 +28,7 @@ from bracc_etl.transforms import (
     deduplicate_rows,
     format_cnpj,
     format_cpf,
+    normalize_cnpj,
     parse_date,
     strip_document,
 )
@@ -62,9 +63,12 @@ _PENALTY_KEYWORDS = (
 
 # Regex for document extraction
 _CPF_RE = re.compile(r"\d{3}\.\d{3}\.\d{3}-\d{2}")
-_CNPJ_RE = re.compile(r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}")
+_CNPJ_RE = re.compile(
+    r"(?<![A-Za-z0-9])[A-Za-z0-9]{2}\.[A-Za-z0-9]{3}\.[A-Za-z0-9]{3}/"
+    r"[A-Za-z0-9]{4}-[0-9]{2}(?![A-Za-z0-9])"
+)
 # Also match raw 14-digit CNPJs
-_CNPJ_RAW_RE = re.compile(r"\d{14}")
+_CNPJ_RAW_RE = re.compile(r"(?<![A-Za-z0-9])[A-Za-z0-9]{12}[0-9]{2}(?![A-Za-z0-9])")
 
 
 def _classify_act(title: str, abstract: str) -> str:
@@ -111,7 +115,7 @@ def _extract_cnpjs(text: str) -> list[str]:
     cnpjs: list[str] = []
 
     for m in formatted:
-        digits = strip_document(m)
+        digits = normalize_cnpj(m)
         if len(digits) == 14 and digits not in seen:
             seen.add(digits)
             cnpjs.append(format_cnpj(m))

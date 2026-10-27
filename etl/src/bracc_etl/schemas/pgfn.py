@@ -58,7 +58,7 @@ deve_relationship_schema = pa.DataFrameSchema(
             coerce=True,
             checks=[
                 pa.Check.str_matches(
-                    r"^(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}|\d{14})$",
+                    r"^([A-Za-z0-9]{2}\.[A-Za-z0-9]{3}\.[A-Za-z0-9]{3}/[A-Za-z0-9]{4}-[0-9]{2}|[A-Za-z0-9]{12}[0-9]{2})$",
                     error="source_key must be a formatted CNPJ",
                 ),
             ],

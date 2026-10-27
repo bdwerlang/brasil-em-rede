@@ -39,7 +39,7 @@ COMMUNITY_PATTERN_QUERIES: dict[str, str] = {
     "inexigibility_recurrence": "public_pattern_inexigibility_recurrence",
 }
 
-_CNPJ_PATTERN = re.compile(r"^\d{14}$")
+_CNPJ_PATTERN = re.compile(r"^[A-Z0-9]{12}[0-9]{2}$")
 _PUBLIC_PATTERN_BLOCKLIST = (
     "cpf",
     "doc_",
@@ -152,13 +152,12 @@ def _community_pattern_params(
 
 def _sanitize_public_pattern_data(record: Any) -> dict[str, Any]:
     data: dict[str, Any] = {}
-    for key in record:
+    for key, value in dict(record).items():
         if key in {"pattern_id", "summary_pt", "summary_en"}:
             continue
         lower_key = str(key).lower()
         if any(token in lower_key for token in _PUBLIC_PATTERN_BLOCKLIST):
             continue
-        value = record[key]
         if isinstance(value, list):
             data[key] = [str(item) for item in value if item is not None and str(item).strip()]
         else:
@@ -296,11 +295,11 @@ class CommunityIntelligenceProvider:
         if by_element is not None and "Company" in by_element["entity_labels"]:
             node = by_element["e"]
             cnpj = str(node.get("cnpj", "")).strip()
-            digits = re.sub(r"[.\-/]", "", cnpj)
+            digits = re.sub(r"[.\-/]", "", cnpj).upper()
             if _CNPJ_PATTERN.match(digits):
                 return entity_id, digits, _format_cnpj(digits)
 
-        identifier = re.sub(r"[.\-/]", "", entity_id)
+        identifier = re.sub(r"[.\-/]", "", entity_id).upper()
         if not _CNPJ_PATTERN.match(identifier):
             return None
         return entity_id, identifier, _format_cnpj(identifier)

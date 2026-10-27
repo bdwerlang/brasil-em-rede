@@ -55,11 +55,19 @@ async def search_entities(
     type_filter = entity_type.lower() if entity_type else None
     hide_person_entities = should_hide_person_entities()
 
+    identifier = re.sub(r"[.\-/]", "", q).upper()
+    is_cnpj = bool(re.fullmatch(r"[A-Z0-9]{12}[0-9]{2}", identifier))
+    formatted = (
+        f"{identifier[:2]}.{identifier[2:5]}.{identifier[5:8]}/"
+        f"{identifier[8:12]}-{identifier[12:]}"
+    ) if is_cnpj else ""
     records = await execute_query(
         session,
-        "search",
+        "search_cnpj" if is_cnpj else "search",
         {
             "query": _escape_lucene(q),
+            "identifier": identifier,
+            "identifier_formatted": formatted,
             "entity_type": type_filter,
             "skip": skip,
             "limit": size,
@@ -68,9 +76,11 @@ async def search_entities(
     )
     total_record = await execute_query_single(
         session,
-        "search_count",
+        "search_cnpj_count" if is_cnpj else "search_count",
         {
             "query": _escape_lucene(q),
+            "identifier": identifier,
+            "identifier_formatted": formatted,
             "entity_type": type_filter,
             "hide_person_entities": hide_person_entities,
         },
