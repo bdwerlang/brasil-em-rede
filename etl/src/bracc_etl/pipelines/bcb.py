@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from neo4j import Driver
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     normalize_cnpj,
@@ -76,7 +77,7 @@ class BcbPipeline(Pipeline):
             cnpj_raw = str(row.get("CNPJ", ""))
             digits = normalize_cnpj(cnpj_raw)
 
-            if len(digits) != 14:
+            if classify_document(digits) != "cnpj_valid":
                 continue
 
             cnpj_formatted = format_cnpj(cnpj_raw)

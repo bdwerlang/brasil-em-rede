@@ -15,6 +15,7 @@ import pandas as pd
 from bracc_etl.base import Pipeline
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     normalize_cnpj,
@@ -78,7 +79,7 @@ class CvmFundsPipeline(Pipeline):
             # Fund CNPJ
             fund_cnpj_raw = str(row.get("CNPJ_FUNDO", "")).strip()
             fund_digits = normalize_cnpj(fund_cnpj_raw)
-            if len(fund_digits) != 14:
+            if classify_document(fund_digits) != "cnpj_valid":
                 continue
 
             fund_cnpj = format_cnpj(fund_digits)
@@ -93,7 +94,9 @@ class CvmFundsPipeline(Pipeline):
             # Administrator CNPJ
             admin_cnpj_raw = str(row.get("CNPJ_ADMIN", "")).strip()
             admin_digits = normalize_cnpj(admin_cnpj_raw)
-            admin_cnpj = format_cnpj(admin_digits) if len(admin_digits) == 14 else ""
+            admin_cnpj = (
+                format_cnpj(admin_digits) if classify_document(admin_digits) == "cnpj_valid" else ""
+            )
             admin_name = normalize_name(str(row.get("ADMIN", "")))
 
             # Manager CNPJ (can be PF or PJ — only use PJ)
@@ -101,7 +104,7 @@ class CvmFundsPipeline(Pipeline):
             manager_cnpj_raw = str(row.get("CPF_CNPJ_GESTOR", "")).strip()
             manager_digits = normalize_cnpj(manager_cnpj_raw)
             manager_cnpj = ""
-            if pf_pj == "PJ" and len(manager_digits) == 14:
+            if pf_pj == "PJ" and classify_document(manager_digits) == "cnpj_valid":
                 manager_cnpj = format_cnpj(manager_digits)
             manager_name = normalize_name(str(row.get("GESTOR", "")))
 
