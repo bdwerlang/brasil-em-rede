@@ -1,0 +1,569 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-27T10:43:51.905536-03:00",
+  "issue": 20,
+  "executor": "Codex/OpenAI",
+  "base_commit": "b4f0014650c1cf169426a8947b7063c8fa669982",
+  "auditor": "pip-audit 2.10.1",
+  "environment": {
+    "python": "3.12.3",
+    "platform": "Linux x86_64"
+  },
+  "scope": "Locked dependencies with all extras and all groups; markers evaluated on the recorded platform. No vulnerability suppressions.",
+  "projects": {
+    "api": {
+      "lock_sha256_before": "062070188da2c622a64b4e86f3839b220b9ec51b5f95d12ef16ee4595bfae075",
+      "lock_sha256_after": "7d7d1ae52764f9fb8066673ab87bf3c8f02124486be6b15576f9d3d1117e7689",
+      "before": {
+        "packages": 64,
+        "vulnerable_packages": 16,
+        "advisory_package_pairs": 106,
+        "skipped_packages": 0
+      },
+      "after": {
+        "packages": 65,
+        "vulnerable_packages": 0,
+        "advisory_package_pairs": 0,
+        "skipped_packages": 0
+      },
+      "before_findings": [
+        {
+          "package": "anyio",
+          "version": "4.12.1",
+          "advisories": [
+            "PYSEC-2026-4024",
+            "PYSEC-2026-4025"
+          ]
+        },
+        {
+          "package": "brotli",
+          "version": "1.2.0",
+          "advisories": [
+            "GHSA-9v8h-qqgm-4m35",
+            "PYSEC-2026-4322"
+          ]
+        },
+        {
+          "package": "certifi",
+          "version": "2026.1.4",
+          "advisories": [
+            "PYSEC-2026-4320"
+          ]
+        },
+        {
+          "package": "cryptography",
+          "version": "46.0.6",
+          "advisories": [
+            "GHSA-537c-gmf6-5ccf",
+            "PYSEC-2026-3552",
+            "PYSEC-2026-3553",
+            "PYSEC-2026-3554",
+            "PYSEC-2026-36"
+          ]
+        },
+        {
+          "package": "starlette",
+          "version": "0.52.1",
+          "advisories": [
+            "PYSEC-2026-161",
+            "PYSEC-2026-2280",
+            "PYSEC-2026-2281",
+            "PYSEC-2026-248",
+            "PYSEC-2026-249"
+          ]
+        },
+        {
+          "package": "idna",
+          "version": "3.11",
+          "advisories": [
+            "PYSEC-2026-215"
+          ]
+        },
+        {
+          "package": "pillow",
+          "version": "12.1.1",
+          "advisories": [
+            "CVE-2026-112390",
+            "CVE-2026-112391",
+            "CVE-2026-112393",
+            "CVE-2026-112395",
+            "CVE-2026-112397",
+            "CVE-2026-112398",
+            "CVE-2026-112399",
+            "CVE-2026-112400",
+            "CVE-2026-112401",
+            "CVE-2026-112402",
+            "CVE-2026-112404",
+            "CVE-2026-112405",
+            "CVE-2026-112406",
+            "CVE-2026-112891",
+            "CVE-2026-112892",
+            "CVE-2026-112893",
+            "CVE-2026-112894",
+            "CVE-2026-112895",
+            "CVE-2026-112896",
+            "CVE-2026-112897",
+            "CVE-2026-112899",
+            "CVE-2026-112900",
+            "CVE-2026-112901",
+            "CVE-2026-114501",
+            "CVE-2026-96636",
+            "CVE-2026-96637",
+            "CVE-2026-96638",
+            "CVE-2026-96639",
+            "CVE-2026-96640",
+            "CVE-2026-96641",
+            "CVE-2026-96642",
+            "CVE-2026-96643",
+            "CVE-2026-96644",
+            "CVE-2026-96778",
+            "GHSA-78g4-xqwv-q3g8",
+            "PYSEC-2026-165",
+            "PYSEC-2026-2250",
+            "PYSEC-2026-2251",
+            "PYSEC-2026-2252",
+            "PYSEC-2026-2253",
+            "PYSEC-2026-2254",
+            "PYSEC-2026-2255",
+            "PYSEC-2026-2256",
+            "PYSEC-2026-2257",
+            "PYSEC-2026-2874",
+            "PYSEC-2026-3451",
+            "PYSEC-2026-3452",
+            "PYSEC-2026-3453",
+            "PYSEC-2026-3454",
+            "PYSEC-2026-3493",
+            "PYSEC-2026-3494",
+            "PYSEC-2026-3495",
+            "PYSEC-2026-3496",
+            "PYSEC-2026-4326",
+            "PYSEC-2026-4327",
+            "PYSEC-2026-4328"
+          ]
+        },
+        {
+          "package": "pydantic-settings",
+          "version": "2.13.1",
+          "advisories": [
+            "CVE-2026-58203"
+          ]
+        },
+        {
+          "package": "pygments",
+          "version": "2.19.2",
+          "advisories": [
+            "PYSEC-2026-2987"
+          ]
+        },
+        {
+          "package": "pyjwt",
+          "version": "2.12.1",
+          "advisories": [
+            "GHSA-pxh4-856f-4h89",
+            "PYSEC-2026-175",
+            "PYSEC-2026-176",
+            "PYSEC-2026-177",
+            "PYSEC-2026-178",
+            "PYSEC-2026-179",
+            "PYSEC-2026-4140",
+            "PYSEC-2026-4141",
+            "PYSEC-2026-4144",
+            "PYSEC-2026-4145",
+            "PYSEC-2026-4146",
+            "PYSEC-2026-4147",
+            "PYSEC-2026-4148",
+            "PYSEC-2026-4149",
+            "PYSEC-2026-4152",
+            "PYSEC-2026-4183"
+          ]
+        },
+        {
+          "package": "pytest",
+          "version": "9.0.2",
+          "advisories": [
+            "PYSEC-2026-1845"
+          ]
+        },
+        {
+          "package": "python-dotenv",
+          "version": "1.2.1",
+          "advisories": [
+            "PYSEC-2026-2270"
+          ]
+        },
+        {
+          "package": "python-multipart",
+          "version": "0.0.22",
+          "advisories": [
+            "PYSEC-2026-3036",
+            "PYSEC-2026-3037",
+            "PYSEC-2026-3038",
+            "PYSEC-2026-3039",
+            "PYSEC-2026-3040"
+          ]
+        },
+        {
+          "package": "requests",
+          "version": "2.32.5",
+          "advisories": [
+            "PYSEC-2026-2275"
+          ]
+        },
+        {
+          "package": "urllib3",
+          "version": "2.6.3",
+          "advisories": [
+            "PYSEC-2026-141",
+            "PYSEC-2026-142",
+            "PYSEC-2026-4175",
+            "PYSEC-2026-4176",
+            "PYSEC-2026-4177"
+          ]
+        },
+        {
+          "package": "weasyprint",
+          "version": "68.1",
+          "advisories": [
+            "PYSEC-2026-3412",
+            "PYSEC-2026-3940",
+            "PYSEC-2026-4311"
+          ]
+        }
+      ],
+      "version_changes": [
+        {
+          "package": "anyio",
+          "before": "4.12.1",
+          "after": "4.15.1"
+        },
+        {
+          "package": "brotli",
+          "before": "1.2.0",
+          "after": "1.2.1"
+        },
+        {
+          "package": "certifi",
+          "before": "2026.1.4",
+          "after": "2026.10.23"
+        },
+        {
+          "package": "cryptography",
+          "before": "46.0.6",
+          "after": "50.0.2"
+        },
+        {
+          "package": "fastapi",
+          "before": "0.129.2",
+          "after": "0.162.0"
+        },
+        {
+          "package": "idna",
+          "before": "3.11",
+          "after": "3.20"
+        },
+        {
+          "package": "opentelemetry-api",
+          "before": null,
+          "after": "1.45.1"
+        },
+        {
+          "package": "pillow",
+          "before": "12.1.1",
+          "after": "13.0.0"
+        },
+        {
+          "package": "pydantic",
+          "before": "2.12.5",
+          "after": "2.14.1"
+        },
+        {
+          "package": "pydantic-core",
+          "before": "2.41.5",
+          "after": "2.50.1"
+        },
+        {
+          "package": "pydantic-settings",
+          "before": "2.13.1",
+          "after": "2.16.1"
+        },
+        {
+          "package": "pygments",
+          "before": "2.19.2",
+          "after": "2.21.0"
+        },
+        {
+          "package": "pyjwt",
+          "before": "2.12.1",
+          "after": "2.15.1"
+        },
+        {
+          "package": "pytest",
+          "before": "9.0.2",
+          "after": "9.1.1"
+        },
+        {
+          "package": "python-dotenv",
+          "before": "1.2.1",
+          "after": "1.2.4"
+        },
+        {
+          "package": "python-multipart",
+          "before": "0.0.22",
+          "after": "0.0.32"
+        },
+        {
+          "package": "requests",
+          "before": "2.32.5",
+          "after": "2.34.2"
+        },
+        {
+          "package": "starlette",
+          "before": "0.52.1",
+          "after": "1.10.0"
+        },
+        {
+          "package": "typing-extensions",
+          "before": "4.15.0",
+          "after": "4.16.0"
+        },
+        {
+          "package": "typing-inspection",
+          "before": "0.4.2",
+          "after": "0.4.4"
+        },
+        {
+          "package": "urllib3",
+          "before": "2.6.3",
+          "after": "2.8.0"
+        },
+        {
+          "package": "weasyprint",
+          "before": "68.1",
+          "after": "70.0"
+        }
+      ]
+    },
+    "etl": {
+      "lock_sha256_before": "1422de90a2128a69b18e84e76a052c72824cf2aa1f29e083cba3447be3eaa7c0",
+      "lock_sha256_after": "19539546402475f26a57ff6051b9e1dbfae0d0f15b4ac0fe37acf26651824015",
+      "before": {
+        "packages": 78,
+        "vulnerable_packages": 11,
+        "advisory_package_pairs": 66,
+        "skipped_packages": 0
+      },
+      "after": {
+        "packages": 78,
+        "vulnerable_packages": 0,
+        "advisory_package_pairs": 0,
+        "skipped_packages": 0
+      },
+      "before_findings": [
+        {
+          "package": "anyio",
+          "version": "4.12.1",
+          "advisories": [
+            "PYSEC-2026-4024",
+            "PYSEC-2026-4025"
+          ]
+        },
+        {
+          "package": "certifi",
+          "version": "2026.1.4",
+          "advisories": [
+            "PYSEC-2026-4320"
+          ]
+        },
+        {
+          "package": "cryptography",
+          "version": "46.0.5",
+          "advisories": [
+            "GHSA-537c-gmf6-5ccf",
+            "PYSEC-2026-35",
+            "PYSEC-2026-3552",
+            "PYSEC-2026-3553",
+            "PYSEC-2026-3554",
+            "PYSEC-2026-36"
+          ]
+        },
+        {
+          "package": "requests",
+          "version": "2.32.5",
+          "advisories": [
+            "PYSEC-2026-2275"
+          ]
+        },
+        {
+          "package": "idna",
+          "version": "3.11",
+          "advisories": [
+            "PYSEC-2026-215"
+          ]
+        },
+        {
+          "package": "urllib3",
+          "version": "2.6.3",
+          "advisories": [
+            "PYSEC-2026-141",
+            "PYSEC-2026-142",
+            "PYSEC-2026-4175",
+            "PYSEC-2026-4176",
+            "PYSEC-2026-4177"
+          ]
+        },
+        {
+          "package": "pyasn1",
+          "version": "0.6.2",
+          "advisories": [
+            "PYSEC-2026-2263",
+            "PYSEC-2026-3455",
+            "PYSEC-2026-3456",
+            "PYSEC-2026-3457"
+          ]
+        },
+        {
+          "package": "pydantic-settings",
+          "version": "2.13.1",
+          "advisories": [
+            "CVE-2026-58203"
+          ]
+        },
+        {
+          "package": "pypdf",
+          "version": "6.9.2",
+          "advisories": [
+            "CVE-2026-113786",
+            "CVE-2026-113789",
+            "CVE-2026-113790",
+            "CVE-2026-113791",
+            "CVE-2026-113792",
+            "CVE-2026-113793",
+            "CVE-2026-113794",
+            "CVE-2026-113795",
+            "CVE-2026-115572",
+            "CVE-2026-115580",
+            "CVE-2026-115585",
+            "CVE-2026-57204",
+            "PYSEC-2026-3004",
+            "PYSEC-2026-3006",
+            "PYSEC-2026-3007",
+            "PYSEC-2026-3009",
+            "PYSEC-2026-3010",
+            "PYSEC-2026-3011",
+            "PYSEC-2026-3016",
+            "PYSEC-2026-3018",
+            "PYSEC-2026-3020",
+            "PYSEC-2026-3021",
+            "PYSEC-2026-3022",
+            "PYSEC-2026-3025",
+            "PYSEC-2026-3026",
+            "PYSEC-2026-3610",
+            "PYSEC-2026-3611",
+            "PYSEC-2026-3612",
+            "PYSEC-2026-3613",
+            "PYSEC-2026-3655",
+            "PYSEC-2026-3656",
+            "PYSEC-2026-3910",
+            "PYSEC-2026-3911",
+            "PYSEC-2026-3912",
+            "PYSEC-2026-3913",
+            "PYSEC-2026-4153",
+            "PYSEC-2026-4154",
+            "PYSEC-2026-4155",
+            "PYSEC-2026-4156",
+            "PYSEC-2026-4157",
+            "PYSEC-2026-4158",
+            "PYSEC-2026-4159",
+            "PYSEC-2026-4160"
+          ]
+        },
+        {
+          "package": "pytest",
+          "version": "9.0.2",
+          "advisories": [
+            "PYSEC-2026-1845"
+          ]
+        },
+        {
+          "package": "python-dotenv",
+          "version": "1.2.1",
+          "advisories": [
+            "PYSEC-2026-2270"
+          ]
+        }
+      ],
+      "version_changes": [
+        {
+          "package": "anyio",
+          "before": "4.12.1",
+          "after": "4.15.1"
+        },
+        {
+          "package": "certifi",
+          "before": "2026.1.4",
+          "after": "2026.10.23"
+        },
+        {
+          "package": "cryptography",
+          "before": "46.0.5",
+          "after": "50.0.2"
+        },
+        {
+          "package": "grpcio",
+          "before": "1.78.1",
+          "after": "1.85.0"
+        },
+        {
+          "package": "grpcio-status",
+          "before": "1.78.1",
+          "after": "1.85.0"
+        },
+        {
+          "package": "idna",
+          "before": "3.11",
+          "after": "3.20"
+        },
+        {
+          "package": "pyasn1",
+          "before": "0.6.2",
+          "after": "0.6.5"
+        },
+        {
+          "package": "pydantic-settings",
+          "before": "2.13.1",
+          "after": "2.16.1"
+        },
+        {
+          "package": "pypdf",
+          "before": "6.9.2",
+          "after": "6.21.3"
+        },
+        {
+          "package": "pytest",
+          "before": "9.0.2",
+          "after": "9.1.1"
+        },
+        {
+          "package": "python-dotenv",
+          "before": "1.2.1",
+          "after": "1.2.4"
+        },
+        {
+          "package": "requests",
+          "before": "2.32.5",
+          "after": "2.34.2"
+        },
+        {
+          "package": "typing-extensions",
+          "before": "4.15.0",
+          "after": "4.16.0"
+        },
+        {
+          "package": "urllib3",
+          "before": "2.6.3",
+          "after": "2.8.0"
+        }
+      ]
+    }
+  }
+}
