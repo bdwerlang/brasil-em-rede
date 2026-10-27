@@ -36,11 +36,11 @@ async def test_search_alphanumeric_cnpj_uses_exact_forms(client: AsyncClient) ->
             new_callable=AsyncMock,
             return_value=[
                 {
-            "node": {"cnpj": "00.ABC.123/0001-35", "razao_social": "Example"},
+                    "node": {"cnpj": "00.ABC.123/0001-35", "razao_social": "Example"},
                     "node_labels": ["Company"],
                     "node_id": "4:company:1",
                     "score": 1.0,
-            "document_id": "00.ABC.123/0001-35",
+                    "document_id": "00.ABC.123/0001-35",
                 }
             ],
         ) as query,

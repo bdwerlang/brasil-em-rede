@@ -3,17 +3,17 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 
 from bracc_etl.pipelines.senado import SenadoPipeline, _make_expense_id, _parse_brl_value
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> SenadoPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return SenadoPipeline(driver=driver, data_dir=str(FIXTURES.parent))
 
 
@@ -188,7 +188,7 @@ class TestSenadoLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         expense_calls = [
@@ -202,7 +202,7 @@ class TestSenadoLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         company_calls = [
@@ -216,7 +216,7 @@ class TestSenadoLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         forneceu_calls = [
@@ -231,7 +231,7 @@ class TestSenadoLoad:
         pipeline.forneceu_rels = []
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         assert session_mock.run.call_count == 0
 
 
@@ -259,7 +259,7 @@ class TestSenatorLookupEnrichment:
                 json.dumps(parlamentares), encoding="utf-8"
             )
 
-            driver = MagicMock()
+            driver = make_driver()
             pipeline = SenadoPipeline(driver=driver, data_dir=tmpdir)
             lookup = pipeline._load_senator_lookup()
 
@@ -277,7 +277,7 @@ class TestSenatorLookupEnrichment:
             senado_dir = Path(tmpdir) / "senado"
             senado_dir.mkdir()
 
-            driver = MagicMock()
+            driver = make_driver()
             pipeline = SenadoPipeline(driver=driver, data_dir=tmpdir)
             lookup = pipeline._load_senator_lookup()
 
@@ -298,7 +298,7 @@ class TestSenatorLookupEnrichment:
                 json.dumps(parlamentares), encoding="utf-8"
             )
 
-            driver = MagicMock()
+            driver = make_driver()
             pipeline = SenadoPipeline(driver=driver, data_dir=tmpdir)
             pipeline._senator_lookup = pipeline._load_senator_lookup()
             # Manually set raw data with one row

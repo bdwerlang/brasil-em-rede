@@ -252,7 +252,7 @@ async def test_entity_lookup_alphanumeric_cnpj(client: AsyncClient) -> None:
         new_callable=AsyncMock,
         return_value=[
             {
-        "e": {"cnpj": "00.ABC.123/0001-35", "razao_social": "Example"},
+                "e": {"cnpj": "00.ABC.123/0001-35", "razao_social": "Example"},
                 "entity_labels": ["Company"],
                 "entity_id": "4:company:1",
             }
