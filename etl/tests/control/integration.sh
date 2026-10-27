@@ -4,11 +4,12 @@ set -euo pipefail
 root=$(git rev-parse --show-toplevel)
 name="bracc-u03-test-${$}-${RANDOM}"
 image="bracc-u03-image-${$}-${RANDOM}:test"
+restore_name="${name}-restore"
 a=$(mktemp -d)
 chmod 755 "$a"
 mkdir "$a/socket"
 chmod 777 "$a/socket"
-cleanup() { docker stop -t 10 "$name" >/dev/null 2>&1 || true; docker rm -v "$name" >/dev/null 2>&1 || true; docker image rm "$image" >/dev/null 2>&1 || true; rm -rf "$a"; }
+cleanup() { docker stop -t 10 "$restore_name" >/dev/null 2>&1 || true; docker rm -v "$restore_name" >/dev/null 2>&1 || true; docker stop -t 10 "$name" >/dev/null 2>&1 || true; docker rm -v "$name" >/dev/null 2>&1 || true; docker image rm "$image" >/dev/null 2>&1 || true; rm -rf "$a"; }
 trap cleanup EXIT
 docker build -t "$image" "$root/infra/postgres" >/dev/null
 docker run -d --name "$name" --network none -v "$a/socket:/var/run/postgresql" -e POSTGRES_PASSWORD=synthetic-only "$image" >/dev/null
@@ -56,12 +57,14 @@ wait "$first"; wait "$second"
 [[ $(cat "$a/one" "$a/two" | rg -c '^1$') == 1 ]]
 owner=$(sql -Atc "SELECT owner FROM control.partition_lease WHERE partition_id='p'")
 if [[ "$owner" == 10000000-0000-0000-0000-000000000001 ]]; then worker=u03_w1; else worker=u03_w2; fi
-sql -c "SET SESSION AUTHORIZATION $worker; SELECT control.finalize_manifest('20000000-0000-0000-0000-000000000001','p',ARRAY['00000000-0000-0000-0000-000000000001'::uuid],'$owner',1)"
+sql -c "SET SESSION AUTHORIZATION $worker; SELECT control.start_attempt('70000000-0000-0000-0000-000000000001','synthetic','80000000-0000-0000-0000-000000000001','p','$owner',1)"
+sql -c "SET SESSION AUTHORIZATION $worker; SELECT control.finalize_manifest('20000000-0000-0000-0000-000000000001','p',ARRAY['00000000-0000-0000-0000-000000000001'::uuid],'$owner',1,'80000000-0000-0000-0000-000000000001')"
 # Duplicate finalization fails under the same token.
-if sql -c "SET SESSION AUTHORIZATION $worker; SELECT control.finalize_manifest('20000000-0000-0000-0000-000000000002','p',ARRAY['00000000-0000-0000-0000-000000000001'::uuid],'$owner',1)" 2>/dev/null; then exit 1; fi
+if sql -c "SET SESSION AUTHORIZATION $worker; SELECT control.finalize_manifest('20000000-0000-0000-0000-000000000002','p',ARRAY['00000000-0000-0000-0000-000000000001'::uuid],'$owner',1,'80000000-0000-0000-0000-000000000001')" 2>/dev/null; then exit 1; fi
 sql -c "UPDATE control.partition_lease SET expires_at=clock_timestamp()-interval '1 second' WHERE partition_id='p'"
-sql -c "SET SESSION AUTHORIZATION u03_w3; SELECT control.acquire_lease('p','10000000-0000-0000-0000-000000000003',interval '1 hour')"
-if sql -c "SET SESSION AUTHORIZATION $worker; SELECT control.finalize_manifest('20000000-0000-0000-0000-000000000002','p',ARRAY['00000000-0000-0000-0000-000000000001'::uuid],'$owner',1)" 2>/dev/null; then exit 1; fi
+sql -c "SET SESSION AUTHORIZATION u03_w3; SELECT control.acquire_lease('p','10000000-0000-0000-0000-000000000003',interval '1 hour'); SELECT control.start_attempt('70000000-0000-0000-0000-000000000001','synthetic','80000000-0000-0000-0000-000000000002','p','10000000-0000-0000-0000-000000000003',2)"
+if sql -c "SET SESSION AUTHORIZATION $worker; SELECT control.finalize_manifest('20000000-0000-0000-0000-000000000002','p',ARRAY['00000000-0000-0000-0000-000000000001'::uuid],'$owner',1,'80000000-0000-0000-0000-000000000001')" 2>/dev/null; then exit 1; fi
+if sql -c "SET SESSION AUTHORIZATION u03_w3; SELECT control.finalize_manifest('20000000-0000-0000-0000-000000000009','p',ARRAY['00000000-0000-0000-0000-000000000001'::uuid],'10000000-0000-0000-0000-000000000003',2,'80000000-0000-0000-0000-000000000001')" 2>/dev/null; then exit 1; fi
 # A previous active bundle remains visible through failed promotion.
 # This synthetic object has no catalog row and cannot change the pointer.
 docker exec "$name" sh -c "printf orphan > /tmp/orphan-object"
@@ -72,15 +75,16 @@ INSERT INTO control.release_partition VALUES ('30000000-0000-0000-0000-000000000
 INSERT INTO control.release_manifest VALUES ('30000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000001');
 UPDATE control.release_bundle SET status='verified' WHERE id='30000000-0000-0000-0000-000000000002';
 SQL
-if sql -c "SET SESSION AUTHORIZATION $worker; SELECT control.promote_release('30000000-0000-0000-0000-000000000002','30000000-0000-0000-0000-000000000001','p','$owner',1)" 2>/dev/null; then exit 1; fi
+if sql -c "SET SESSION AUTHORIZATION $worker; SELECT control.promote_release('30000000-0000-0000-0000-000000000002','30000000-0000-0000-0000-000000000001','p','$owner',1,'80000000-0000-0000-0000-000000000001')" 2>/dev/null; then exit 1; fi
 [[ $(sql -Atc 'SELECT release_id FROM control.active_release') == 30000000-0000-0000-0000-000000000001 ]]
 sql <<'SQL'
-SET SESSION AUTHORIZATION u03_w3; SELECT control.finalize_manifest('20000000-0000-0000-0000-000000000002','p',ARRAY['00000000-0000-0000-0000-000000000001'::uuid],'10000000-0000-0000-0000-000000000003',2); RESET SESSION AUTHORIZATION;
+SET SESSION AUTHORIZATION u03_w3; SELECT control.finalize_manifest('20000000-0000-0000-0000-000000000002','p',ARRAY['00000000-0000-0000-0000-000000000001'::uuid],'10000000-0000-0000-0000-000000000003',2,'80000000-0000-0000-0000-000000000002'); RESET SESSION AUTHORIZATION;
 INSERT INTO control.release_bundle(id,status,graph_target,contract_version,identity_version) VALUES ('30000000-0000-0000-0000-000000000003','draft','g3','v1','v1');
 INSERT INTO control.partition VALUES ('q','d');
 INSERT INTO control.artifact VALUES ('00000000-0000-0000-0000-000000000002','q','raw/s/d/q/' || repeat('b',64),repeat('b',64),'public');
 SET SESSION AUTHORIZATION u03_w3; SELECT control.acquire_lease('q','10000000-0000-0000-0000-000000000003',interval '1 hour');
-SELECT control.finalize_manifest('20000000-0000-0000-0000-000000000003','q',ARRAY['00000000-0000-0000-0000-000000000002'::uuid],'10000000-0000-0000-0000-000000000003',1); RESET SESSION AUTHORIZATION;
+SELECT control.start_attempt('70000000-0000-0000-0000-000000000001','synthetic','80000000-0000-0000-0000-000000000003','q','10000000-0000-0000-0000-000000000003',1);
+SELECT control.finalize_manifest('20000000-0000-0000-0000-000000000003','q',ARRAY['00000000-0000-0000-0000-000000000002'::uuid],'10000000-0000-0000-0000-000000000003',1,'80000000-0000-0000-0000-000000000003'); RESET SESSION AUTHORIZATION;
 INSERT INTO control.release_partition VALUES ('30000000-0000-0000-0000-000000000003','p'),('30000000-0000-0000-0000-000000000003','q');
 INSERT INTO control.release_manifest VALUES ('30000000-0000-0000-0000-000000000003','20000000-0000-0000-0000-000000000003');
 INSERT INTO control.quality_result VALUES ('40000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000003',true,'{}');
@@ -125,7 +129,8 @@ with psycopg.connect(host=sys.argv[1], user="u03_w3", dbname="postgres") as conn
         assert token == 1
         catalog.artifact(u("00000000-0000-0000-0000-000000000003"), "r", "raw/s/d/r/" + "c" * 64, "c" * 64, "public")
         catalog.artifact(u("00000000-0000-0000-0000-000000000004"), "r", "parquet/d/v1/r/" + "d" * 64 + ".parquet", "d" * 64, "public")
-        catalog.manifest(u("20000000-0000-0000-0000-000000000004"), "r", [u("00000000-0000-0000-0000-000000000003"), u("00000000-0000-0000-0000-000000000004")], u("10000000-0000-0000-0000-000000000003"), token)
+        catalog.start_attempt(u("70000000-0000-0000-0000-000000000001"), "synthetic", u("80000000-0000-0000-0000-000000000004"), "r", u("10000000-0000-0000-0000-000000000003"), token)
+        catalog.manifest(u("20000000-0000-0000-0000-000000000004"), "r", [u("00000000-0000-0000-0000-000000000003"), u("00000000-0000-0000-0000-000000000004")], u("10000000-0000-0000-0000-000000000003"), token, u("80000000-0000-0000-0000-000000000004"))
         catalog.quality(u("40000000-0000-0000-0000-000000000003"), u("20000000-0000-0000-0000-000000000004"), True, {})
         catalog.projection(u("50000000-0000-0000-0000-000000000003"), u("60000000-0000-0000-0000-000000000003"), u("20000000-0000-0000-0000-000000000004"), "v1")
         catalog.bundle(u("30000000-0000-0000-0000-000000000004"), "g4", "v1", "v1", [("r", u("20000000-0000-0000-0000-000000000004"))])
@@ -146,7 +151,8 @@ INSERT INTO control.partition VALUES ('s','d');
 INSERT INTO control.artifact VALUES ('00000000-0000-0000-0000-000000000005','s','raw/s/d/s/' || repeat('e',64),repeat('e',64),'public');
 SET SESSION AUTHORIZATION u03_w3;
 SELECT control.acquire_lease('s','10000000-0000-0000-0000-000000000003',interval '1 hour');
-SELECT control.finalize_manifest('20000000-0000-0000-0000-000000000005','s',ARRAY['00000000-0000-0000-0000-000000000005'::uuid],'10000000-0000-0000-0000-000000000003',1);
+SELECT control.start_attempt('70000000-0000-0000-0000-000000000001','synthetic','80000000-0000-0000-0000-000000000005','s','10000000-0000-0000-0000-000000000003',1);
+SELECT control.finalize_manifest('20000000-0000-0000-0000-000000000005','s',ARRAY['00000000-0000-0000-0000-000000000005'::uuid],'10000000-0000-0000-0000-000000000003',1,'80000000-0000-0000-0000-000000000005');
 RESET SESSION AUTHORIZATION;
 INSERT INTO control.quality_result VALUES ('40000000-0000-0000-0000-000000000005','20000000-0000-0000-0000-000000000005',true,'{}'),('40000000-0000-0000-0000-000000000006','20000000-0000-0000-0000-000000000005',false,'{}');
 INSERT INTO control.projection_job VALUES ('50000000-0000-0000-0000-000000000005','20000000-0000-0000-0000-000000000005','v1');
@@ -158,11 +164,36 @@ UPDATE control.release_bundle SET status='verified' WHERE id='30000000-0000-0000
 SQL
 if sql -c "SET SESSION AUTHORIZATION u03_w3; SELECT control.promote_release('30000000-0000-0000-0000-000000000005','30000000-0000-0000-0000-000000000004','s','10000000-0000-0000-0000-000000000003',1)" 2>/dev/null; then exit 1; fi
 if sql -c "INSERT INTO control.quality_result VALUES ('40000000-0000-0000-0000-000000000007','20000000-0000-0000-0000-000000000005',true,'{}')" 2>/dev/null; then exit 1; fi
-docker exec "$name" pg_dump -U postgres -Fc -f /tmp/control.dump postgres
-docker exec "$name" createdb -U postgres restored
-docker exec "$name" pg_restore -U postgres -d restored --exit-on-error /tmp/control.dump
-[[ $(sql -d restored -Atc 'SELECT count(*) FROM control.schema_migration') == 3 ]]
-[[ $(sql -Atc 'SELECT release_id FROM control.active_release') == $(sql -d restored -Atc 'SELECT release_id FROM control.active_release') ]]
-[[ $(sql -Atc "SELECT string_agg(manifest_id::text || ':' || artifact_id::text, ',' ORDER BY manifest_id, artifact_id) FROM control.manifest_artifact") == $(sql -d restored -Atc "SELECT string_agg(manifest_id::text || ':' || artifact_id::text, ',' ORDER BY manifest_id, artifact_id) FROM control.manifest_artifact") ]]
-[[ $(sql -Atc "SELECT string_agg(release_id::text || ':' || manifest_id::text, ',' ORDER BY release_id, manifest_id) FROM control.release_manifest") == $(sql -d restored -Atc "SELECT string_agg(release_id::text || ':' || manifest_id::text, ',' ORDER BY release_id, manifest_id) FROM control.release_manifest") ]]
+docker exec "$name" pg_dumpall -U postgres --globals-only > "$a/globals.sql"
+docker exec "$name" pg_dump -U postgres -Fc postgres > "$a/control.dump"
+docker run -d --name "$restore_name" --network none -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=synthetic-only "$image" >/dev/null
+restore_ready=false
+for _ in {1..60}; do
+  if docker logs "$restore_name" 2>&1 | grep -Fq 'PostgreSQL init process complete; ready for start up.' &&
+    docker exec "$restore_name" pg_isready -U postgres >/dev/null 2>&1; then
+    restore_ready=true
+    break
+  fi
+  sleep 1
+done
+[[ "$restore_ready" == true ]]
+# The bootstrap postgres role already exists; retain its ALTER ROLE and all grants.
+sed '/^CREATE ROLE postgres;$/d' "$a/globals.sql" > "$a/globals-restore.sql"
+docker exec -i "$restore_name" psql -X -q -U postgres -d postgres -v ON_ERROR_STOP=1 < "$a/globals-restore.sql"
+docker exec "$restore_name" createdb -U postgres restored
+docker exec -i "$restore_name" pg_restore -U postgres -d restored --exit-on-error < "$a/control.dump"
+restored() { docker exec -i "$restore_name" psql -X -q -U postgres -d restored -v ON_ERROR_STOP=1 "$@"; }
+[[ $(restored -Atc 'SELECT count(*) FROM control.schema_migration') == 4 ]]
+[[ $(sql -Atc 'SELECT release_id FROM control.active_release') == $(restored -Atc 'SELECT release_id FROM control.active_release') ]]
+[[ $(sql -Atc "SELECT string_agg(id::text || ':' || run_id::text || ':' || partition_id || ':' || owner::text || ':' || token::text, ',' ORDER BY id) FROM control.run_attempt") == $(restored -Atc "SELECT string_agg(id::text || ':' || run_id::text || ':' || partition_id || ':' || owner::text || ':' || token::text, ',' ORDER BY id) FROM control.run_attempt") ]]
+[[ $(sql -Atc "SELECT string_agg(id::text || ':' || run_attempt_id::text, ',' ORDER BY id) FROM control.partition_manifest") == $(restored -Atc "SELECT string_agg(id::text || ':' || run_attempt_id::text, ',' ORDER BY id) FROM control.partition_manifest") ]]
+[[ $(sql -Atc "SELECT string_agg(manifest_id::text || ':' || artifact_id::text, ',' ORDER BY manifest_id, artifact_id) FROM control.manifest_artifact") == $(restored -Atc "SELECT string_agg(manifest_id::text || ':' || artifact_id::text, ',' ORDER BY manifest_id, artifact_id) FROM control.manifest_artifact") ]]
+[[ $(sql -Atc "SELECT string_agg(release_id::text || ':' || manifest_id::text, ',' ORDER BY release_id, manifest_id) FROM control.release_manifest") == $(restored -Atc "SELECT string_agg(release_id::text || ':' || manifest_id::text, ',' ORDER BY release_id, manifest_id) FROM control.release_manifest") ]]
+restored -c "SET SESSION AUTHORIZATION u03_reader; SELECT release_id FROM control.active_release"
+if restored -c "SET SESSION AUTHORIZATION u03_reader; UPDATE control.outbox SET acknowledged_at=clock_timestamp()" 2>/dev/null; then exit 1; fi
+if restored -c "SET SESSION AUTHORIZATION u03_w3; UPDATE control.outbox SET acknowledged_at=clock_timestamp()" 2>/dev/null; then exit 1; fi
+[[ $(restored -Atc "SELECT owner FROM control.worker_identity WHERE login='u03_w3'") == 10000000-0000-0000-0000-000000000003 ]]
+[[ $(restored -Atc "SELECT has_column_privilege('u03_projector','control.outbox','acknowledged_at','UPDATE') AND NOT has_column_privilege('u03_w3','control.outbox','acknowledged_at','UPDATE')") == t ]]
+restored -c "SET SESSION AUTHORIZATION u03_w3; SELECT control.start_attempt('70000000-0000-0000-0000-000000000001','synthetic','80000000-0000-0000-0000-000000000006','s','10000000-0000-0000-0000-000000000003',1)"
+restored -c "SET SESSION AUTHORIZATION u03_projector; SELECT id FROM control.outbox"
 printf 'U03 synthetic integration passed\n'

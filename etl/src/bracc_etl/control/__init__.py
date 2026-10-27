@@ -25,12 +25,13 @@ def acquire_lease(cursor: Cursor, partition: str, owner: UUID, duration: timedel
 
 
 def finalize_manifest(
-    cursor: Cursor, manifest: UUID, partition: str, artifacts: list[UUID], owner: UUID, token: int
+    cursor: Cursor, manifest: UUID, partition: str, artifacts: list[UUID], owner: UUID, token: int,
+    attempt: UUID
 ) -> None:
     """Register an immutable manifest while its lease remains valid."""
     cursor.execute(
-        "SELECT control.finalize_manifest(%s, %s, %s, %s, %s)",
-        (manifest, partition, artifacts, owner, token),
+        "SELECT control.finalize_manifest(%s, %s, %s, %s, %s, %s)",
+        (manifest, partition, artifacts, owner, token, attempt),
     )
 
 

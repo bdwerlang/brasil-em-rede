@@ -29,12 +29,21 @@ class Catalog:
             (artifact, partition, key, sha256, access),
         )
 
-    def manifest(
-        self, manifest: UUID, partition: str, artifacts: list[UUID], owner: UUID, token: int
+    def start_attempt(
+        self, run: UUID, key: str, attempt: UUID, partition: str, owner: UUID, token: int
     ) -> None:
         self.connection.execute(
-            "SELECT control.finalize_manifest(%s, %s, %s, %s, %s)",
-            (manifest, partition, artifacts, owner, token),
+            "SELECT control.start_attempt(%s, %s, %s, %s, %s, %s)",
+            (run, key, attempt, partition, owner, token),
+        )
+
+    def manifest(
+        self, manifest: UUID, partition: str, artifacts: list[UUID], owner: UUID, token: int,
+        attempt: UUID
+    ) -> None:
+        self.connection.execute(
+            "SELECT control.finalize_manifest(%s, %s, %s, %s, %s, %s)",
+            (manifest, partition, artifacts, owner, token, attempt),
         )
 
     def quality(self, result: UUID, manifest: UUID, passed: bool, evidence: dict[str, Any]) -> None:
