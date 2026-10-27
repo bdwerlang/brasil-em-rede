@@ -19,6 +19,7 @@ from bracc_etl.base import Pipeline
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
     cap_contract_value,
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     normalize_cnpj,
@@ -103,11 +104,10 @@ class ComprasnetPipeline(Pipeline):
         for rec in self._raw_records:
             # Extract supplier CNPJ
             ni_fornecedor = str(rec.get("niFornecedor", "")).strip()
-            cnpj_digits = normalize_cnpj(ni_fornecedor)
 
-            # Only process companies (PJ with 14-digit CNPJ)
+            # Only process companies with a structurally complete CNPJ.
             tipo_pessoa = str(rec.get("tipoPessoa", "")).strip()
-            if tipo_pessoa != "PJ" or len(cnpj_digits) != 14:
+            if tipo_pessoa != "PJ" or classify_document(ni_fornecedor) != "cnpj_valid":
                 skipped_no_cnpj += 1
                 continue
 
