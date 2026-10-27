@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlsplit
 from uuid import uuid4
 
@@ -163,7 +164,7 @@ class Pipeline(ABC):
             _active_load.reset(token)
             self.empty_load_evidence = None
 
-    def run_direct_write(self, query: str, parameters: dict | None = None) -> None:
+    def run_direct_write(self, query: str, parameters: dict[str, Any] | None = None) -> None:
         """Execute an auto-commit write and record its consumed Neo4j summary."""
         try:
             with self.driver.session(database=self.neo4j_database) as session:
