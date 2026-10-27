@@ -25,6 +25,12 @@ Os itens F01–F10 têm escopo e critérios completos na
 [ficha para cada fonte](../implementation/README.md) e
 [21 planos de cruzamentos](../implementation/crossings.md).
 
+A [unificação das bases](../unification/README.md) detalha como as fontes
+convergem para identidades, fatos e consultas comuns. Suas doze etapas reutilizam
+as issues de fundação/piloto existentes e incluem o mapa de todas as fontes e
+o procedimento de migração/publicação. Os novos serviços estão propostos, sem
+implantação realizada por esse plano.
+
 ## Ordem de execução
 
 1. Registrar a linha de base dos testes e fechar as falhas que impedem o desenvolvimento.

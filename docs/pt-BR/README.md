@@ -22,6 +22,11 @@ A primeira entrega será um piloto reproduzível **CNPJ → sanções → contra
 públicos**, com evidência de origem e data. O trabalho começa pela fundação
 registrada no [roteiro](../project/README.md). Ainda não há serviço de produção.
 
+O [plano de unificação das bases](../unification/README.md) define identidades,
+evidências, responsabilidades de armazenamento, migração, reversão e a rota de
+integração das 169 fontes. São doze etapas de implementação propostas, com
+dependências e critérios de aceite.
+
 ## O Que Esta Incluido Neste Repositorio Publico
 
 - Código da API, interface, ETL, esquema Neo4j e fixtures sintéticas.
