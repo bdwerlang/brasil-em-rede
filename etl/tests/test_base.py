@@ -1,5 +1,6 @@
 import hashlib
 import json
+from contextlib import suppress
 from unittest.mock import MagicMock
 
 import pytest
@@ -81,15 +82,33 @@ def test_empty_load_requires_evidence_and_records_failure() -> None:
 def test_empty_load_with_evidence_is_recorded(tmp_path) -> None:
     pipeline = DummyPipeline()
     pipeline.load = lambda: None
-    content = json.dumps({"source_id": "cnpj", "record_count": 0}).encode()
+    raw = b"[]"
+    artifact = tmp_path / "page.json"
+    artifact.write_bytes(raw)
+    source_url = "https://example.test/empty.json"
+    manifest = {
+        "source_id": "cnpj",
+        "pages": {
+            artifact.name: {
+                "source_sha256": hashlib.sha256(source_url.encode()).hexdigest(),
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "bytes": len(raw),
+            }
+        },
+    }
+    content = json.dumps(manifest).encode()
     path = tmp_path / "manifest.json"
     path.write_bytes(content)
-    pipeline.empty_load_evidence = EmptyLoadEvidence(str(path), hashlib.sha256(content).hexdigest())
+    pipeline.empty_load_evidence = EmptyLoadEvidence(
+        str(path), hashlib.sha256(content).hexdigest(), str(artifact), source_url, "json"
+    )
+    pipeline.configured_source_url = source_url
     pipeline.run()
     session = pipeline.driver.session.return_value.__enter__.return_value
     params = session.run.call_args.args[1]
     assert params["status"] == "loaded"
-    assert params["empty_load_evidence_sha256"] == pipeline.empty_load_evidence.sha256
+    assert params["empty_load_evidence_sha256"] == hashlib.sha256(content).hexdigest()
+    assert pipeline.empty_load_evidence is None
 
 
 def test_pipeline_does_not_succeed_when_run_status_cannot_be_persisted() -> None:
@@ -109,3 +128,99 @@ def test_empty_manifest_hash_must_match(tmp_path) -> None:
     pipeline.empty_load_evidence = EmptyLoadEvidence(str(path), "0" * 64)
     with pytest.raises(ValueError, match="empty load requires evidence"):
         pipeline.run()
+
+
+def test_empty_evidence_rejects_nonempty_or_tampered_artifact(tmp_path) -> None:
+    raw = b"[]"
+    artifact = tmp_path / "page.json"
+    artifact.write_bytes(raw)
+    url = "https://example.test/data"
+    manifest = {
+        "source_id": "cnpj",
+        "pages": {
+            artifact.name: {
+                "source_sha256": hashlib.sha256(url.encode()).hexdigest(),
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "bytes": len(raw),
+            }
+        },
+    }
+    contents = json.dumps(manifest).encode()
+    path = tmp_path / "manifest.json"
+    path.write_bytes(contents)
+    evidence = EmptyLoadEvidence(
+        str(path), hashlib.sha256(contents).hexdigest(), str(artifact), url, "json"
+    )
+    assert evidence.verify("cnpj", url)
+    artifact.write_bytes(b"[1]")
+    assert not evidence.verify("cnpj", url)
+    assert not EmptyLoadEvidence(
+        str(path),
+        hashlib.sha256(contents).hexdigest(),
+        str(artifact),
+        "https://other.test/data",
+        "json",
+    ).verify("cnpj", url)
+
+
+def test_untracked_direct_write_fails_closed() -> None:
+    pipeline = DummyPipeline()
+
+    def load():
+        pipeline.mark_untracked_write()
+
+    pipeline.load = load
+    with pytest.raises(ValueError, match="untracked writes"):
+        pipeline.run()
+
+
+def test_caught_batch_failure_cannot_promote() -> None:
+    pipeline = DummyPipeline()
+
+    def load():
+        session = pipeline.driver.session.return_value.__enter__.return_value
+        tx = session.begin_transaction.return_value.__enter__.return_value
+        tx.run.side_effect = RuntimeError("batch failure")
+        with suppress(RuntimeError):
+            Neo4jBatchLoader(pipeline.driver).load_nodes("Test", [{"id": 1}], "id")
+
+    pipeline.load = load
+    with pytest.raises(ValueError, match="failed batches"):
+        pipeline.run()
+
+
+@pytest.mark.parametrize("url", ["ftp://example.test/data.csv", "http://example.test/data.csv"])
+def test_empty_csv_evidence_matches_configured_source(tmp_path, url) -> None:
+    artifact = tmp_path / "page.csv"
+    raw = b"id,name\n"
+    artifact.write_bytes(raw)
+    manifest = {
+        "source_id": "cnpj",
+        "pages": {
+            artifact.name: {
+                "source_sha256": hashlib.sha256(url.encode()).hexdigest(),
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "bytes": len(raw),
+            }
+        },
+    }
+    content = json.dumps(manifest).encode()
+    path = tmp_path / "manifest.json"
+    path.write_bytes(content)
+    evidence = EmptyLoadEvidence(
+        str(path), hashlib.sha256(content).hexdigest(), str(artifact), url, "csv"
+    )
+    assert evidence.verify("cnpj", url)
+    assert not evidence.verify("cnpj", "https://example.test/data.csv")
+
+
+def test_reused_pipeline_resets_running_metrics() -> None:
+    pipeline = DummyPipeline()
+    pipeline.run()
+    pipeline.run()
+    session = pipeline.driver.session.return_value.__enter__.return_value
+    running = [
+        call.args[1] for call in session.run.call_args_list if call.args[1]["status"] == "running"
+    ]
+    assert len(running) == 2
+    assert all(params["submitted"] == params["rows_loaded"] == 0 for params in running)

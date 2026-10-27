@@ -1,3 +1,4 @@
+import csv
 import hashlib
 import json
 import logging
@@ -6,6 +7,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 from uuid import uuid4
 
 from neo4j import Driver
@@ -18,23 +20,50 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class EmptyLoadEvidence:
-    """A JSON source manifest with source_id and record_count, identified by SHA-256."""
+    """An acquisition manifest and its actual JSON or CSV source artifact.
+
+    The caller supplies the configured source URL independently of the manifest.
+    The hashes link the manifest to that URL and the observed artifact bytes.
+    """
 
     path: str
     sha256: str
+    artifact_path: str = ""
+    source_url: str = ""
+    artifact_format: str = ""
 
-    def verify(self, source_id: str) -> bool:
+    def verify(self, source_id: str, configured_source_url: str | None = None) -> bool:
         try:
             content = Path(self.path).read_bytes()
+            artifact = Path(self.artifact_path)
+            raw = artifact.read_bytes()
             manifest = json.loads(content)
-            return (
+            record = manifest["pages"][artifact.name]
+            url = urlsplit(self.source_url)
+            if not (
                 hashlib.sha256(content).hexdigest() == self.sha256
-                and isinstance(manifest, dict)
-                and manifest.get("source_id") == source_id
-                and type(manifest.get("record_count")) is int
-                and manifest["record_count"] == 0
-            )
-        except (OSError, ValueError, UnicodeDecodeError):
+                and manifest["source_id"] == source_id
+                and self.source_url == configured_source_url
+                and url.scheme in {"http", "https", "ftp"}
+                and bool(url.hostname)
+                and not url.username
+                and not url.password
+                and record["source_sha256"] == hashlib.sha256(self.source_url.encode()).hexdigest()
+                and record["sha256"] == hashlib.sha256(raw).hexdigest()
+                and record["bytes"] == len(raw)
+            ):
+                return False
+            if self.artifact_format == "json":
+                data = json.loads(raw)
+                return isinstance(data, list) and len(data) == 0
+            if self.artifact_format == "csv":
+                import io
+
+                reader = csv.reader(io.StringIO(raw.decode("utf-8-sig"), newline=""), strict=True)
+                header = next(reader, None)
+                return bool(header) and next(reader, None) is None
+            return False
+        except (OSError, ValueError, TypeError, KeyError, UnicodeDecodeError, csv.Error):
             return False
 
 
@@ -63,6 +92,7 @@ class Pipeline(ABC):
         self.rows_loaded: int = 0
         # Pipelines that legitimately load no rows must provide auditable evidence.
         self.empty_load_evidence: EmptyLoadEvidence | None = None
+        self.configured_source_url: str | None = None
         self.load_metrics = LoadMetrics()
         self.source_identity = source_aliases().for_pipeline(self.name, self.source_id)
         source_key = getattr(self, "source_id", getattr(self, "name", "unknown_source"))
@@ -84,8 +114,10 @@ class Pipeline(ABC):
         """Execute the full ETL pipeline."""
         self.run_id = f"{self.source_id}_{uuid4().hex}"
         started_at = datetime.now(tz=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-        self._upsert_ingestion_run(status="running", started_at=started_at)
         self.load_metrics = LoadMetrics()
+        self.rows_in = 0
+        self.rows_loaded = 0
+        self._upsert_ingestion_run(status="running", started_at=started_at)
         token = _active_load.set((self.driver, self.load_metrics))
         try:
             logger.info("[%s] Starting extraction...", self.name)
@@ -95,13 +127,18 @@ class Pipeline(ABC):
             logger.info("[%s] Starting load...", self.name)
             self.load()
             self._sync_load_metrics()
+            if self.load_metrics.failed_batches or self.load_metrics.untracked_writes:
+                raise ValueError("load has failed batches or untracked writes")
             if (
                 self.rows_loaded == 0
                 and self.load_metrics.generic_updates == 0
+                and self.load_metrics.direct_updates == 0
                 and not (
                     self.load_metrics.submitted == 0
                     and isinstance(self.empty_load_evidence, EmptyLoadEvidence)
-                    and self.empty_load_evidence.verify(self.source_identity.source_id)
+                    and self.empty_load_evidence.verify(
+                        self.source_identity.source_id, self.configured_source_url
+                    )
                 )
             ):
                 raise ValueError("empty load requires evidence")
@@ -124,6 +161,34 @@ class Pipeline(ABC):
             raise
         finally:
             _active_load.reset(token)
+            self.empty_load_evidence = None
+
+    def run_direct_write(self, query: str, parameters: dict | None = None) -> None:
+        """Execute an auto-commit write and record its consumed Neo4j summary."""
+        try:
+            with self.driver.session(database=self.neo4j_database) as session:
+                summary = session.run(query, parameters or {}).consume()
+            counters = summary.counters
+            with self.load_metrics._lock:
+                self.load_metrics.nodes_created += counters.nodes_created
+                self.load_metrics.relationships_created += counters.relationships_created
+                self.load_metrics.direct_updates += (
+                    counters.nodes_created
+                    + counters.relationships_created
+                    + counters.nodes_deleted
+                    + counters.relationships_deleted
+                    + counters.properties_set
+                    + counters.labels_added
+                    + counters.labels_removed
+                )
+        except Exception:
+            self.mark_untracked_write()
+            raise
+
+    def mark_untracked_write(self) -> None:
+        """Fail closed when a direct write has no committed summary."""
+        with self.load_metrics._lock:
+            self.load_metrics.untracked_writes += 1
 
     def _sync_load_metrics(self) -> None:
         self.rows_loaded = self.load_metrics.verified_rows
@@ -152,6 +217,10 @@ class Pipeline(ABC):
             "    r.rows_loaded = $rows_loaded, "
             "    r.empty_load_evidence_path = $empty_load_evidence_path, "
             "    r.empty_load_evidence_sha256 = $empty_load_evidence_sha256, "
+            "    r.empty_load_artifact_path = $empty_load_artifact_path, "
+            "    r.empty_load_source_sha256 = $empty_load_source_sha256, "
+            "    r.failed_batches = $failed_batches, r.direct_updates = $direct_updates, "
+            "    r.untracked_writes = $untracked_writes, "
             "    r.submitted = $submitted, r.attempts = $attempts, "
             "    r.rejected = $rejected, r.committed_rows = $committed_rows, "
             "    r.verified_rows = $verified_rows, r.generic_updates = $generic_updates, "
@@ -182,7 +251,17 @@ class Pipeline(ABC):
                 if isinstance(self.empty_load_evidence, EmptyLoadEvidence)
                 else None
             ),
-            **vars(self.load_metrics),
+            "empty_load_artifact_path": (
+                self.empty_load_evidence.artifact_path
+                if isinstance(self.empty_load_evidence, EmptyLoadEvidence)
+                else None
+            ),
+            "empty_load_source_sha256": (
+                hashlib.sha256(self.empty_load_evidence.source_url.encode()).hexdigest()
+                if isinstance(self.empty_load_evidence, EmptyLoadEvidence)
+                else None
+            ),
+            **{k: v for k, v in vars(self.load_metrics).items() if not k.startswith("_")},
         }
         with self.driver.session(database=self.neo4j_database) as session:
             session.run(query, params).consume()
