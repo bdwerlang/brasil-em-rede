@@ -12,10 +12,21 @@ cleanup() { docker stop -t 10 "$name" >/dev/null 2>&1 || true; docker rm -v "$na
 trap cleanup EXIT
 docker build -t "$image" "$root/infra/postgres" >/dev/null
 docker run -d --name "$name" --network none -v "$a/socket:/var/run/postgresql" -e POSTGRES_PASSWORD=synthetic-only "$image" >/dev/null
+# The entrypoint starts and stops a temporary server during initialization.
+# Wait for its completion message before testing the final server's socket.
+ready=false
 for _ in {1..60}; do
-  if docker exec "$name" pg_isready -U postgres >/dev/null 2>&1; then break; fi
+  if docker logs "$name" 2>&1 | grep -Fq 'PostgreSQL init process complete; ready for start up.' &&
+    docker exec "$name" pg_isready -U postgres >/dev/null 2>&1; then
+    ready=true
+    break
+  fi
   sleep 1
 done
+if [[ "$ready" != true ]]; then
+  echo "PostgreSQL final server did not become ready" >&2
+  exit 1
+fi
 sql() { docker exec -i "$name" psql -X -q -U postgres -v ON_ERROR_STOP=1 "$@"; }
 for file in "$root"/infra/postgres/migrations/*.sql; do sql < "$file"; done
 sql < "$root/etl/tests/control/fixture.sql"
