@@ -9,8 +9,8 @@ from bracc_etl.base import Pipeline
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
     format_cnpj,
+    normalize_cnpj,
     normalize_name,
-    strip_document,
 )
 
 if TYPE_CHECKING:
@@ -65,7 +65,7 @@ class DatasusPipeline(Pipeline):
             if not cnpj_raw:
                 cnpj_raw = str(row.get("numero_cnpj", "")).strip()
 
-            cnpj_digits = strip_document(cnpj_raw)
+            cnpj_digits = normalize_cnpj(cnpj_raw)
             cnpj_formatted = format_cnpj(cnpj_raw) if len(cnpj_digits) == 14 else ""
 
             razao = normalize_name(str(row.get("nome_razao_social", "")))

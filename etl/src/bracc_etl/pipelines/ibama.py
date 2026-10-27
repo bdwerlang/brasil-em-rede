@@ -12,12 +12,12 @@ if TYPE_CHECKING:
     from neo4j import Driver
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     format_cpf,
     normalize_name,
     parse_date,
-    strip_document,
 )
 
 logger = logging.getLogger(__name__)
@@ -99,10 +99,9 @@ class IbamaPipeline(Pipeline):
                 continue
 
             doc_raw = str(row["CPF_CNPJ_EMBARGADO"]).strip()
-            digits = strip_document(doc_raw)
             nome = normalize_name(str(row["NOME_PESSOA_EMBARGADA"]))
-            is_company = len(digits) == 14
-            is_person = len(digits) == 11
+            is_company = classify_document(doc_raw) == "cnpj_valid"
+            is_person = classify_document(doc_raw) == "cpf_valid"
 
             if not is_company and not is_person:
                 continue

@@ -14,8 +14,8 @@ from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
     deduplicate_rows,
     format_cnpj,
+    normalize_cnpj,
     normalize_name,
-    strip_document,
 )
 
 
@@ -60,7 +60,7 @@ class CepimPipeline(Pipeline):
 
         for _idx, row in self._raw.iterrows():
             cnpj_raw = str(row.get("CNPJ ENTIDADE", ""))
-            digits = strip_document(cnpj_raw)
+            digits = normalize_cnpj(cnpj_raw)
 
             if len(digits) != 14:
                 continue

@@ -9,9 +9,11 @@ import pandas as pd
 from bracc_etl.base import Pipeline
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     format_cpf,
+    normalize_cnpj,
     normalize_name,
     parse_date,
     strip_document,
@@ -131,7 +133,7 @@ class TcuPipeline(Pipeline):
         """Companies declared unfit for public bidding (CNPJ-only)."""
         for idx, row in self._raw_inidoneos.iterrows():
             doc_raw = str(row["CPF_CNPJ"]).strip()
-            digits = strip_document(doc_raw)
+            digits = normalize_cnpj(doc_raw)
             nome = normalize_name(str(row["NOME"]))
             processo = str(row["PROCESSO"]).strip()
             deliberacao = str(row["DELIBERACAO"]).strip()
@@ -157,7 +159,7 @@ class TcuPipeline(Pipeline):
                 "source": "tcu",
             })
 
-            if len(digits) == 14:
+            if classify_document(doc_raw) == "cnpj_valid":
                 cnpj = format_cnpj(doc_raw)
                 self.sanctioned_companies.append({
                     "cnpj": cnpj,
@@ -165,7 +167,7 @@ class TcuPipeline(Pipeline):
                     "name": nome,
                     "sanction_id": sanction_id,
                 })
-            elif len(digits) == 11:
+            elif classify_document(doc_raw) == "cpf_valid":
                 cpf = format_cpf(doc_raw)
                 self.sanctioned_persons.append({
                     "cpf": cpf,
@@ -177,7 +179,7 @@ class TcuPipeline(Pipeline):
         """Persons with accounts judged irregular (may have CPF or CNPJ)."""
         for idx, row in self._raw_irregulares.iterrows():
             doc_raw = str(row["CPF_CNPJ"]).strip()
-            digits = strip_document(doc_raw)
+            digits = normalize_cnpj(doc_raw)
             nome = normalize_name(str(row["NOME"]))
             processo = str(row["PROCESSO"]).strip()
             deliberacao = str(row["DELIBERACAO"]).strip()
@@ -201,7 +203,7 @@ class TcuPipeline(Pipeline):
                 "source": "tcu",
             })
 
-            if len(digits) == 14:
+            if classify_document(doc_raw) == "cnpj_valid":
                 cnpj = format_cnpj(doc_raw)
                 self.sanctioned_companies.append({
                     "cnpj": cnpj,
@@ -209,7 +211,7 @@ class TcuPipeline(Pipeline):
                     "name": nome,
                     "sanction_id": sanction_id,
                 })
-            elif len(digits) == 11:
+            elif classify_document(doc_raw) == "cpf_valid":
                 cpf = format_cpf(doc_raw)
                 self.sanctioned_persons.append({
                     "cpf": cpf,

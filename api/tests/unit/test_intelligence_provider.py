@@ -107,3 +107,73 @@ async def test_community_provider_enforces_public_evidence_fields() -> None:
     payload = results[0].data
     assert payload["evidence_refs"]
     assert "risk_signal" in payload
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    "identifier,by_element",
+    [
+        ("00abc123000135", None),
+        ("4:company:1", {"entity_labels": ["Company"], "e": {"cnpj": "00.ABC.123/0001-35"}}),
+    ],
+)
+async def test_alphanumeric_company_analysis(identifier: str, by_element: object) -> None:
+    provider = provider_module.CommunityIntelligenceProvider()
+    with (
+        patch.object(
+            provider_module, "execute_query_single", new_callable=AsyncMock, return_value=by_element
+        ),
+        patch.object(
+            provider_module,
+            "execute_query",
+            new_callable=AsyncMock,
+            return_value=[{"evidence_refs": ["contract:1"], "company_name": "Example"}],
+        ) as query,
+    ):
+        result = await provider.run_pattern(
+            object(),
+            pattern_id="debtor_contracts",
+            entity_id=identifier,  # type: ignore[arg-type]
+        )
+    assert len(result) == 1
+    assert query.await_args.args[2]["company_identifier"] == "00ABC123000135"
+    assert query.await_args.args[2]["company_identifier_formatted"] == "00.ABC.123/0001-35"
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("identifier", ["00ABC123000135", "4:company:1"])
+async def test_alphanumeric_company_patterns_endpoint(client, monkeypatch, identifier: str) -> None:
+    from bracc.dependencies import get_intelligence_provider
+    from bracc.main import app
+
+    monkeypatch.setattr(settings, "patterns_enabled", True)
+    monkeypatch.setattr(settings, "public_mode", False)
+    app.dependency_overrides[get_intelligence_provider] = lambda: (
+        provider_module.CommunityIntelligenceProvider()
+    )
+    by_element = (
+        {"entity_labels": ["Company"], "e": {"cnpj": "00.ABC.123/0001-35"}}
+        if identifier.startswith("4:")
+        else None
+    )
+    try:
+        with (
+            patch.object(
+                provider_module,
+                "execute_query_single",
+                new_callable=AsyncMock,
+                return_value=by_element,
+            ),
+            patch.object(
+                provider_module,
+                "execute_query",
+                new_callable=AsyncMock,
+                return_value=[{"evidence_refs": ["contract:1"], "company_name": "Example"}],
+            ) as query,
+        ):
+            response = await client.get(f"/api/v1/patterns/{identifier}/debtor_contracts")
+        assert response.status_code == 200
+        assert response.json()["total"] == 1
+        assert query.await_args.args[2]["company_identifier"] == "00ABC123000135"
+    finally:
+        app.dependency_overrides.pop(get_intelligence_provider, None)

@@ -96,3 +96,11 @@ describe("EntityDetail", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 });
+
+it("looks up an alphanumeric CNPJ as a document", async () => {
+  vi.clearAllMocks();
+  mockGetEntity.mockResolvedValue(sampleEntity);
+  render(<EntityDetail entityId="00ABC123000135" onClose={vi.fn()} />);
+  await waitFor(() => expect(mockGetEntity).toHaveBeenCalledWith("00ABC123000135"));
+  expect(mockGetEntityByElementId).not.toHaveBeenCalled();
+});

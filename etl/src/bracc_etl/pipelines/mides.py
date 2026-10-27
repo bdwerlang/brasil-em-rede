@@ -14,9 +14,9 @@ from bracc_etl.transforms import (
     cap_contract_value,
     deduplicate_rows,
     format_cnpj,
+    normalize_cnpj,
     normalize_name,
     parse_date,
-    strip_document,
 )
 
 if TYPE_CHECKING:
@@ -56,7 +56,7 @@ def _pick(row: pd.Series, *keys: str) -> str:
 
 
 def _valid_cnpj(value: str) -> str:
-    digits = strip_document(value)
+    digits = normalize_cnpj(value)
     if len(digits) != 14:
         return ""
     return format_cnpj(digits)
