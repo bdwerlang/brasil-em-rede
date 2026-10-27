@@ -1,0 +1,54 @@
+{
+  "$schema": "./source-contract.schema.json",
+  "contract_version": "1.0",
+  "source_id": "sanctions",
+  "provider": "Controladoria-Geral da União / Portal da Transparência",
+  "dataset": "Snapshots independentes CEIS e CNEP",
+  "status": "proposed_not_acquired",
+  "execution_enabled": false,
+  "reviewed_on": "2026-10-27",
+  "evidence_state": {"acquired": false, "loaded": false, "linked": false},
+  "acquisition": {
+    "method": "public_file_export",
+    "urls": ["https://portaldatransparencia.gov.br/download-de-dados/ceis", "https://portaldatransparencia.gov.br/download-de-dados/cnep"],
+    "authentication": "Selecionado fluxo público de arquivos; confirmar URL final. API com token Gov.br é alternativa separada, sem credenciais presumidas e sem fallback automático.",
+    "verification": "documentation_only",
+    "costs": "Preço não verificado nas páginas consultadas; nenhum serviço pago contratado. Medir bytes, processamento e retenção antes de estimar custo.",
+    "official_limits": ["Nenhuma cota de download de arquivos foi confirmada.", "Alternativa API: cadastro publica 700 requisições/min entre 00h e 06h, 400 nos demais horários e 180 para APIs restritas; não aplicar essas cotas aos arquivos."],
+    "local_limits": {"concurrency": 1, "requests_per_minute": 10, "max_retries_per_resource": 3},
+    "stop_conditions": ["Autenticação não prevista, CAPTCHA ou HTTP 401/403.", "Respeitar Retry-After; parar após 3 retentativas, schema incompatível ou orçamento de bytes/disco não definido ou excedido.", "Snapshot-alvo ausente exige revisão do contrato; nunca omitir uma lista nem declarar cobertura conjunta parcial como completa."]
+  },
+  "scope": {
+    "period_start": "2026-10-26",
+    "period_end": "2026-10-26",
+    "period_basis": "snapshot_date",
+    "partitions": ["CEIS: arquivo do snapshot-alvo 2026-10-26, URL final pendente", "CNEP: arquivo do snapshot-alvo 2026-10-26, URL final pendente"],
+    "selection": "Adquirir futuramente um arquivo de cada lista e preservar os registros de cada snapshot com manifesto independente. Projetar ligação com Company apenas por CNPJ completo validado; contabilizar demais partes e manter sem ligação determinística. Sem garantia de interseção com a amostra CNPJ.",
+    "max_output_records": null,
+    "coverage_exclusions": ["Data-alvo proposta, ainda não confirmada no seletor oficial; não representa histórico de sanções.", "Cobertura descreve o arquivo selecionado, não certifica todas as sanções do país nem vigência atual.", "CPF mascarado, documento inválido ou ausente não cria identidade de pessoa ou vínculo com empresa."]
+  },
+  "format": {
+    "expected_raw": ["Exportação oficial CEIS/CNEP esperada em ZIP/CSV; confirmar conteúdo, delimitador, encoding e cabeçalhos no recurso final."],
+    "existing_adapter": "etl/src/bracc_etl/pipelines/sanctions.py usa alias ceis_cnep e CSV canônico Latin-1 separado por vírgula em data/sanctions; exige adaptação e chave estável antes da carga.",
+    "validation_pending": ["Resolver arquivo final e dicionário de cada lista para a mesma data-alvo.", "Preservar ID oficial, processo, órgão, alcance, início/fim e situação da sanção; testar schema e retificações.", "Separar listas, documentos parciais, expirados/suspensos e vínculos pendentes nas contagens."]
+  },
+  "identity": {
+    "record_key": "Lista CEIS/CNEP + identificador oficial da sanção; composição estável alternativa exige validação, nunca índice da linha.",
+    "link_policy": "CNPJ completo validado por igualdade exata; preservar origem e vigência sem inferir impedimento atual a partir de registro expirado/suspenso ou atribuir identidade por nome."
+  },
+  "destinations": {
+    "raw_relative": "audit-results/local/pilot/sanctions/raw/",
+    "staged_relative": "audit-results/local/pilot/sanctions/staged/",
+    "manifest_relative": "audit-results/local/pilot/sanctions/manifests/",
+    "database_role": "bracc-m0-pilot"
+  },
+  "blockers": ["Seletores não forneceram datas/URLs finais na consulta textual; disponibilidade de 2026-10-26 pendente.", "Condições do recurso final, schema, orçamento e adaptação do CSV oficial pendentes.", "IDs/normalização, aquisição com manifesto, loader verificável e instância isolada dependem da fundação M0."],
+  "required_measurements": ["Bytes, linhas, formato e expansão de cada lista; custo de retenção de snapshots.", "Pico de recursos e duração por etapa; repetição idempotente e atualização temporal.", "Totais por lista/vigência/documento válido ou parcial, interseção real com CNPJ e pendências de ligação."],
+  "references": [
+    {"url": "https://portaldatransparencia.gov.br/download-de-dados/ceis", "checked_on": "2026-10-27", "observed": "Página de download acessível, com seleção de data e referência ao dicionário; sem resolução do arquivo final."},
+    {"url": "https://portaldatransparencia.gov.br/download-de-dados/cnep", "checked_on": "2026-10-27", "observed": "Página de download acessível, com seleção de data e referência ao dicionário; sem resolução do arquivo final."},
+    {"url": "https://portaldatransparencia.gov.br/dicionario-de-dados/ceis", "checked_on": "2026-10-27", "observed": "Dicionário oficial acessível; conteúdo do arquivo selecionado ainda não inspecionado."},
+    {"url": "https://portaldatransparencia.gov.br/dicionario-de-dados/cnep", "checked_on": "2026-10-27", "observed": "Dicionário oficial acessível; conteúdo do arquivo selecionado ainda não inspecionado."},
+    {"url": "https://portaldatransparencia.gov.br/api-de-dados/cadastrar-email", "checked_on": "2026-10-27", "observed": "Cadastro oficial documenta token via Gov.br e cotas da API; alternativa não selecionada nem autenticada nesta tarefa."}
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "M0 source planning contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "contract_version", "source_id", "provider", "dataset", "status", "execution_enabled", "reviewed_on", "evidence_state", "acquisition", "scope", "format", "identity", "destinations", "blockers", "required_measurements", "references"],
+  "properties": {
+    "$schema": {"const": "./source-contract.schema.json"},
+    "contract_version": {"const": "1.0"},
+    "source_id": {"enum": ["cnpj", "sanctions", "pncp"]},
+    "provider": {"type": "string", "minLength": 1},
+    "dataset": {"type": "string", "minLength": 1},
+    "status": {"const": "proposed_not_acquired"},
+    "execution_enabled": {"const": false},
+    "reviewed_on": {"type": "string", "format": "date"},
+    "evidence_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["acquired", "loaded", "linked"],
+      "properties": {"acquired": {"const": false}, "loaded": {"const": false}, "linked": {"const": false}}
+    },
+    "acquisition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "urls", "authentication", "verification", "costs", "official_limits", "local_limits", "stop_conditions"],
+      "properties": {
+        "method": {"enum": ["public_file_export", "public_read_api"]},
+        "urls": {"$ref": "#/$defs/urls"},
+        "authentication": {"type": "string", "minLength": 1},
+        "verification": {"const": "documentation_only"},
+        "costs": {"type": "string", "minLength": 1},
+        "official_limits": {"$ref": "#/$defs/texts"},
+        "local_limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["concurrency", "requests_per_minute", "max_retries_per_resource"],
+          "properties": {"concurrency": {"const": 1}, "requests_per_minute": {"const": 10}, "max_retries_per_resource": {"const": 3}}
+        },
+        "stop_conditions": {"$ref": "#/$defs/texts"}
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["period_start", "period_end", "period_basis", "partitions", "selection", "max_output_records", "coverage_exclusions"],
+      "properties": {
+        "period_start": {"type": "string", "format": "date"},
+        "period_end": {"type": "string", "format": "date"},
+        "period_basis": {"enum": ["monthly_snapshot", "snapshot_date", "publication_date"]},
+        "partitions": {"$ref": "#/$defs/texts"},
+        "selection": {"type": "string", "minLength": 1},
+        "max_output_records": {"type": ["integer", "null"], "minimum": 1},
+        "coverage_exclusions": {"$ref": "#/$defs/texts"}
+      }
+    },
+    "format": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_raw", "existing_adapter", "validation_pending"],
+      "properties": {
+        "expected_raw": {"$ref": "#/$defs/texts"},
+        "existing_adapter": {"type": "string", "minLength": 1},
+        "validation_pending": {"$ref": "#/$defs/texts"}
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_key", "link_policy"],
+      "properties": {"record_key": {"type": "string", "minLength": 1}, "link_policy": {"type": "string", "minLength": 1}}
+    },
+    "destinations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_relative", "staged_relative", "manifest_relative", "database_role"],
+      "properties": {
+        "raw_relative": {"type": "string", "pattern": "^audit-results/local/pilot/(cnpj|sanctions|pncp)/raw/$"},
+        "staged_relative": {"type": "string", "pattern": "^audit-results/local/pilot/(cnpj|sanctions|pncp)/staged/$"},
+        "manifest_relative": {"type": "string", "pattern": "^audit-results/local/pilot/(cnpj|sanctions|pncp)/manifests/$"},
+        "database_role": {"const": "bracc-m0-pilot"}
+      }
+    },
+    "blockers": {"$ref": "#/$defs/texts"},
+    "required_measurements": {"$ref": "#/$defs/texts"},
+    "references": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["url", "checked_on", "observed"],
+        "properties": {"url": {"type": "string", "format": "uri", "pattern": "^https://"}, "checked_on": {"type": "string", "format": "date"}, "observed": {"type": "string", "minLength": 1}}
+      }
+    }
+  },
+  "$defs": {
+    "texts": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "urls": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "format": "uri", "pattern": "^https://"}}
+  }
+}
