@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
 from bracc_etl.pipelines.renuncias import RenunciasPipeline, _parse_brl
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 @pytest.fixture()
 def pipeline() -> RenunciasPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return RenunciasPipeline(driver=driver, data_dir=str(FIXTURES))
 
 
@@ -42,14 +42,14 @@ class TestExtract:
         assert len(pipeline._raw) == 5
 
     def test_extract_with_limit(self) -> None:
-        driver = MagicMock()
+        driver = make_driver()
         p = RenunciasPipeline(driver=driver, data_dir=str(FIXTURES), limit=2)
         p.extract()
         assert len(p._raw) == 2
 
     def test_extract_empty_dir(self, tmp_path: Path) -> None:
         (tmp_path / "renuncias").mkdir()
-        driver = MagicMock()
+        driver = make_driver()
         p = RenunciasPipeline(driver=driver, data_dir=str(tmp_path))
         p.extract()
         assert len(p._raw) == 0
@@ -126,7 +126,7 @@ class TestLoad:
         pipeline.extract()
         pipeline.transform()
         pipeline.load()
-        session = pipeline.driver.session.return_value.__enter__.return_value
+        session = transaction(pipeline.driver)
         assert session.run.called
 
     def test_load_empty_data(self, pipeline: RenunciasPipeline) -> None:

@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 
 from bracc_etl.pipelines.cvm import CvmPipeline
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> CvmPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return CvmPipeline(driver=driver, data_dir=str(FIXTURES.parent))
 
 
@@ -168,7 +168,7 @@ class TestCvmLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         proceeding_calls = [
@@ -182,7 +182,7 @@ class TestCvmLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [
@@ -196,7 +196,7 @@ class TestCvmLoad:
         pipeline.accused_entities = []
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         assert session_mock.run.call_count == 0
 
     def test_name_based_matching_query(self) -> None:
@@ -205,7 +205,7 @@ class TestCvmLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [

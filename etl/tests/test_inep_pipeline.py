@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from bracc_etl.pipelines.inep import InepPipeline
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> InepPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return InepPipeline(driver, data_dir=str(FIXTURES))
 
 
@@ -132,6 +132,6 @@ def test_load_calls_session() -> None:
     pipeline.load()
 
     driver = pipeline.driver
-    session = driver.session.return_value.__enter__.return_value
+    session = transaction(driver)
     # Should call session.run for: Education nodes + MANTEDORA_DE relationships = at least 2
     assert session.run.call_count >= 2

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
@@ -20,6 +19,7 @@ from bracc_etl.pipelines.dou import (
     _extract_cpfs,
     _make_act_id,
 )
+from tests.neo4j_mocks import make_driver, transaction
 
 try:
     import pyarrow  # noqa: F401
@@ -32,7 +32,7 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline(data_dir: str | None = None) -> DouPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return DouPipeline(driver, data_dir=data_dir or str(FIXTURES))
 
 
@@ -100,7 +100,7 @@ class TestExtract:
         assert pipeline._raw_acts[0]["urlTitle"] == "test-act-wrapper"
 
     def test_respects_limit(self) -> None:
-        driver = MagicMock()
+        driver = make_driver()
         pipeline = DouPipeline(driver, data_dir=str(FIXTURES), limit=2)
         pipeline.extract()
         assert len(pipeline._raw_acts) == 2
@@ -466,7 +466,7 @@ class TestLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         act_calls = [c for c in run_calls if "MERGE (n:DOUAct" in str(c)]
@@ -478,7 +478,7 @@ class TestLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [c for c in run_calls if "PUBLICOU" in str(c)]
@@ -490,7 +490,7 @@ class TestLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [c for c in run_calls if "MENCIONOU" in str(c)]
@@ -503,7 +503,7 @@ class TestLoad:
         pipeline.company_rels = []
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         assert session_mock.run.call_count == 0
 
     def test_load_without_person_rels(self, tmp_path: Path) -> None:
@@ -531,7 +531,7 @@ class TestLoad:
         assert len(pipeline.company_rels) == 1
 
         pipeline.load()
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         publicou_calls = [c for c in run_calls if "PUBLICOU" in str(c)]
@@ -547,5 +547,5 @@ class TestFullRun:
         pipeline = _make_pipeline()
         pipeline.run()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         assert session_mock.run.call_count >= 1

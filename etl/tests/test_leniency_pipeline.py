@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 
 from bracc_etl.pipelines.leniency import LeniencyPipeline
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> LeniencyPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     pipeline = LeniencyPipeline(driver=driver, data_dir=str(FIXTURES.parent))
     return pipeline
 
@@ -146,7 +146,7 @@ class TestLeniencyLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         agreement_calls = [
@@ -161,7 +161,7 @@ class TestLeniencyLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         company_calls = [
@@ -186,7 +186,7 @@ class TestLeniencyLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [

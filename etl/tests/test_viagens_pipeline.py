@@ -7,12 +7,13 @@ from unittest.mock import MagicMock
 import pandas as pd
 
 from bracc_etl.pipelines.viagens import ViagensPipeline, _make_travel_id, _parse_money
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> ViagensPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     pipeline = ViagensPipeline(driver=driver, data_dir=str(FIXTURES.parent))
     return pipeline
 
@@ -313,7 +314,7 @@ class TestViagensLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         travel_calls = [
@@ -327,7 +328,7 @@ class TestViagensLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [call for call in run_calls if "VIAJOU" in str(call)]
@@ -339,7 +340,7 @@ class TestViagensLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         person_calls = [
@@ -353,5 +354,5 @@ class TestViagensLoad:
         pipeline.person_rels = []
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         assert session_mock.run.call_count == 0
