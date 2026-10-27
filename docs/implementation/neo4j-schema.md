@@ -1,0 +1,7 @@
+# Esquema Neo4j
+
+Os dois arquivos de inicialização devem conter o mesmo esquema. As constraints de unicidade protegem os identificadores existentes; sua aplicação em um grafo com duplicatas falha e requer diagnóstico e reconciliação antes da atualização. `IF NOT EXISTS` não corrige uma constraint existente com nome conflitante. Não há remoção automática de dados ou índices.
+
+`Payment.transfer_id` identifica uma transferência do Tesouro conforme a chave usada pelo pipeline atual. Uma constraint não garante identidade entre fontes ou correção da geração dessa chave. `LaborStats.stats_id` e `MunicipalFinance.finance_id` identificam agregados já materializados; não equivalem a pessoas ou empresas. Séries e geografia canônicas dependem de contrato de fonte, indicador, período, unidade e versão territorial, ainda não aprovado. O contrato F09 define `Territory.territory_id` para geografia e chaves para `PublicBody`, `EconomicActivity`, `Unit` e `FiscalYear`; essas chaves usam namespaces e versões explícitos. Séries canônicas ainda não possuem chave aprovada.
+
+Unicidade não exige presença da propriedade nem resolve chaves variantes, colisões, identidades parciais ou `MERGE` por nome. `Person` também é criado por identificadores alternativos; a reconciliação desses caminhos pertence à migração de identidade. A inicialização não faz essa migração. O índice fulltext antigo pode continuar com definição anterior em instalações existentes porque `IF NOT EXISTS` não o substitui; alteração desse índice requer procedimento próprio.

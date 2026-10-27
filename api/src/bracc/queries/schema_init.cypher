@@ -44,6 +44,78 @@ CREATE CONSTRAINT convenio_id_unique IF NOT EXISTS
 CREATE CONSTRAINT laborstats_id_unique IF NOT EXISTS
   FOR (l:LaborStats) REQUIRE l.stats_id IS UNIQUE;
 
+CREATE CONSTRAINT offshore_entity_id_unique IF NOT EXISTS
+  FOR (o:OffshoreEntity) REQUIRE o.offshore_id IS UNIQUE;
+
+CREATE CONSTRAINT offshore_officer_id_unique IF NOT EXISTS
+  FOR (o:OffshoreOfficer) REQUIRE o.offshore_officer_id IS UNIQUE;
+
+CREATE CONSTRAINT global_pep_id_unique IF NOT EXISTS
+  FOR (g:GlobalPEP) REQUIRE g.pep_id IS UNIQUE;
+
+CREATE CONSTRAINT cvm_proceeding_id_unique IF NOT EXISTS
+  FOR (c:CVMProceeding) REQUIRE c.pas_id IS UNIQUE;
+
+CREATE CONSTRAINT expense_id_unique IF NOT EXISTS
+  FOR (e:Expense) REQUIRE e.expense_id IS UNIQUE;
+
+CREATE CONSTRAINT expulsion_id_unique IF NOT EXISTS
+  FOR (e:Expulsion) REQUIRE e.expulsion_id IS UNIQUE;
+
+CREATE CONSTRAINT leniency_id_unique IF NOT EXISTS
+  FOR (l:LeniencyAgreement) REQUIRE l.leniency_id IS UNIQUE;
+
+CREATE CONSTRAINT pep_record_id_unique IF NOT EXISTS
+  FOR (p:PEPRecord) REQUIRE p.pep_id IS UNIQUE;
+
+CREATE CONSTRAINT barred_ngo_id_unique IF NOT EXISTS
+  FOR (b:BarredNGO) REQUIRE b.ngo_id IS UNIQUE;
+
+CREATE CONSTRAINT gov_card_expense_id_unique IF NOT EXISTS
+  FOR (g:GovCardExpense) REQUIRE g.expense_id IS UNIQUE;
+
+CREATE CONSTRAINT gov_travel_id_unique IF NOT EXISTS
+  FOR (t:GovTravel) REQUIRE t.travel_id IS UNIQUE;
+
+CREATE CONSTRAINT tax_waiver_id_unique IF NOT EXISTS
+  FOR (t:TaxWaiver) REQUIRE t.waiver_id IS UNIQUE;
+
+CREATE CONSTRAINT bcb_penalty_id_unique IF NOT EXISTS
+  FOR (b:BCBPenalty) REQUIRE b.penalty_id IS UNIQUE;
+
+CREATE CONSTRAINT legal_case_id_unique IF NOT EXISTS
+  FOR (l:LegalCase) REQUIRE l.case_id IS UNIQUE;
+
+CREATE CONSTRAINT international_sanction_id_unique IF NOT EXISTS
+  FOR (s:InternationalSanction) REQUIRE s.sanction_id IS UNIQUE;
+
+CREATE CONSTRAINT declared_asset_id_unique IF NOT EXISTS
+  FOR (d:DeclaredAsset) REQUIRE d.asset_id IS UNIQUE;
+
+CREATE CONSTRAINT holding_rel_id_unique IF NOT EXISTS
+  FOR (h:Holding) REQUIRE h.holding_id IS UNIQUE;
+
+CREATE CONSTRAINT bid_id_unique IF NOT EXISTS
+  FOR (b:Bid) REQUIRE b.bid_id IS UNIQUE;
+
+CREATE CONSTRAINT fund_cnpj_unique IF NOT EXISTS
+  FOR (f:Fund) REQUIRE f.fund_cnpj IS UNIQUE;
+
+CREATE CONSTRAINT dou_act_id_unique IF NOT EXISTS
+  FOR (d:DOUAct) REQUIRE d.act_id IS UNIQUE;
+
+CREATE CONSTRAINT municipal_finance_id_unique IF NOT EXISTS
+  FOR (m:MunicipalFinance) REQUIRE m.finance_id IS UNIQUE;
+
+CREATE CONSTRAINT party_membership_id_unique IF NOT EXISTS
+  FOR (pm:PartyMembership) REQUIRE pm.membership_id IS UNIQUE;
+
+CREATE CONSTRAINT labor_movement_id_unique IF NOT EXISTS
+  FOR (lm:LaborMovement) REQUIRE lm.movement_id IS UNIQUE;
+
+CREATE CONSTRAINT cpi_id_unique IF NOT EXISTS
+  FOR (c:CPI) REQUIRE c.cpi_id IS UNIQUE;
+
 CREATE CONSTRAINT inquiry_id_unique IF NOT EXISTS
   FOR (i:Inquiry) REQUIRE i.inquiry_id IS UNIQUE;
 
@@ -77,9 +149,30 @@ CREATE CONSTRAINT ingestion_run_id_unique IF NOT EXISTS
 CREATE CONSTRAINT temporal_violation_id_unique IF NOT EXISTS
   FOR (t:TemporalViolation) REQUIRE t.violation_id IS UNIQUE;
 
+CREATE CONSTRAINT payment_transfer_id_unique IF NOT EXISTS
+  FOR (p:Payment) REQUIRE p.transfer_id IS UNIQUE;
+
+CREATE CONSTRAINT territory_id_unique IF NOT EXISTS
+  FOR (n:Territory) REQUIRE n.territory_id IS UNIQUE;
+
+CREATE CONSTRAINT public_body_id_unique IF NOT EXISTS
+  FOR (n:PublicBody) REQUIRE n.public_body_id IS UNIQUE;
+
+CREATE CONSTRAINT economic_activity_id_unique IF NOT EXISTS
+  FOR (n:EconomicActivity) REQUIRE n.activity_id IS UNIQUE;
+
+CREATE CONSTRAINT unit_id_unique IF NOT EXISTS
+  FOR (n:Unit) REQUIRE n.unit_id IS UNIQUE;
+
+CREATE CONSTRAINT fiscal_year_id_unique IF NOT EXISTS
+  FOR (n:FiscalYear) REQUIRE n.fiscal_year_id IS UNIQUE;
+
 // ── Indexes ─────────────────────────────────────────────
 CREATE INDEX person_name IF NOT EXISTS
   FOR (p:Person) ON (p.name);
+
+CREATE INDEX person_name_uf IF NOT EXISTS
+  FOR (p:Person) ON (p.name, p.uf);
 
 CREATE INDEX person_author_key IF NOT EXISTS
   FOR (p:Person) ON (p.author_key);
@@ -186,7 +279,42 @@ CREATE INDEX laborstats_uf IF NOT EXISTS
 CREATE INDEX laborstats_cnae_subclass IF NOT EXISTS
   FOR (l:LaborStats) ON (l.cnae_subclass);
 
-// ── Person Servidor ID Index ────────────────────────────
+// ── OffshoreEntity Indexes ───────────────────────────────
+CREATE INDEX offshore_entity_name IF NOT EXISTS
+  FOR (o:OffshoreEntity) ON (o.name);
+
+CREATE INDEX offshore_entity_jurisdiction IF NOT EXISTS
+  FOR (o:OffshoreEntity) ON (o.jurisdiction);
+
+// ── OffshoreOfficer Indexes ─────────────────────────────
+CREATE INDEX offshore_officer_name IF NOT EXISTS
+  FOR (o:OffshoreOfficer) ON (o.name);
+
+// ── GlobalPEP Indexes ───────────────────────────────────
+CREATE INDEX global_pep_name IF NOT EXISTS
+  FOR (g:GlobalPEP) ON (g.name);
+
+CREATE INDEX global_pep_country IF NOT EXISTS
+  FOR (g:GlobalPEP) ON (g.country);
+
+// ── CVMProceeding Indexes ───────────────────────────────
+CREATE INDEX cvm_proceeding_date IF NOT EXISTS
+  FOR (c:CVMProceeding) ON (c.date);
+
+// ── Expense Indexes ─────────────────────────────────────
+CREATE INDEX expense_deputy_id IF NOT EXISTS
+  FOR (e:Expense) ON (e.deputy_id);
+
+CREATE INDEX expense_date IF NOT EXISTS
+  FOR (e:Expense) ON (e.date);
+
+CREATE INDEX expense_type IF NOT EXISTS
+  FOR (e:Expense) ON (e.type);
+
+// ── Person Deputy ID Index ──────────────────────────────
+CREATE INDEX person_deputy_id IF NOT EXISTS
+  FOR (p:Person) ON (p.deputy_id);
+
 CREATE INDEX person_servidor_id IF NOT EXISTS
   FOR (p:Person) ON (p.servidor_id);
 
@@ -248,10 +376,127 @@ CREATE INDEX socio_snapshot_membership_id IF NOT EXISTS
 CREATE INDEX socio_snapshot_date IF NOT EXISTS
   FOR ()-[r:SOCIO_DE_SNAPSHOT]-() ON (r.snapshot_date);
 
+// ── PEPRecord Indexes ─────────────────────────────────────
+CREATE INDEX pep_record_name IF NOT EXISTS
+  FOR (p:PEPRecord) ON (p.name);
+
+CREATE INDEX pep_record_role IF NOT EXISTS
+  FOR (p:PEPRecord) ON (p.role);
+
+CREATE INDEX pep_record_org IF NOT EXISTS
+  FOR (p:PEPRecord) ON (p.org);
+
+// ── Expulsion Indexes ─────────────────────────────────────
+CREATE INDEX expulsion_date IF NOT EXISTS
+  FOR (e:Expulsion) ON (e.date);
+
+// ── LeniencyAgreement Indexes ─────────────────────────────
+CREATE INDEX leniency_date IF NOT EXISTS
+  FOR (l:LeniencyAgreement) ON (l.date);
+
+// ── GovCardExpense Indexes ────────────────────────────────
+CREATE INDEX gov_card_expense_date IF NOT EXISTS
+  FOR (g:GovCardExpense) ON (g.date);
+
+CREATE INDEX gov_card_expense_value IF NOT EXISTS
+  FOR (g:GovCardExpense) ON (g.value);
+
+// ── TaxWaiver Indexes ─────────────────────────────────────
+CREATE INDEX tax_waiver_value IF NOT EXISTS
+  FOR (t:TaxWaiver) ON (t.value);
+
+// ── LegalCase Indexes ─────────────────────────────────────
+CREATE INDEX legal_case_type IF NOT EXISTS
+  FOR (l:LegalCase) ON (l.type);
+
+CREATE INDEX legal_case_date IF NOT EXISTS
+  FOR (l:LegalCase) ON (l.date);
+
+// ── DeclaredAsset Indexes ─────────────────────────────────
+CREATE INDEX declared_asset_type IF NOT EXISTS
+  FOR (d:DeclaredAsset) ON (d.asset_type);
+
+CREATE INDEX declared_asset_value IF NOT EXISTS
+  FOR (d:DeclaredAsset) ON (d.asset_value);
+
+CREATE INDEX declared_asset_year IF NOT EXISTS
+  FOR (d:DeclaredAsset) ON (d.election_year);
+
+// ── InternationalSanction Indexes ─────────────────────────
+CREATE INDEX international_sanction_source IF NOT EXISTS
+  FOR (s:InternationalSanction) ON (s.source);
+
+// ── Bid Indexes ─────────────────────────────────────────────
+CREATE INDEX bid_date IF NOT EXISTS
+  FOR (b:Bid) ON (b.date);
+
+CREATE INDEX bid_modality IF NOT EXISTS
+  FOR (b:Bid) ON (b.modality);
+
+// ── Fund Indexes ─────────────────────────────────────────────
+CREATE INDEX fund_name IF NOT EXISTS
+  FOR (f:Fund) ON (f.fund_name);
+
+CREATE INDEX fund_type IF NOT EXISTS
+  FOR (f:Fund) ON (f.fund_type);
+
+// ── DOUAct Indexes ─────────────────────────────────────────
+CREATE INDEX dou_act_date IF NOT EXISTS
+  FOR (d:DOUAct) ON (d.date);
+
+CREATE INDEX dou_act_type IF NOT EXISTS
+  FOR (d:DOUAct) ON (d.act_type);
+
+// ── GovTravel Indexes ──────────────────────────────────────
+CREATE INDEX gov_travel_date IF NOT EXISTS
+  FOR (t:GovTravel) ON (t.start_date);
+
+// ── MunicipalFinance Indexes ───────────────────────────────
+CREATE INDEX municipal_finance_year IF NOT EXISTS
+  FOR (m:MunicipalFinance) ON (m.year);
+
+CREATE INDEX municipal_finance_cod_ibge IF NOT EXISTS
+  FOR (m:MunicipalFinance) ON (m.cod_ibge);
+
+// ── PartyMembership Indexes ──────────────────────────────
+CREATE INDEX party_membership_party IF NOT EXISTS
+  FOR (pm:PartyMembership) ON (pm.party);
+
+CREATE INDEX party_membership_uf IF NOT EXISTS
+  FOR (pm:PartyMembership) ON (pm.uf);
+
+// ── BarredNGO Indexes ────────────────────────────────────
+CREATE INDEX barred_ngo_cnpj IF NOT EXISTS
+  FOR (b:BarredNGO) ON (b.cnpj);
+
+// ── LaborMovement Indexes ─────────────────────────────────
+CREATE INDEX labor_movement_date IF NOT EXISTS
+  FOR (lm:LaborMovement) ON (lm.movement_date);
+
+CREATE INDEX labor_movement_type IF NOT EXISTS
+  FOR (lm:LaborMovement) ON (lm.movement_type);
+
+CREATE INDEX labor_movement_uf IF NOT EXISTS
+  FOR (lm:LaborMovement) ON (lm.uf);
+
+// ── CPI Indexes ──────────────────────────────────────────
+CREATE INDEX cpi_name IF NOT EXISTS
+  FOR (c:CPI) ON (c.name);
+
+CREATE INDEX cpi_date IF NOT EXISTS
+  FOR (c:CPI) ON (c.date_start);
+
+// ── BCBPenalty Indexes ───────────────────────────────────
+CREATE INDEX bcb_penalty_type IF NOT EXISTS
+  FOR (b:BCBPenalty) ON (b.penalty_type);
+
+CREATE INDEX bcb_penalty_date IF NOT EXISTS
+  FOR (b:BCBPenalty) ON (b.decision_date);
+
 // ── Fulltext Search Index ───────────────────────────────
 CREATE FULLTEXT INDEX entity_search IF NOT EXISTS
-  FOR (n:Person|Partner|Company|Health|Education|Contract|Amendment|Convenio|Embargo|PublicOffice|Inquiry|InquiryRequirement|MunicipalContract|MunicipalBid|MunicipalGazetteAct|JudicialCase|SourceDocument)
-  ON EACH [n.name, n.razao_social, n.cpf, n.cnpj, n.doc_partial, n.doc_raw, n.cnes_code, n.object, n.contracting_org, n.convenente, n.infraction, n.org, n.function, n.subject, n.text, n.topic, n.case_number, n.url];
+  FOR (n:Person|Partner|Company|Health|Education|Contract|Amendment|Convenio|Embargo|PublicOffice|OffshoreEntity|OffshoreOfficer|GlobalPEP|CVMProceeding|Expense|PEPRecord|Expulsion|LeniencyAgreement|GovCardExpense|GovTravel|TaxWaiver|LegalCase|DeclaredAsset|InternationalSanction|Bid|Fund|DOUAct|MunicipalFinance|PartyMembership|BarredNGO|BCBPenalty|LaborMovement|CPI|Inquiry|InquiryRequirement|InquirySession|MunicipalBid|MunicipalContract|MunicipalGazetteAct|JudicialCase|SourceDocument)
+  ON EACH [n.name, n.razao_social, n.cpf, n.cnpj, n.doc_partial, n.doc_raw, n.cnes_code, n.object, n.contracting_org, n.convenente, n.infraction, n.org, n.function, n.jurisdiction, n.penalty_type, n.description, n.institution_name, n.subject, n.text, n.topic, n.case_number, n.url];
 
 // ── User Constraints ────────────────────────────────────
 CREATE CONSTRAINT user_email_unique IF NOT EXISTS
