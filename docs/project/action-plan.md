@@ -48,15 +48,18 @@ quando todos os seus aceites, incluindo migração/recuperação, estiverem demo
 | 3 | [A03 / #21 — Auditoria frontend](https://github.com/bdwerlang/brasil-em-rede/issues/21) | Frontend | Atualização revisada, auditoria, lint, tipos, testes e build; regressões de navegação verificadas |
 | 4 | [F01 / #2 — IDs das fontes](https://github.com/bdwerlang/brasil-em-rede/issues/2) | Dados/backend | Mapa versionado para os 47 módulos existentes, IDs das 169 entradas e aliases legados preservados; teste de ambiguidades |
 
-Começar **#19 e #20**, com **no máximo duas tarefas de implementação em andamento**.
-Ao liberar uma vaga, puxar #21 e depois #2. Não há executor humano designado
-automaticamente: quem assumir registra a responsabilidade e a PR na issue.
-Revisões e coordenação não criam uma terceira implementação concorrente.
+Começar por **#19 e #20**, seguidas de #21 e #2 conforme as dependências e a
+capacidade disponível. A equipe alvo de cada rodada tem de três a cinco subagentes
+para demandas independentes, ajustada à capacidade real. O agente principal
+coordena e revisa; subagentes executam as alterações. Cada entrega tem executor,
+branch e worktree próprios, com arquivos de trabalho isolados. Registrar a
+responsabilidade e a PR na issue.
 
 As tarefas #20/#21 detalham a F00; #19 é parte de F10. Seus pais conservam o
 escopo restante. As demais tarefas ficam bloqueadas até os pré-requisitos do
 roadmap estarem cumpridos; `ready` significa pronta para iniciar, não iniciada.
-Ao terminar R1, desbloquear somente os próximos itens que couberem nas duas vagas.
+Ao terminar R1, desbloquear os próximos itens conforme seus pré-requisitos e a
+capacidade disponível.
 
 ## Condições para a v0.1 estar pronta
 
@@ -100,15 +103,16 @@ até as respectivas PRs e evidências; este documento não os corrige.
 
 ## Rotina de execução e encerramento
 
-1. Escolher a próxima tarefa `ready` com vaga disponível; registrar executor,
-   resultado esperado, dependências e a branch da implementação.
+1. Escolher a próxima tarefa `ready` conforme a capacidade disponível; registrar
+   executor, resultado esperado, dependências, branch e worktree da implementação.
 2. Abrir PR focada e executar checks do escopo. Atualização Python e frontend
    têm PRs próprias; mudanças de identidade/esquema incluem migração/reversão.
 3. Anexar evidência reproduzível e limitações à issue. Encerrar somente quando
    seus critérios de aceite forem demonstrados; documentação sozinha não
    comprova implementação, download, carga ou funcionamento da interface.
 4. Quando houver falha externa, registrar motivo e próximo teste, e puxar outra
-   tarefa independente dentro do limite. Não promover estado de sucesso.
+   tarefa independente conforme a capacidade disponível. Não promover estado
+   de sucesso.
 5. Ao fechar uma rodada, demonstrar sua saída e atualizar o épico #17. Reavaliar
    estimativa e desbloquear a próxima fila pelos aceites alcançados.
 
