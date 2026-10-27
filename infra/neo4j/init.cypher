@@ -5,6 +5,13 @@
 CREATE CONSTRAINT person_cpf_unique IF NOT EXISTS
   FOR (p:Person) REQUIRE p.cpf IS UNIQUE;
 
+// Snapshot identities are unique within Person; cross-label uniqueness requires F03/U06.
+CREATE CONSTRAINT person_entity_id_unique IF NOT EXISTS
+  FOR (p:Person) REQUIRE p.entity_id IS UNIQUE;
+
+CREATE CONSTRAINT person_snapshot_alias_unique IF NOT EXISTS
+  FOR (p:Person) REQUIRE (p.identity_snapshot, p.identity_legacy_id) IS UNIQUE;
+
 CREATE CONSTRAINT partner_id_unique IF NOT EXISTS
   FOR (p:Partner) REQUIRE p.partner_id IS UNIQUE;
 
