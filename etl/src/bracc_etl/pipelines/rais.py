@@ -10,18 +10,40 @@ from bracc_etl.base import Pipeline
 
 if TYPE_CHECKING:
     from neo4j import Driver
+from bracc_etl.dimensions.projection import project_rais
 from bracc_etl.loader import Neo4jBatchLoader
 
 logger = logging.getLogger(__name__)
 
 # UF IBGE numeric code -> state abbreviation
 UF_CODE_MAP = {
-    "11": "RO", "12": "AC", "13": "AM", "14": "RR", "15": "PA",
-    "16": "AP", "17": "TO", "21": "MA", "22": "PI", "23": "CE",
-    "24": "RN", "25": "PB", "26": "PE", "27": "AL", "28": "SE",
-    "29": "BA", "31": "MG", "32": "ES", "33": "RJ", "35": "SP",
-    "41": "PR", "42": "SC", "43": "RS", "50": "MS", "51": "MT",
-    "52": "GO", "53": "DF",
+    "11": "RO",
+    "12": "AC",
+    "13": "AM",
+    "14": "RR",
+    "15": "PA",
+    "16": "AP",
+    "17": "TO",
+    "21": "MA",
+    "22": "PI",
+    "23": "CE",
+    "24": "RN",
+    "25": "PB",
+    "26": "PE",
+    "27": "AL",
+    "28": "SE",
+    "29": "BA",
+    "31": "MG",
+    "32": "ES",
+    "33": "RJ",
+    "35": "SP",
+    "41": "PR",
+    "42": "SC",
+    "43": "RS",
+    "50": "MS",
+    "51": "MT",
+    "52": "GO",
+    "53": "DF",
 }
 
 
@@ -49,6 +71,7 @@ class RaisPipeline(Pipeline):
     ) -> None:
         super().__init__(driver, data_dir, limit=limit, chunk_size=chunk_size, **kwargs)
         self.labor_stats: list[dict[str, Any]] = []
+        self.dimension_observations: list[dict[str, Any]] = []
 
     def extract(self) -> None:
         """Read RAIS establishment microdata and aggregate by CNAE + UF.
@@ -77,23 +100,59 @@ class RaisPipeline(Pipeline):
     def _from_aggregated(self, df: pd.DataFrame) -> None:
         """Load from pre-aggregated CSV."""
         rows: list[dict[str, Any]] = []
+        self.dimension_observations = []
         for _, row in df.iterrows():
             cnae = str(row.get("cnae_subclass", "")).strip()
             uf = str(row.get("uf", "")).strip()
             if not cnae or not uf:
                 continue
-            rows.append({
-                "stats_id": f"rais_2022_{cnae}_{uf}",
-                "cnae_subclass": cnae,
-                "uf": uf,
-                "year": 2022,
-                "establishment_count": int(row.get("establishment_count", 0)),
-                "total_employees": int(row.get("total_employees", 0)),
-                "total_clt": int(row.get("total_clt", 0)),
-                "total_statutory": int(row.get("total_statutory", 0)),
-                "avg_employees": float(row.get("avg_employees", 0)),
-                "source": "rais_mte",
-            })
+            # Only project when the source explicitly supplies all vocabulary metadata.
+            fields = (
+                "ibge_code",
+                "territorial_version",
+                "cnae_version",
+                "unit_system",
+                "unit_code",
+                "exercise",
+            )
+            if all(isinstance(row.get(f), str) and row.get(f) for f in fields):
+                if row["exercise"] != "2022":
+                    raise ValueError("RAIS exercise does not match the 2022 aggregate")
+                self.dimension_observations.append(
+                    {
+                        "stats_id": f"rais_2022_{cnae}_{uf}",
+                        "dimensions": {
+                            "territory": {
+                                "system": "IBGE",
+                                "type": "uf",
+                                "code": row["ibge_code"],
+                                "territorial_version": row["territorial_version"],
+                                "uf": uf,
+                            },
+                            "activity": {
+                                "classification": "CNAE",
+                                "version": row["cnae_version"],
+                                "code": cnae,
+                            },
+                            "unit": {"system": row["unit_system"], "code": row["unit_code"]},
+                            "fiscal_year": {"year": row["exercise"]},
+                        },
+                    }
+                )
+            rows.append(
+                {
+                    "stats_id": f"rais_2022_{cnae}_{uf}",
+                    "cnae_subclass": cnae,
+                    "uf": uf,
+                    "year": 2022,
+                    "establishment_count": int(row.get("establishment_count", 0)),
+                    "total_employees": int(row.get("total_employees", 0)),
+                    "total_clt": int(row.get("total_clt", 0)),
+                    "total_statutory": int(row.get("total_statutory", 0)),
+                    "avg_employees": float(row.get("avg_employees", 0)),
+                    "source": "rais_mte",
+                }
+            )
         self.labor_stats = rows
         logger.info("Loaded %d aggregated RAIS records", len(rows))
 
@@ -111,8 +170,11 @@ class RaisPipeline(Pipeline):
             dtype=str,
             keep_default_na=False,
             usecols=[
-                "CNAE 2.0 Subclasse", "Qtd Vínculos Ativos",
-                "Qtd Vínculos CLT", "Qtd Vínculos Estatutários", "UF",
+                "CNAE 2.0 Subclasse",
+                "Qtd Vínculos Ativos",
+                "Qtd Vínculos CLT",
+                "Qtd Vínculos Estatutários",
+                "UF",
             ],
             chunksize=self.chunk_size,
         )
@@ -127,9 +189,7 @@ class RaisPipeline(Pipeline):
                 uf = UF_CODE_MAP.get(uf_code, uf_code)
                 vinculos = int(str(row["Qtd Vínculos Ativos"]).strip() or "0")
                 vinculos_clt = int(str(row["Qtd Vínculos CLT"]).strip() or "0")
-                vinculos_estat = int(
-                    str(row["Qtd Vínculos Estatutários"]).strip() or "0"
-                )
+                vinculos_estat = int(str(row["Qtd Vínculos Estatutários"]).strip() or "0")
                 key = (cnae, uf)
                 if key not in agg:
                     agg[key] = {
@@ -149,25 +209,29 @@ class RaisPipeline(Pipeline):
         rows: list[dict[str, Any]] = []
         for v in agg.values():
             est_count = v["establishment_count"]
-            rows.append({
-                "stats_id": f"rais_2022_{v['cnae_subclass']}_{v['uf']}",
-                "cnae_subclass": v["cnae_subclass"],
-                "uf": v["uf"],
-                "year": 2022,
-                "establishment_count": est_count,
-                "total_employees": v["total_employees"],
-                "total_clt": v["total_clt"],
-                "total_statutory": v["total_statutory"],
-                "avg_employees": round(v["total_employees"] / est_count, 1)
-                if est_count > 0
-                else 0,
-                "source": "rais_mte",
-            })
+            rows.append(
+                {
+                    "stats_id": f"rais_2022_{v['cnae_subclass']}_{v['uf']}",
+                    "cnae_subclass": v["cnae_subclass"],
+                    "uf": v["uf"],
+                    "year": 2022,
+                    "establishment_count": est_count,
+                    "total_employees": v["total_employees"],
+                    "total_clt": v["total_clt"],
+                    "total_statutory": v["total_statutory"],
+                    "avg_employees": round(v["total_employees"] / est_count, 1)
+                    if est_count > 0
+                    else 0,
+                    "source": "rais_mte",
+                }
+            )
 
         self.labor_stats = rows
         logger.info(
             "Aggregated %d rows into %d CNAE+UF stats from %d raw records",
-            total_rows, len(rows), total_rows,
+            total_rows,
+            len(rows),
+            total_rows,
         )
 
     def transform(self) -> None:
@@ -185,16 +249,18 @@ class RaisPipeline(Pipeline):
         logger.info("Loading %d LaborStats nodes...", len(self.labor_stats))
         loader.load_nodes("LaborStats", self.labor_stats, key_field="stats_id")
 
+        if self.dimension_observations:
+            project_rais(self.driver, self.neo4j_database, self.dimension_observations)
+        else:
+            logger.warning("RAIS dimensions pending: explicit vocabulary metadata unavailable")
+
         # Create index for efficient matching
         with self.driver.session(database=self.neo4j_database) as session:
             session.run(
                 "CREATE INDEX labor_stats_cnae IF NOT EXISTS "
                 "FOR (l:LaborStats) ON (l.cnae_subclass)"
             )
-            session.run(
-                "CREATE INDEX labor_stats_uf IF NOT EXISTS "
-                "FOR (l:LaborStats) ON (l.uf)"
-            )
+            session.run("CREATE INDEX labor_stats_uf IF NOT EXISTS FOR (l:LaborStats) ON (l.uf)")
 
         logger.info("LaborStats nodes loaded. Indexes created.")
         logger.info(
