@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 
 from bracc_etl.base import Pipeline
+from bracc_etl.dimensions.crosswalk import validate_crosswalk
 
 if TYPE_CHECKING:
     from neo4j import Driver
@@ -67,9 +68,11 @@ class RaisPipeline(Pipeline):
         data_dir: str = "./data",
         limit: int | None = None,
         chunk_size: int = 50_000,
+        dimension_crosswalk: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(driver, data_dir, limit=limit, chunk_size=chunk_size, **kwargs)
+        self.dimension_crosswalk = dimension_crosswalk
         self.labor_stats: list[dict[str, Any]] = []
         self.dimension_observations: list[dict[str, Any]] = []
 
@@ -106,6 +109,7 @@ class RaisPipeline(Pipeline):
             uf = str(row.get("uf", "")).strip()
             if not cnae or not uf:
                 continue
+            code_check = {"status": "pending", "reason": "dimension_metadata_missing"}
             # Only project when the source explicitly supplies all vocabulary metadata.
             fields = (
                 "ibge_code",
@@ -139,8 +143,15 @@ class RaisPipeline(Pipeline):
                         },
                     }
                 )
+                observed = self.dimension_observations[-1]["dimensions"]
+                code_check = validate_crosswalk(
+                    [{key: observed[key] for key in ("territory", "activity", "unit")}],
+                    self.dimension_crosswalk,
+                )[0]
             rows.append(
                 {
+                    "code_validation_status": code_check["status"],
+                    "code_validation_reason": code_check["reason"],
                     "stats_id": f"rais_2022_{cnae}_{uf}",
                     "cnae_subclass": cnae,
                     "uf": uf,
@@ -211,6 +222,8 @@ class RaisPipeline(Pipeline):
             est_count = v["establishment_count"]
             rows.append(
                 {
+                    "code_validation_status": "pending",
+                    "code_validation_reason": "dimension_metadata_missing",
                     "stats_id": f"rais_2022_{v['cnae_subclass']}_{v['uf']}",
                     "cnae_subclass": v["cnae_subclass"],
                     "uf": v["uf"],

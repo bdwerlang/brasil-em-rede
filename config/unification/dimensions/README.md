@@ -12,3 +12,19 @@ usa classificação, versão e código. `PublicBody` usa jurisdição, sistema,
 papel, código e versão. Não há crosswalk implícito nem validação de existência
 em tabela oficial. A identidade institucional precisa ser reconciliada por
 crosswalk documentado, nunca por nome.
+
+O módulo `crosswalk` oferece correspondência explícita contra uma tabela local
+fornecida pelo chamador. A tabela exige fonte, versão e SHA-256 das entradas
+serializadas em JSON canônico (UTF-8, chaves ordenadas, sem espaços); sem tabela
+ou entrada correspondente, o resultado é pendente. A correspondência não prova
+que a fonte seja oficial. Nenhuma tabela é fornecida nesta entrega. RAIS e Siconfi aceitam uma tabela
+opcional `dimension_crosswalk`; o fato registra `code_validation_status`
+como `pending` ou `matched_local` e a razão. A correspondência local não
+certifica validação oficial nem substitui a reconciliação de snapshots U05.
+Reprocessar uma chave com dimensões removidas pode conservar vínculos antigos;
+a correção requer preservar histórico e continua pendente.
+
+No Siconfi, linhas com o mesmo identificador são reconciliadas sem depender da
+ordem: uma observação completa prevalece sobre uma incompleta compatível.
+Valores ou metadados explícitos divergentes para o mesmo identificador causam
+erro; a reconciliação de revisões históricas continua pendente de U05/U06.

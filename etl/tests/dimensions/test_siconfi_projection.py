@@ -80,7 +80,8 @@ def test_load_twice_without_entities():
         with driver.session() as session:
             statuses = session.run(
                 "MATCH (n:MunicipalFinance) RETURN n.account AS account, "
-                "n.dimension_status AS status, n.dimension_reason AS reason"
+                "n.dimension_status AS status, n.dimension_reason AS reason, "
+                "n.code_validation_status AS code_status"
             ).data()
             nodes = session.run("MATCH (n) RETURN labels(n) AS labels, count(n) AS count").data()
             links = session.run("MATCH (:MunicipalFinance)-[r]->() RETURN count(r) AS n").single(
@@ -94,6 +95,7 @@ def test_load_twice_without_entities():
             ("PublicBody",): 1,
         }
         assert links == 4
+        assert all(r["code_status"] == "pending" for r in statuses)
         assert {r["account"]: (r["status"], r["reason"]) for r in statuses} == {
             "receita": ("projected", ""),
             "despesa": ("pending", "missing_metadata:versao_territorial"),
@@ -108,5 +110,72 @@ def test_conflicting_dimensions_for_same_fact_fail():
     second["unidade_codigo"] = "USD"
     pipeline = SiconfiPipeline(MagicMock())
     pipeline._raw = [first, second]
-    with pytest.raises(ValueError, match="conflicting dimensions"):
+    with pytest.raises(ValueError, match="conflicting metadata"):
         pipeline.transform()
+
+
+def test_duplicate_public_body_completes_in_either_order():
+    from copy import deepcopy
+
+    full = observation()
+    partial = deepcopy(full)
+    for field in (
+        "orgao_jurisdicao",
+        "orgao_sistema",
+        "orgao_papel",
+        "orgao_codigo",
+        "orgao_versao",
+    ):
+        del partial[field]
+    pipeline = SiconfiPipeline(MagicMock())
+    results = []
+    for rows in ([partial, full], [full, partial]):
+        pipeline._raw = rows
+        pipeline.transform()
+        results.append(deepcopy(pipeline.dimension_observations))
+        assert pipeline.dimension_observations[0]["dimensions"]["public_body"]["code"] == "000123"
+    assert results[0] == results[1]
+    conflict = deepcopy(full)
+    conflict["orgao_codigo"] = "000124"
+    for rows in ([full, conflict], [conflict, full]):
+        pipeline._raw = rows
+        with pytest.raises(ValueError, match="conflicting metadata"):
+            pipeline.transform()
+
+
+def test_duplicate_body_link_in_disposable_graph():
+    from copy import deepcopy
+
+    uri = os.environ.get("F09_NEO4J_URI")
+    if not uri:
+        pytest.skip("requires disposable Neo4j")
+    driver = GraphDatabase.driver(uri, auth=("neo4j", os.environ["F09_NEO4J_PASSWORD"]))
+    try:
+        full = observation()
+        full["conta"] = "duplicate_body"
+        partial = deepcopy(full)
+        for field in (
+            "orgao_jurisdicao",
+            "orgao_sistema",
+            "orgao_papel",
+            "orgao_codigo",
+            "orgao_versao",
+        ):
+            del partial[field]
+        pipeline = SiconfiPipeline(driver)
+        for rows in ([partial, full], [full, partial]):
+            pipeline._raw = rows
+            pipeline.transform()
+            pipeline.load()
+            with driver.session() as session:
+                result = session.run(
+                    "MATCH (f:MunicipalFinance {finance_id: $id}) "
+                    "OPTIONAL MATCH (f)-[r:REFERENCES_BODY]->(b:PublicBody) "
+                    "RETURN f.dimension_status AS status, count(r) AS n, collect(b.code) AS codes",
+                    id=pipeline.finances[0]["finance_id"],
+                ).single(strict=True)
+                assert result["status"] == "projected"
+                assert result["n"] == 1
+                assert result["codes"] == ["000123"]
+    finally:
+        driver.close()
