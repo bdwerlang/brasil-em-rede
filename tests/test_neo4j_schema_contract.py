@@ -37,3 +37,13 @@ def test_explicit_dimension_keys():
     assert {("Territory", "territory_id"), ("PublicBody", "public_body_id"),
             ("EconomicActivity", "activity_id"), ("Unit", "unit_id"),
             ("FiscalYear", "fiscal_year_id")} <= keys
+
+
+def test_person_identity_constraints_are_scoped_to_snapshot_and_label():
+    schema = INFRA.read_text()
+    assert re.search(r'FOR \(p:Person\) REQUIRE p\.entity_id IS UNIQUE', schema)
+    assert re.search(
+        r'FOR \(p:Person\) REQUIRE \(p\.identity_snapshot, p\.identity_legacy_id\) IS UNIQUE',
+        schema,
+    )
+    assert not re.search(r'FOR \(p:Person\) REQUIRE p\.(author_key|sq_candidato) IS UNIQUE', schema)
