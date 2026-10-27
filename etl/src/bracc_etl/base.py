@@ -1,13 +1,41 @@
+import hashlib
+import json
 import logging
 import os
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
+from uuid import uuid4
 
 from neo4j import Driver
 
+from bracc_etl.loader import LoadMetrics, _active_load
 from bracc_etl.source_aliases import SCHEMA_VERSION, source_aliases
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class EmptyLoadEvidence:
+    """A JSON source manifest with source_id and record_count, identified by SHA-256."""
+
+    path: str
+    sha256: str
+
+    def verify(self, source_id: str) -> bool:
+        try:
+            content = Path(self.path).read_bytes()
+            manifest = json.loads(content)
+            return (
+                hashlib.sha256(content).hexdigest() == self.sha256
+                and isinstance(manifest, dict)
+                and manifest.get("source_id") == source_id
+                and type(manifest.get("record_count")) is int
+                and manifest["record_count"] == 0
+            )
+        except (OSError, ValueError, UnicodeDecodeError):
+            return False
 
 
 class Pipeline(ABC):
@@ -33,9 +61,12 @@ class Pipeline(ABC):
         self.history = history
         self.rows_in: int = 0
         self.rows_loaded: int = 0
+        # Pipelines that legitimately load no rows must provide auditable evidence.
+        self.empty_load_evidence: EmptyLoadEvidence | None = None
+        self.load_metrics = LoadMetrics()
         self.source_identity = source_aliases().for_pipeline(self.name, self.source_id)
         source_key = getattr(self, "source_id", getattr(self, "name", "unknown_source"))
-        self.run_id = f"{source_key}_{datetime.now(tz=UTC).strftime('%Y%m%d%H%M%S')}"
+        self.run_id = f"{source_key}_{uuid4().hex}"
 
     @abstractmethod
     def extract(self) -> None:
@@ -51,8 +82,11 @@ class Pipeline(ABC):
 
     def run(self) -> None:
         """Execute the full ETL pipeline."""
+        self.run_id = f"{self.source_id}_{uuid4().hex}"
         started_at = datetime.now(tz=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
         self._upsert_ingestion_run(status="running", started_at=started_at)
+        self.load_metrics = LoadMetrics()
+        token = _active_load.set((self.driver, self.load_metrics))
         try:
             logger.info("[%s] Starting extraction...", self.name)
             self.extract()
@@ -60,6 +94,17 @@ class Pipeline(ABC):
             self.transform()
             logger.info("[%s] Starting load...", self.name)
             self.load()
+            self._sync_load_metrics()
+            if (
+                self.rows_loaded == 0
+                and self.load_metrics.generic_updates == 0
+                and not (
+                    self.load_metrics.submitted == 0
+                    and isinstance(self.empty_load_evidence, EmptyLoadEvidence)
+                    and self.empty_load_evidence.verify(self.source_identity.source_id)
+                )
+            ):
+                raise ValueError("empty load requires evidence")
             finished_at = datetime.now(tz=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
             self._upsert_ingestion_run(
                 status="loaded",
@@ -68,6 +113,7 @@ class Pipeline(ABC):
             )
             logger.info("[%s] Pipeline complete.", self.name)
         except Exception as exc:
+            self._sync_load_metrics()
             finished_at = datetime.now(tz=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
             self._upsert_ingestion_run(
                 status="quality_fail",
@@ -76,6 +122,11 @@ class Pipeline(ABC):
                 error=str(exc)[:1000],
             )
             raise
+        finally:
+            _active_load.reset(token)
+
+    def _sync_load_metrics(self) -> None:
+        self.rows_loaded = self.load_metrics.verified_rows
 
     def _upsert_ingestion_run(
         self,
@@ -98,7 +149,15 @@ class Pipeline(ABC):
             "    r.finished_at = coalesce($finished_at, r.finished_at), "
             "    r.error = coalesce($error, r.error), "
             "    r.rows_in = $rows_in, "
-            "    r.rows_loaded = $rows_loaded"
+            "    r.rows_loaded = $rows_loaded, "
+            "    r.empty_load_evidence_path = $empty_load_evidence_path, "
+            "    r.empty_load_evidence_sha256 = $empty_load_evidence_sha256, "
+            "    r.submitted = $submitted, r.attempts = $attempts, "
+            "    r.rejected = $rejected, r.committed_rows = $committed_rows, "
+            "    r.verified_rows = $verified_rows, r.generic_updates = $generic_updates, "
+            "    r.nodes_created = $nodes_created, "
+            "    r.relationships_created = $relationships_created, "
+            "    r.relationships_resolved = $relationships_resolved, r.unresolved = $unresolved"
         )
         run_id = getattr(self, "run_id", f"{self.source_id}_manual")
         params = {
@@ -113,9 +172,17 @@ class Pipeline(ABC):
             "error": error,
             "rows_in": self.rows_in,
             "rows_loaded": self.rows_loaded,
+            "empty_load_evidence_path": (
+                self.empty_load_evidence.path
+                if isinstance(self.empty_load_evidence, EmptyLoadEvidence)
+                else None
+            ),
+            "empty_load_evidence_sha256": (
+                self.empty_load_evidence.sha256
+                if isinstance(self.empty_load_evidence, EmptyLoadEvidence)
+                else None
+            ),
+            **vars(self.load_metrics),
         }
-        try:
-            with self.driver.session(database=self.neo4j_database) as session:
-                session.run(query, params)
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("[%s] failed to persist IngestionRun: %s", self.name, exc)
+        with self.driver.session(database=self.neo4j_database) as session:
+            session.run(query, params).consume()

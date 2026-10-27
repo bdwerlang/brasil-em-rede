@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
 
 from bracc_etl.pipelines.cnpj import CNPJPipeline, parse_capital_social
+from tests.neo4j_mocks import make_driver
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline(data_dir: str | None = None, **kwargs: object) -> CNPJPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     if data_dir is None:
         data_dir = str(FIXTURES)
     return CNPJPipeline(driver=driver, data_dir=data_dir, **kwargs)  # type: ignore[arg-type]
@@ -528,9 +528,6 @@ def test_transform_socios_rf_vectorized() -> None:
 def test_run_streaming_rf_format() -> None:
     """run_streaming processes RF files chunk-by-chunk and calls loader."""
     pipeline = _make_pipeline(chunk_size=2)
-    mock_session = MagicMock()
-    pipeline.driver.session.return_value.__enter__ = MagicMock(return_value=mock_session)
-    pipeline.driver.session.return_value.__exit__ = MagicMock(return_value=False)
 
     pipeline.run_streaming()
 
@@ -542,9 +539,6 @@ def test_run_streaming_bq_format(tmp_path: Path) -> None:
     """run_streaming detects BQ-format files and processes them correctly."""
     data_dir = _write_bq_fixtures(tmp_path)
     pipeline = _make_pipeline(data_dir=str(data_dir), chunk_size=2)
-    mock_session = MagicMock()
-    pipeline.driver.session.return_value.__enter__ = MagicMock(return_value=mock_session)
-    pipeline.driver.session.return_value.__exit__ = MagicMock(return_value=False)
 
     pipeline.run_streaming()
 
