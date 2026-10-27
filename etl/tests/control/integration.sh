@@ -3,13 +3,15 @@ set -euo pipefail
 # Runs only in a new networkless disposable container. No host port or existing DB.
 root=$(git rev-parse --show-toplevel)
 name="bracc-u03-test-${$}-${RANDOM}"
+image="bracc-u03-image-${$}-${RANDOM}:test"
 a=$(mktemp -d)
 chmod 755 "$a"
 mkdir "$a/socket"
 chmod 777 "$a/socket"
-cleanup() { docker stop -t 10 "$name" >/dev/null 2>&1 || true; docker rm -v "$name" >/dev/null 2>&1 || true; rm -rf "$a"; }
+cleanup() { docker stop -t 10 "$name" >/dev/null 2>&1 || true; docker rm -v "$name" >/dev/null 2>&1 || true; docker image rm "$image" >/dev/null 2>&1 || true; rm -rf "$a"; }
 trap cleanup EXIT
-docker run -d --name "$name" --network none -v "$a/socket:/var/run/postgresql" -e POSTGRES_PASSWORD=synthetic-only postgres:16-alpine >/dev/null
+docker build -t "$image" "$root/infra/postgres" >/dev/null
+docker run -d --name "$name" --network none -v "$a/socket:/var/run/postgresql" -e POSTGRES_PASSWORD=synthetic-only "$image" >/dev/null
 for _ in {1..60}; do
   if docker exec "$name" pg_isready -U postgres >/dev/null 2>&1; then break; fi
   sleep 1
