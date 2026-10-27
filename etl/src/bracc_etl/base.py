@@ -5,6 +5,8 @@ from datetime import UTC, datetime
 
 from neo4j import Driver
 
+from bracc_etl.source_aliases import SCHEMA_VERSION, source_aliases
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,6 +33,7 @@ class Pipeline(ABC):
         self.history = history
         self.rows_in: int = 0
         self.rows_loaded: int = 0
+        self.source_identity = source_aliases().for_pipeline(self.name, self.source_id)
         source_key = getattr(self, "source_id", getattr(self, "name", "unknown_source"))
         self.run_id = f"{source_key}_{datetime.now(tz=UTC).strftime('%Y%m%d%H%M%S')}"
 
@@ -83,10 +86,13 @@ class Pipeline(ABC):
         error: str | None = None,
     ) -> None:
         """Persist ingestion run state for operational traceability."""
-        source_id = getattr(self, "source_id", getattr(self, "name", "unknown_source"))
+        identity = self.source_identity
         query = (
             "MERGE (r:IngestionRun {run_id: $run_id}) "
             "SET r.source_id = $source_id, "
+            "    r.runner_name = $runner_name, "
+            "    r.provider_id = $provider_id, "
+            "    r.source_aliases_version = $source_aliases_version, "
             "    r.status = $status, "
             "    r.started_at = coalesce($started_at, r.started_at), "
             "    r.finished_at = coalesce($finished_at, r.finished_at), "
@@ -94,10 +100,13 @@ class Pipeline(ABC):
             "    r.rows_in = $rows_in, "
             "    r.rows_loaded = $rows_loaded"
         )
-        run_id = getattr(self, "run_id", f"{source_id}_manual")
+        run_id = getattr(self, "run_id", f"{self.source_id}_manual")
         params = {
             "run_id": run_id,
-            "source_id": source_id,
+            "source_id": identity.source_id,
+            "runner_name": identity.runner_name,
+            "provider_id": identity.provider_id,
+            "source_aliases_version": SCHEMA_VERSION,
             "status": status,
             "started_at": started_at,
             "finished_at": finished_at,

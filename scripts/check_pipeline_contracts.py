@@ -5,10 +5,9 @@ from __future__ import annotations
 
 import argparse
 import csv
-import re
 from pathlib import Path
 
-PIPELINE_ENTRY_RE = re.compile(r'^\s*"([a-z0-9_]+)":\s*[A-Za-z_][A-Za-z0-9_]*,\s*$')
+from check_source_aliases import REPO_ROOT, check_source_aliases, pipeline_metadata
 
 
 def parse_bool(value: str) -> bool:
@@ -28,19 +27,7 @@ def parse_registry_implemented(path: Path) -> set[str]:
 
 
 def parse_runner_pipelines(path: Path) -> set[str]:
-    pipelines: set[str] = set()
-    inside = False
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line.startswith("PIPELINES: dict[str, type] = {"):
-            inside = True
-            continue
-        if inside and line.strip() == "}":
-            break
-        if inside:
-            match = PIPELINE_ENTRY_RE.match(line)
-            if match:
-                pipelines.add(match.group(1))
-    return pipelines
+    return set(pipeline_metadata(path))
 
 
 def main() -> int:
@@ -65,6 +52,17 @@ def main() -> int:
             print(f"- runner_not_marked_implemented={extra}")
         return 1
 
+    try:
+        sources, runners = check_source_aliases(
+            Path(args.registry_path),
+            Path(args.runner_path),
+            REPO_ROOT / "config/source_aliases.json",
+            REPO_ROOT / "etl/src/bracc_etl/data/source_aliases.json",
+        )
+    except (ValueError, OSError) as exc:
+        print(f"FAIL: {exc}")
+        return 1
+    print(f"source_aliases={sources} mapped_runners={runners}")
     print("PASS")
     return 0
 
