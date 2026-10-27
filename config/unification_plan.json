@@ -1,0 +1,563 @@
+{
+  "schema_version": 1,
+  "planned_on": "2026-10-27",
+  "status": "planning",
+  "repository": "bdwerlang/brasil-em-rede",
+  "scope": {
+    "registered_sources": 169,
+    "public_universe_sources": 168,
+    "current_pipeline_modules": 47,
+    "crossing_plans": 21
+  },
+  "source_plan": "config/source_implementation_plan.json",
+  "source_mapping": "config/source_unification_map.json",
+  "runtime_prerequisite": {
+    "key": "F00",
+    "issue_number": 1,
+    "policy": "Corrigir ou triar explicitamente alertas de dependências antes de introduzir os serviços e preparar release. Planejamento e inventário podem ocorrer em paralelo."
+  },
+  "stores": [
+    {
+      "id": "raw",
+      "technology": "filesystem com interface de object storage",
+      "status": "proposed",
+      "purpose": "Artefatos imutáveis e manifests; acesso por classe e checksum."
+    },
+    {
+      "id": "normalized",
+      "technology": "Apache Parquet",
+      "status": "proposed",
+      "purpose": "Registros tipados, observações, séries e geometadados por partição/versão."
+    },
+    {
+      "id": "control",
+      "technology": "PostgreSQL",
+      "status": "proposed",
+      "purpose": "Catálogo operacional, identidades, decisões, leases, outbox e bundles; schema app separado para usuários, investigações e anotações mutáveis."
+    },
+    {
+      "id": "graph",
+      "technology": "Neo4j Community",
+      "status": "existing_to_migrate",
+      "purpose": "Projeção de entidades e vínculos curados com evidência."
+    },
+    {
+      "id": "analytics",
+      "technology": "DuckDB por processo",
+      "status": "proposed",
+      "purpose": "Validação e consultas analíticas sobre manifestos Parquet aprovados."
+    }
+  ],
+  "documentation": [
+    "docs/unification/README.md",
+    "docs/unification/canonical-model.md",
+    "docs/unification/migration-runbook.md",
+    "docs/unification/roadmap.md",
+    "docs/unification/source-map.md"
+  ],
+  "phases": [
+    {
+      "id": "U01",
+      "title": "Inventário e contratos",
+      "depends_on": [],
+      "existing_issues": [
+        {
+          "key": "F01",
+          "number": 2
+        },
+        {
+          "key": "F10",
+          "number": 11
+        }
+      ],
+      "owner_role": "engenharia de dados",
+      "relative_effort": "M",
+      "current_evidence": [
+        "docs/source_registry_br_v1.csv",
+        "etl/src/bracc_etl/runner.py"
+      ],
+      "proposed_deliverables": [
+        "config/source_aliases.json",
+        "config/source_contracts/",
+        "audit-results/unification/inventory.json"
+      ],
+      "tasks": [
+        "Inventariar arquivos, bancos, volumes, versões, chaves e estados reais sem iniciar cargas.",
+        "Mapear os IDs das 169 fontes aos aliases e identificar os 47 adaptadores existentes.",
+        "Fixar granularidade, chave de negócio, partição, cobertura, acesso e atualização de cada dataset."
+      ],
+      "acceptance": [
+        "169 IDs cobertos uma vez; nenhum alias ambíguo.",
+        "Cada dataset piloto tem contrato e partição verificáveis; bloqueios têm causa explícita."
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U02",
+      "title": "Identidade e modelo canônico",
+      "depends_on": [
+        "U01"
+      ],
+      "existing_issues": [
+        {
+          "key": "F02",
+          "number": 3
+        },
+        {
+          "key": "F03",
+          "number": 4
+        },
+        {
+          "key": "F09",
+          "number": 10
+        }
+      ],
+      "owner_role": "dados e backend",
+      "relative_effort": "L",
+      "current_evidence": [
+        "etl/src/bracc_etl/transforms/document_formatting.py",
+        "etl/src/bracc_etl/pipelines/cnpj.py"
+      ],
+      "proposed_deliverables": [
+        "etl/src/bracc_etl/identity/",
+        "config/unification/identity_rules.json",
+        "etl/tests/test_canonical_identity.py"
+      ],
+      "tasks": [
+        "Definir IDs opacos persistentes e identificadores com namespace.",
+        "Separar cadastro por raiz, estabelecimento completo, pessoa, observação de sócio e órgão.",
+        "Especificar crosswalks de território, CNAE, códigos de órgão e identificadores de eventos."
+      ],
+      "acceptance": [
+        "Zeros e letras preservados; raiz não fabrica CNPJ completo.",
+        "Filiais distintas e homônimos com máscara igual permanecem separados.",
+        "IDs públicos continuam estáveis quando a projeção é reconstruída."
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U03",
+      "title": "Persistência e catálogo operacional",
+      "depends_on": [
+        "U01"
+      ],
+      "existing_issues": [
+        {
+          "key": "F04",
+          "number": 5
+        },
+        {
+          "key": "F05",
+          "number": 6
+        },
+        {
+          "key": "F10",
+          "number": 11
+        }
+      ],
+      "owner_role": "infraestrutura e dados",
+      "relative_effort": "L",
+      "current_evidence": [
+        "docker-compose.yml",
+        "etl/src/bracc_etl/base.py"
+      ],
+      "proposed_deliverables": [
+        "infra/postgres/migrations/",
+        "etl/src/bracc_etl/control/",
+        "infra/storage/README.md"
+      ],
+      "tasks": [
+        "Introduzir PostgreSQL para catálogo de datasets/artefatos, execuções, identidade e releases.",
+        "Definir volumes de bruto e Parquet com caminhos imutáveis e política de acesso.",
+        "Implementar leases por partição, outbox e controle de publicação concorrente.",
+        "Separar schema de aplicação para usuários/investigações/anotações do controle de ingestão; definir migração e backup sem expor hashes ou identificadores sensíveis."
+      ],
+      "acceptance": [
+        "Migrations e restore do controle ensaiados; versões fixadas após triagem F00.",
+        "Dois workers não publicam a mesma partição em concorrência.",
+        "Arquivo órfão ou outbox pendente não muda a release consultável."
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U04",
+      "title": "Aquisição e normalização comuns",
+      "depends_on": [
+        "U02",
+        "U03"
+      ],
+      "existing_issues": [
+        {
+          "key": "F05",
+          "number": 6
+        },
+        {
+          "key": "F06",
+          "number": 7
+        },
+        {
+          "key": "F08",
+          "number": 9
+        }
+      ],
+      "owner_role": "engenharia de dados",
+      "relative_effort": "XL",
+      "current_evidence": [
+        "etl/src/bracc_etl/base.py",
+        "scripts/bootstrap_all/adapters/registry.py"
+      ],
+      "proposed_deliverables": [
+        "etl/src/bracc_etl/acquisition/",
+        "etl/src/bracc_etl/normalization/",
+        "etl/tests/test_normalized_partitions.py"
+      ],
+      "tasks": [
+        "Adaptar os módulos ao contrato adquirir, validar e normalizar sem escrita direta no grafo ativo.",
+        "Gravar bruto íntegro e Parquet tipado com proveniência por registro e rejeições separadas.",
+        "Retomar paginação/partições e aplicar evolução de esquema explícita."
+      ],
+      "acceptance": [
+        "Reexecução do mesmo conteúdo e versão do parser não duplica observações.",
+        "Leitura reconciliada em aceitos, duplicatas e rejeições; dados vazios inesperados falham.",
+        "Mudança incompatível de esquema bloqueia a partição, preservando a release anterior."
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U05",
+      "title": "Observações, fatos e histórico",
+      "depends_on": [
+        "U02",
+        "U03"
+      ],
+      "existing_issues": [
+        {
+          "key": "F04",
+          "number": 5
+        },
+        {
+          "key": "F07",
+          "number": 8
+        }
+      ],
+      "owner_role": "dados e domínio",
+      "relative_effort": "L",
+      "current_evidence": [
+        "etl/src/bracc_etl/pipelines/senado_cpis.py",
+        "etl/src/bracc_etl/pipelines/tse.py"
+      ],
+      "proposed_deliverables": [
+        "config/unification/fact_contracts/",
+        "etl/src/bracc_etl/evidence/",
+        "etl/tests/test_fact_revisions.py"
+      ],
+      "tasks": [
+        "Separar registro da fonte, versão de observação, evento de negócio e entidade canônica.",
+        "Preservar vigência do fato, data de observação e revisões divergentes.",
+        "Definir evidência de atributos e relações, incluindo localização no artefato original."
+      ],
+      "acceptance": [
+        "Toda afirmação publicada resolve para fonte, versão, artefato e registro.",
+        "Duas receitas eleitorais ou contratos distintos não colapsam por mesmo par/ano/valor.",
+        "Correções e retrações são versionadas; ausência de linha não equivale a revogação."
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U06",
+      "title": "Resolução e reconciliação entre fontes",
+      "depends_on": [
+        "U04",
+        "U05"
+      ],
+      "existing_issues": [
+        {
+          "key": "F07",
+          "number": 8
+        },
+        {
+          "key": "F09",
+          "number": 10
+        }
+      ],
+      "owner_role": "dados e revisão de domínio",
+      "relative_effort": "XL",
+      "current_evidence": [
+        "etl/src/bracc_etl/entity_resolution/linker.py",
+        "etl/src/bracc_etl/pipelines/mides.py"
+      ],
+      "proposed_deliverables": [
+        "etl/src/bracc_etl/identity/resolver.py",
+        "config/unification/reconciliation_rules.json",
+        "etl/tests/test_cross_source_resolution.py"
+      ],
+      "tasks": [
+        "Resolver documentos íntegros e IDs oficiais em namespaces definidos.",
+        "Tratar candidatos probabilísticos, conflitos e crosswalks de contratos como estados auditáveis.",
+        "Reconciliar fontes sobrepostas preservando todas as observações e o grão dos fatos."
+      ],
+      "acceptance": [
+        "Homônimo, CPF parcial, geoproximidade e igualdade de valor não geram identidade confirmada.",
+        "PNCP, Comprasnet e MiDES contam um mesmo contrato somente com chave/crosswalk demonstrado.",
+        "Cada decisão de ligação pode ser revisada e revertida sem apagar evidência."
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U07",
+      "title": "Projeção Neo4j compatível",
+      "depends_on": [
+        "U05",
+        "U06"
+      ],
+      "existing_issues": [
+        {
+          "key": "F04",
+          "number": 5
+        },
+        {
+          "key": "F06",
+          "number": 7
+        }
+      ],
+      "owner_role": "dados e backend",
+      "relative_effort": "L",
+      "current_evidence": [
+        "etl/src/bracc_etl/loader.py",
+        "infra/neo4j/init.cypher",
+        "api/src/bracc/queries/schema_init.cypher"
+      ],
+      "proposed_deliverables": [
+        "infra/neo4j/migrations/",
+        "etl/src/bracc_etl/projection/",
+        "etl/tests/integration/test_unified_projection.py"
+      ],
+      "tasks": [
+        "Unificar constraints e manter a projeção derivada de datasets aprovados.",
+        "Projetar entidades e relações canônicas com chaves explícitas e evidência.",
+        "Confirmar transações, propagar falhas e reconciliar contadores sem confundir linhas com nós criados.",
+        "Fazer writers e coordenador de freeze adquirirem o mesmo guard transacional no grafo, verificando estado/epoch/token sob lock antes de gravar; adaptar QSA canônico à raiz LegalEntity."
+      ],
+      "acceptance": [
+        "Inicialização limpa e atualização dão esquema equivalente.",
+        "Falha no último lote impede promoção; retry não duplica fatos.",
+        "Rebuild a partir dos manifestos mantém IDs e resultados do recorte.",
+        "Worker atrasado após revogação/freeze não confirma escrita; transação iniciada antes da barreira é drenada ou abortada de forma verificável."
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U08",
+      "title": "Piloto de entidades e vínculos",
+      "depends_on": [
+        "U04",
+        "U07"
+      ],
+      "existing_issues": [
+        {
+          "key": "P01",
+          "number": 12
+        },
+        {
+          "key": "P02",
+          "number": 13
+        },
+        {
+          "key": "P03",
+          "number": 14
+        }
+      ],
+      "owner_role": "dados e domínio",
+      "relative_effort": "L",
+      "current_evidence": [
+        "etl/src/bracc_etl/pipelines/cnpj.py",
+        "etl/src/bracc_etl/pipelines/sanctions.py",
+        "etl/src/bracc_etl/pipelines/pncp.py"
+      ],
+      "proposed_deliverables": [
+        "audit-results/unification/pilot/",
+        "etl/tests/integration/test_company_sanction_contract.py"
+      ],
+      "tasks": [
+        "Selecionar recorte público delimitado com estabelecimentos, sanções e contratos.",
+        "Adquirir recursos de contratos/fornecedores, distinguindo publicação de licitação.",
+        "Validar os vínculos positivos e negativos e medir recursos antes de ampliar."
+      ],
+      "acceptance": [
+        "CNPJ a sanção e fornecedor a contrato reproduzidos com origem e datas.",
+        "Filiais diferentes e mesmo contrato espelhado exercitados.",
+        "Bytes, pico de memória, tempo, cobertura e rejeições medidos por partição.",
+        "QSA por raiz aparece no cadastro correto, sem replicar uma sociedade como fatos independentes de todas as filiais."
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U09",
+      "title": "Piloto de séries e geografia",
+      "depends_on": [
+        "U04",
+        "U05",
+        "U06"
+      ],
+      "existing_issues": [
+        {
+          "key": "F09",
+          "number": 10
+        },
+        {
+          "key": "E01",
+          "number": 16
+        }
+      ],
+      "owner_role": "dados e análise de domínio",
+      "relative_effort": "M",
+      "current_evidence": [
+        "etl/src/bracc_etl/pipelines/siconfi.py",
+        "etl/src/bracc_etl/pipelines/rais.py"
+      ],
+      "proposed_deliverables": [
+        "etl/src/bracc_etl/analytics/",
+        "config/unification/dimensions/",
+        "etl/tests/integration/test_territorial_series.py"
+      ],
+      "tasks": [
+        "Escolher dimensão IBGE e uma série agregada do catálogo com competência explícita.",
+        "Consultar Parquet com DuckDB e ligar métricas ao território/dimensão sem inventar entidades nominais.",
+        "Definir CRS, unidades, versões territoriais e revisões de série."
+      ],
+      "acceptance": [
+        "Agregação reproduz soma/contagem/unidade da fonte no grão correto.",
+        "Mudança territorial e competência revisada não duplicam série.",
+        "Mesmo nome de município ou valor de indicador não produz ligação nominal."
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U10",
+      "title": "API e interface unificadas",
+      "depends_on": [
+        "U08",
+        "U09"
+      ],
+      "existing_issues": [
+        {
+          "key": "P04",
+          "number": 15
+        },
+        {
+          "key": "F02",
+          "number": 3
+        },
+        {
+          "key": "F10",
+          "number": 11
+        }
+      ],
+      "owner_role": "backend e frontend",
+      "relative_effort": "L",
+      "current_evidence": [
+        "api/src/bracc/routers/public.py",
+        "api/src/bracc/services/intelligence_provider.py",
+        "frontend/src/"
+      ],
+      "proposed_deliverables": [
+        "api/src/bracc/services/unified_data.py",
+        "api/src/bracc/routers/data_releases.py",
+        "api/tests/integration/test_unified_release.py"
+      ],
+      "tasks": [
+        "Servir empresa, fatos, evidências, séries e cobertura pela mesma API com queries parametrizadas.",
+        "Migrar IDs e serializers sem depender de elementId ou da ordem dos labels.",
+        "Fixar release e versão de resolução no início de cada requisição; separar acesso público e restrito.",
+        "Migrar serviços de usuário/investigação/anotação para schema app e manter release nos cursores/expansões, com ordenação estável e expiração explícita."
+      ],
+      "acceptance": [
+        "Resposta nunca mistura entidades/arestas de releases distintas.",
+        "URLs por ID público sobrevivem a rebuild; aliases antigos têm transição testada.",
+        "Busca, navegação, ausência de resultado, conflito e origem/data funcionam no fluxo de usuário.",
+        "Paginação atravessa promoção sem trocar bundle; release retirada retorna 410 e reinicia o contexto. Login e edições não escrevem no grafo congelado."
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U11",
+      "title": "Migração, publicação e recuperação",
+      "depends_on": [
+        "U10"
+      ],
+      "existing_issues": [
+        {
+          "key": "F03",
+          "number": 4
+        },
+        {
+          "key": "F08",
+          "number": 9
+        },
+        {
+          "key": "F10",
+          "number": 11
+        }
+      ],
+      "owner_role": "infraestrutura e backend",
+      "relative_effort": "XL",
+      "current_evidence": [
+        "infra/scripts/backup-neo4j.sh",
+        "docker-compose.yml"
+      ],
+      "proposed_deliverables": [
+        "infra/scripts/migrate-unification.sh",
+        "infra/scripts/restore-unification.sh",
+        "audit-results/unification/rehearsal/"
+      ],
+      "tasks": [
+        "Inventariar e exportar o legado em modo controlado, sem fabricar proveniência ausente.",
+        "Ensaiar backup offline e restore em instância/volume separado.",
+        "Publicar bundle imutável por compare-and-swap e manter rollback para bundle anterior.",
+        "Ensaiar preservação do estado mutável da aplicação e barreira de writers; reter destinos enquanto houver cursores e janela de rollback válidos."
+      ],
+      "acceptance": [
+        "Falhas antes/depois da confirmação do grafo e do ponteiro recuperam sem sucesso falso.",
+        "Restore e rollback preservam IDs, relações e release consultada.",
+        "Gates e relatório de diferença aprovados antes de qualquer corte de produção.",
+        "Rebuild e rollback mantêm investigações/anotações e não reativam writers legados sem guard."
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U12",
+      "title": "Expansão das 169 fontes e operação",
+      "depends_on": [
+        "U11"
+      ],
+      "existing_issues": [
+        {
+          "key": "E01",
+          "number": 16
+        }
+      ],
+      "owner_role": "dados, backend e operação",
+      "relative_effort": "XL",
+      "current_evidence": [
+        "docs/implementation/source_matrix.csv",
+        "config/source_implementation_plan.json"
+      ],
+      "proposed_deliverables": [
+        "config/unification/source_readiness.json",
+        "audit-results/unification/coverage/",
+        "docs/unification/operations.md"
+      ],
+      "tasks": [
+        "Executar oito ondas existentes com contratos e mapas individuais desta unificação.",
+        "Separar descoberta, acesso condicionado, fontes derivadas e ingestão factual.",
+        "Habilitar os 21 cruzamentos apenas após dependências, evidências e testes de endpoint."
+      ],
+      "acceptance": [
+        "169 fontes têm destino e estado explícitos; acesso restrito não vira cobertura pública.",
+        "Nenhuma fonte pronta sem download, carga e vínculos demonstrados separadamente.",
+        "Freshness, não resolvidos, falhas, custos e capacidade são acompanhados por fonte e partição."
+      ],
+      "status": "planned"
+    }
+  ]
+}
