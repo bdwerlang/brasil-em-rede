@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 
 from bracc_etl.pipelines.pep_cgu import PepCguPipeline
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline(*, limit: int | None = None) -> PepCguPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return PepCguPipeline(driver=driver, data_dir=str(FIXTURES), limit=limit)
 
 
@@ -41,7 +41,7 @@ class TestPepCguExtract:
         assert len(pipeline._raw) == 5
 
     def test_extract_raises_when_missing(self) -> None:
-        driver = MagicMock()
+        driver = make_driver()
         pipeline = PepCguPipeline(driver, data_dir="/nonexistent/path")
         try:
             pipeline.extract()
@@ -173,7 +173,7 @@ class TestPepCguLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         pep_calls = [c for c in run_calls if "MERGE (n:PEPRecord" in str(c)]
@@ -185,7 +185,7 @@ class TestPepCguLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [c for c in run_calls if "PEP_REGISTRADA" in str(c)]
@@ -197,5 +197,5 @@ class TestPepCguLoad:
         pipeline.person_links = []
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         assert session_mock.run.call_count == 0

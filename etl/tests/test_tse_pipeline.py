@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from bracc_etl.pipelines.tse import TSEPipeline
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> TSEPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     pipeline = TSEPipeline(driver, data_dir=str(FIXTURES.parent))
     return pipeline
 
@@ -162,7 +162,7 @@ def test_load_doou_merge_preserves_multi_year_donations() -> None:
     pipeline.load()
 
     # Find the person DOOU query
-    session_mock = pipeline.driver.session.return_value.__enter__.return_value
+    session_mock = transaction(pipeline.driver)
     run_calls = session_mock.run.call_args_list
 
     doou_calls = [
@@ -194,7 +194,7 @@ def test_load_company_donors_include_razao_social() -> None:
     pipeline.load()
 
     # Collect all load_nodes calls from the mock driver
-    session_mock = pipeline.driver.session.return_value.__enter__.return_value
+    session_mock = transaction(pipeline.driver)
     run_calls = session_mock.run.call_args_list
 
     # Find the MERGE (n:Company ...) call — its rows should include razao_social

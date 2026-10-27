@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
 
 from bracc_etl.pipelines.cnpj import CNPJPipeline, parse_capital_social
+from tests.neo4j_mocks import make_driver
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline(data_dir: str | None = None, **kwargs: object) -> CNPJPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     if data_dir is None:
         data_dir = str(FIXTURES)
     return CNPJPipeline(driver=driver, data_dir=data_dir, **kwargs)  # type: ignore[arg-type]
@@ -528,9 +528,6 @@ def test_transform_socios_rf_vectorized() -> None:
 def test_run_streaming_rf_format() -> None:
     """run_streaming processes RF files chunk-by-chunk and calls loader."""
     pipeline = _make_pipeline(chunk_size=2)
-    mock_session = MagicMock()
-    pipeline.driver.session.return_value.__enter__ = MagicMock(return_value=mock_session)
-    pipeline.driver.session.return_value.__exit__ = MagicMock(return_value=False)
 
     pipeline.run_streaming()
 
@@ -542,9 +539,6 @@ def test_run_streaming_bq_format(tmp_path: Path) -> None:
     """run_streaming detects BQ-format files and processes them correctly."""
     data_dir = _write_bq_fixtures(tmp_path)
     pipeline = _make_pipeline(data_dir=str(data_dir), chunk_size=2)
-    mock_session = MagicMock()
-    pipeline.driver.session.return_value.__enter__ = MagicMock(return_value=mock_session)
-    pipeline.driver.session.return_value.__exit__ = MagicMock(return_value=False)
 
     pipeline.run_streaming()
 
@@ -683,3 +677,53 @@ def test_transform_socios_rf_normalizes_data_entrada() -> None:
 
     _, _, pf_rels, _, _ = pipeline._transform_socios_rf(pipeline._raw_socios)
     assert pf_rels[0]["data_entrada"] == "2020-01-15"
+
+
+def test_alphanumeric_establishment_and_unknown_root() -> None:
+    pipeline = _make_pipeline()
+    pipeline._build_estab_lookup(
+        pd.DataFrame(
+            [
+                {
+                    "cnpj_basico": "00ABC123",
+                    "cnpj_ordem": "0001",
+                    "cnpj_dv": "35",
+                    "cnae_principal": "",
+                    "uf": "",
+                    "municipio": "",
+                }
+            ]
+        )
+    )
+    companies = pd.DataFrame(
+        [
+            {
+                "cnpj_basico": "00ABC123",
+                "razao_social": "Exemplo",
+                "capital_social": "0",
+                "natureza_juridica": "",
+                "porte_empresa": "",
+            },
+            {
+                "cnpj_basico": "00ABC124",
+                "razao_social": "Sem estabelecimento",
+                "capital_social": "0",
+                "natureza_juridica": "",
+                "porte_empresa": "",
+            },
+        ]
+    )
+    rows = pipeline._transform_empresas_rf(companies.iloc[:1])
+    assert [row["cnpj"] for row in rows] == ["00.ABC.123/0001-35"]
+    with pytest.raises(ValueError, match="Missing establishment for 1 company rows"):
+        pipeline._transform_empresas_rf(companies)
+
+
+def test_unknown_partner_root_fails_batch() -> None:
+    pipeline = _make_pipeline()
+    rows = pd.DataFrame([{
+        "cnpj_basico": "00ABC123", "nome_socio": "Example", "identificador_socio": "2",
+        "qualificacao_socio": "", "data_entrada": "", "cpf_cnpj_socio": "***123456**",
+    }])
+    with pytest.raises(ValueError, match="Missing establishment for 1 partner rows"):
+        pipeline._transform_socios_rf(rows)

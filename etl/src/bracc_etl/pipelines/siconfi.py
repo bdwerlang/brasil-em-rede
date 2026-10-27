@@ -16,8 +16,8 @@ from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
     deduplicate_rows,
     format_cnpj,
+    normalize_cnpj,
     normalize_name,
-    strip_document,
 )
 
 logger = logging.getLogger(__name__)
@@ -98,7 +98,7 @@ class SiconfiPipeline(Pipeline):
 
             # CNPJ may be in API JSON but not in CSV downloads
             cnpj_raw = str(row.get("cnpj", "")).strip()
-            cnpj_digits = strip_document(cnpj_raw)
+            cnpj_digits = normalize_cnpj(cnpj_raw)
             cnpj_formatted = format_cnpj(cnpj_raw) if len(cnpj_digits) == 14 else ""
 
             id_source = f"{cod_ibge}_{exercicio}_{conta}_{coluna}"

@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
 
 from bracc_etl.pipelines.siop import SiopPipeline, _classify_amendment_type, _parse_brl
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> SiopPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     pipeline = SiopPipeline(driver=driver, data_dir=str(FIXTURES.parent))
     return pipeline
 
@@ -116,7 +116,7 @@ class TestSiopExtract:
         )
         (siop_dir / "emendas_2023.csv").write_text(csv_content, encoding="latin-1")
 
-        driver = MagicMock()
+        driver = make_driver()
         pipeline = SiopPipeline(driver=driver, data_dir=str(tmp_path))
         pipeline.extract()
 
@@ -143,7 +143,7 @@ class TestSiopExtract:
         (siop_dir / "emendas_2023.csv").write_text(header + row_2023, encoding="latin-1")
         (siop_dir / "emendas_2024.csv").write_text(header + row_2024, encoding="latin-1")
 
-        driver = MagicMock()
+        driver = make_driver()
         pipeline = SiopPipeline(driver=driver, data_dir=str(tmp_path))
         pipeline.extract()
 
@@ -154,7 +154,7 @@ class TestSiopExtract:
         siop_dir = tmp_path / "siop"
         siop_dir.mkdir()
 
-        driver = MagicMock()
+        driver = make_driver()
         pipeline = SiopPipeline(driver=driver, data_dir=str(tmp_path))
         pipeline.extract()
 
@@ -319,7 +319,7 @@ class TestSiopLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         amendment_calls = [
@@ -334,7 +334,7 @@ class TestSiopLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         person_calls = [
@@ -349,7 +349,7 @@ class TestSiopLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [
@@ -363,7 +363,7 @@ class TestSiopLoad:
         pipeline = _make_pipeline()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         assert session_mock.run.call_count == 0
 
     def test_load_cypher_uses_param_binding(self) -> None:
@@ -373,7 +373,7 @@ class TestSiopLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         for call in session_mock.run.call_args_list:
             query = str(call[0][0])
             if "AUTOR_EMENDA" in query:

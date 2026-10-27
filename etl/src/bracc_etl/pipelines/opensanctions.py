@@ -11,10 +11,10 @@ if TYPE_CHECKING:
     from neo4j import Driver
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     deduplicate_rows,
     format_cpf,
     normalize_name,
-    strip_document,
 )
 
 logger = logging.getLogger(__name__)
@@ -63,9 +63,8 @@ def _extract_cpf(entity: dict[str, Any]) -> str | None:
     props = entity.get("properties", {})
     tax_numbers = props.get("taxNumber", [])
     for tn in tax_numbers:
-        digits = strip_document(tn)
-        if len(digits) == 11:
-            return format_cpf(digits)
+        if classify_document(tn) == "cpf_valid":
+            return format_cpf(tn)
     return None
 
 

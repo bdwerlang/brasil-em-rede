@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from bracc_etl.pipelines.camara_inquiries import CamaraInquiriesPipeline
+from tests.neo4j_mocks import make_driver
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> CamaraInquiriesPipeline:
-    return CamaraInquiriesPipeline(driver=MagicMock(), data_dir=str(FIXTURES))
+    return CamaraInquiriesPipeline(driver=make_driver(), data_dir=str(FIXTURES))
 
 
 class TestCamaraInquiriesMetadata:

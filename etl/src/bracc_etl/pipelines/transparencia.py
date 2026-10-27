@@ -17,6 +17,7 @@ from bracc_etl.transforms import (
     cap_contract_value,
     deduplicate_rows,
     format_cnpj,
+    normalize_cnpj,
     normalize_name,
     parse_date,
     strip_document,
@@ -128,7 +129,7 @@ class TransparenciaPipeline(Pipeline):
                 continue
 
             # Skip rows where CNPJ has no digits (produces malformed contract_ids)
-            cnpj_digits = strip_document(raw_cnpj)
+            cnpj_digits = normalize_cnpj(raw_cnpj)
             if len(cnpj_digits) != 14:
                 continue
 
