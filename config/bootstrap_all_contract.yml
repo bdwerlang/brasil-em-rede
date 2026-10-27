@@ -1,7 +1,7 @@
 {
   "contract_version": "2026-03-01",
   "full_historical_default": true,
-  "expected_implemented_count": 45,
+  "expected_implemented_count": 47,
   "core_sources": [
     "camara",
     "cnpj",
@@ -89,15 +89,12 @@
     },
     {
       "pipeline_id": "comprasnet",
-      "acquisition_mode": "script_download",
+      "acquisition_mode": "file_manifest",
       "required_inputs": [
         "data/comprasnet/*"
       ],
       "blocking_reason_if_any": "-",
-      "core": true,
-      "download_commands": [
-        "python3 /workspace/scripts/download_comprasnet.py 2019 2020 2021 2022 2023 2024 2025 2026"
-      ]
+      "core": true
     },
     {
       "pipeline_id": "cpgf",
@@ -137,15 +134,12 @@
     },
     {
       "pipeline_id": "datasus",
-      "acquisition_mode": "script_download",
+      "acquisition_mode": "file_manifest",
       "required_inputs": [
         "data/datasus/*"
       ],
       "blocking_reason_if_any": "-",
-      "core": false,
-      "download_commands": [
-        "python3 /workspace/scripts/download_datasus.py"
-      ]
+      "core": false
     },
     {
       "pipeline_id": "dou",
@@ -358,10 +352,28 @@
       ]
     },
     {
+      "pipeline_id": "stj_dados_abertos",
+      "acquisition_mode": "file_manifest",
+      "required_inputs": [
+        "data/stj_dados_abertos/decisoes.csv"
+      ],
+      "blocking_reason_if_any": "-",
+      "core": false
+    },
+    {
       "pipeline_id": "tcu",
       "acquisition_mode": "file_manifest",
       "required_inputs": [
         "data/tcu/*"
+      ],
+      "blocking_reason_if_any": "-",
+      "core": false
+    },
+    {
+      "pipeline_id": "tesouro_emendas",
+      "acquisition_mode": "file_manifest",
+      "required_inputs": [
+        "data/tesouro_emendas/emendas_tesouro.csv"
       ],
       "blocking_reason_if_any": "-",
       "core": false

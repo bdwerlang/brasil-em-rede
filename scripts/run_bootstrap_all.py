@@ -20,6 +20,7 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 from bootstrap_all.adapters import PreparationContext, TERMINAL_PREP_STATUSES, prepare_source
+from bootstrap_all.doctor import diagnose
 
 FINAL_STATUSES = {
     "loaded",
@@ -271,6 +272,7 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--report-latest", action="store_true")
+    parser.add_argument("--doctor", action="store_true", help="Validate contract and local inputs without running ingestion")
     return parser.parse_args()
 
 
@@ -291,6 +293,18 @@ def main() -> int:
     except RuntimeError as exc:
         print(str(exc), file=sys.stderr)
         return 1
+
+    if args.doctor:
+        try:
+            contract = load_contract(repo_root / args.contract_path)
+            issues = diagnose(repo_root, contract, parse_implemented_registry_ids(repo_root / args.registry_path))
+        except (OSError, RuntimeError, ValueError) as exc:
+            issues = [str(exc)]
+        for issue in issues:
+            print(issue, file=sys.stderr)
+        if not issues:
+            print("Bootstrap contract and inputs validated")
+        return int(bool(issues))
 
     if shutil.which("docker") is None:
         print("docker is required", file=sys.stderr)
