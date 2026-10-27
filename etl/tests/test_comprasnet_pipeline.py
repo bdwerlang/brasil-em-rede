@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from bracc_etl.pipelines.comprasnet import ComprasnetPipeline
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> ComprasnetPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return ComprasnetPipeline(driver, data_dir=str(FIXTURES))
 
 
@@ -215,6 +215,6 @@ def test_load_calls_batch_loader() -> None:
     pipeline.load()
 
     driver = pipeline.driver
-    session = driver.session.return_value.__enter__.return_value
+    session = transaction(driver)
     # Should have called session.run for Contract nodes, Company nodes, VENCEU and REFERENTE_A rels
     assert session.run.call_count >= 4

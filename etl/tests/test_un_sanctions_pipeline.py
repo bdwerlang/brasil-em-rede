@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from bracc_etl.pipelines.un_sanctions import (
     VALID_ENTITY_TYPES,
     UnSanctionsPipeline,
     _generate_sanction_id,
 )
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> UnSanctionsPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return UnSanctionsPipeline(driver, data_dir=str(FIXTURES))
 
 
@@ -65,14 +65,14 @@ def test_extract_reads_json() -> None:
 
 
 def test_extract_missing_file_no_error() -> None:
-    driver = MagicMock()
+    driver = make_driver()
     pipeline = UnSanctionsPipeline(driver, data_dir="/nonexistent")
     pipeline.extract()
     assert len(pipeline._raw) == 0
 
 
 def test_extract_respects_limit() -> None:
-    driver = MagicMock()
+    driver = make_driver()
     pipeline = UnSanctionsPipeline(driver, data_dir=str(FIXTURES), limit=2)
     pipeline.extract()
     assert len(pipeline._raw) == 2
@@ -211,7 +211,7 @@ def test_load_calls_batch_loader() -> None:
     pipeline.load()
 
     driver = pipeline.driver
-    session = driver.session.return_value.__enter__.return_value
+    session = transaction(driver)
     assert session.run.call_count >= 1
 
 
@@ -223,7 +223,7 @@ def test_load_empty_pipeline_no_calls() -> None:
     pipeline.load()
 
     driver = pipeline.driver
-    session = driver.session.return_value.__enter__.return_value
+    session = transaction(driver)
     assert session.run.call_count == 0
 
 

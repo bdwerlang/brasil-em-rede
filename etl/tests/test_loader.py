@@ -1,134 +1,91 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
 from neo4j.exceptions import TransientError
 
 from bracc_etl.loader import Neo4jBatchLoader
 
 
-class TestNeo4jBatchLoader:
-    def _make_loader(self, batch_size: int = 10_000) -> tuple[Neo4jBatchLoader, MagicMock]:
-        driver = MagicMock()
-        session = MagicMock()
-        driver.session.return_value.__enter__ = MagicMock(return_value=session)
-        driver.session.return_value.__exit__ = MagicMock(return_value=False)
-        return Neo4jBatchLoader(driver, batch_size=batch_size), session
+def make_loader(batch_size=2):
+    driver = MagicMock()
+    session = driver.session.return_value.__enter__.return_value
+    tx = session.begin_transaction.return_value.__enter__.return_value
+    result = tx.run.return_value
+    result.consume.return_value.counters.nodes_created = 0
+    result.consume.return_value.counters.relationships_created = 0
+    result.consume.return_value.counters.nodes_deleted = 0
+    result.consume.return_value.counters.relationships_deleted = 0
+    result.consume.return_value.counters.properties_set = 0
+    result.consume.return_value.counters.labels_added = 0
+    result.consume.return_value.counters.labels_removed = 0
+    return Neo4jBatchLoader(driver, batch_size=batch_size), tx
 
-    def test_load_nodes(self) -> None:
-        loader, session = self._make_loader()
-        rows = [
-            {"cnpj": "111", "razao_social": "Company A", "uf": "SP"},
-            {"cnpj": "222", "razao_social": "Company B", "uf": "RJ"},
-        ]
-        count = loader.load_nodes("Company", rows, "cnpj")
-        assert count == 2
-        session.run.assert_called_once()
-        query = session.run.call_args[0][0]
-        assert "MERGE" in query
-        assert "Company" in query
-        assert "cnpj" in query
 
-    def test_load_nodes_empty(self) -> None:
-        loader, session = self._make_loader()
-        count = loader.load_nodes("Company", [], "cnpj")
-        assert count == 0
-        session.run.assert_not_called()
+def test_nodes_filter_and_commit_consumed_results():
+    loader, tx = make_loader()
+    assert loader.load_nodes("Company", [{"id": "1"}, {"id": ""}, {"id": "2"}], "id") == 2
+    tx.run.return_value.consume.assert_called_once()
+    tx.commit.assert_called_once()
+    assert (loader.metrics.submitted, loader.metrics.rejected, loader.metrics.committed_rows) == (
+        3,
+        1,
+        2,
+    )
+    assert loader.metrics.attempts == 1
 
-    def test_load_relationships(self) -> None:
-        loader, session = self._make_loader()
-        rows = [
-            {"source_key": "111", "target_key": "AAA", "value": 1000},
-        ]
-        count = loader.load_relationships(
-            "VENCEU", rows,
-            "Company", "cnpj",
-            "Contract", "contract_id",
-            properties=["value"],
-        )
-        assert count == 1
-        session.run.assert_called_once()
-        query = session.run.call_args[0][0]
-        assert "MERGE" in query
-        assert "VENCEU" in query
 
-    def test_batching(self) -> None:
-        loader, session = self._make_loader(batch_size=2)
-        rows = [
-            {"cnpj": str(i), "name": f"C{i}"} for i in range(5)
-        ]
-        count = loader.load_nodes("Company", rows, "cnpj")
-        assert count == 5
-        assert session.run.call_count == 3  # 2+2+1
+def test_relationships_count_missing_endpoints_and_created():
+    loader, tx = make_loader()
+    result = tx.run.return_value
+    result.single.return_value = {"resolved": 1, "ambiguous": 0}
+    result.consume.return_value.counters.relationships_created = 1
+    rows = [
+        {"source_key": "a", "target_key": "b"},
+        {"source_key": "a", "target_key": "missing"},
+        {"source_key": ""},
+    ]
+    assert loader.load_relationships("REL", rows, "A", "id", "B", "id") == 1
+    assert (loader.metrics.submitted, loader.metrics.rejected, loader.metrics.committed_rows) == (
+        3,
+        1,
+        2,
+    )
+    assert (loader.metrics.relationships_resolved, loader.metrics.unresolved) == (1, 1)
+    assert loader.metrics.relationships_created == 1
 
-    def test_load_nodes_filters_empty_keys(self) -> None:
-        loader, session = self._make_loader()
-        rows = [
-            {"cnpj": "111", "name": "A"},
-            {"cnpj": "", "name": "B"},
-            {"cnpj": None, "name": "C"},
-            {"name": "D"},  # missing key entirely
-            {"cnpj": "222", "name": "E"},
-        ]
-        count = loader.load_nodes("Company", rows, "cnpj")
-        assert count == 2
-        call_args = session.run.call_args
-        batch = (
-            call_args[1]["rows"] if call_args[1]
-            else call_args[0][1]["rows"]
-        )
-        assert all(r["cnpj"] for r in batch)
 
-    def test_load_relationships_filters_empty_keys(self) -> None:
-        loader, session = self._make_loader()
-        rows = [
-            {"source_key": "111", "target_key": "AAA", "value": 10},
-            {"source_key": "", "target_key": "BBB", "value": 20},
-            {"source_key": "222", "target_key": "", "value": 30},
-            {"source_key": None, "target_key": "CCC", "value": 40},
-            {"source_key": "333", "target_key": None, "value": 50},
-            {"source_key": "444", "target_key": "DDD", "value": 60},
-        ]
-        count = loader.load_relationships(
-            "REL", rows, "A", "id", "B", "id", properties=["value"],
-        )
-        assert count == 2
-        call_args = session.run.call_args
-        batch = (
-            call_args[1]["rows"] if call_args[1]
-            else call_args[0][1]["rows"]
-        )
-        assert all(r["source_key"] and r["target_key"] for r in batch)
+@patch("bracc_etl.loader.time.sleep")
+def test_last_batch_failure_propagates_and_preserves_committed_counts(sleep):
+    loader, tx = make_loader()
+    result = tx.run.return_value
+    result.consume.side_effect = [result.consume.return_value] + [TransientError("deadlock")] * 5
+    with pytest.raises(TransientError):
+        loader.run_query("UNWIND $rows AS row RETURN row", [{"id": i} for i in range(3)])
+    assert loader.metrics.submitted == 3
+    assert loader.metrics.committed_rows == 2
+    assert loader.metrics.attempts == 6
+    assert tx.commit.call_count == 1
+    assert sleep.call_count == 4
 
-    def test_run_query(self) -> None:
-        loader, session = self._make_loader()
-        rows = [{"a": 1}]
-        count = loader.run_query("UNWIND $rows AS row CREATE (n:Test)", rows)
-        assert count == 1
 
-    @patch("bracc_etl.loader.time.sleep")
-    def test_run_query_with_retry_success(self, mock_sleep: MagicMock) -> None:
-        loader, session = self._make_loader()
-        rows = [{"a": 1}, {"a": 2}, {"a": 3}]
-        count = loader.run_query_with_retry("UNWIND $rows AS row CREATE (n:T)", rows, batch_size=2)
-        assert count == 3
-        assert session.run.call_count == 2  # 2+1
-        mock_sleep.assert_not_called()
+@patch("bracc_etl.loader.time.sleep")
+def test_retry_only_counts_committed_write(sleep):
+    loader, tx = make_loader()
+    result = tx.run.return_value
+    result.consume.side_effect = [TransientError("deadlock"), result.consume.return_value]
+    result.consume.return_value.counters.nodes_created = 1
+    assert loader.run_query_with_retry("RETURN 1", [{"id": 1}]) == 1
+    assert (
+        loader.metrics.attempts,
+        loader.metrics.committed_rows,
+        loader.metrics.nodes_created,
+    ) == (2, 1, 1)
+    sleep.assert_called_once_with(1)
 
-    @patch("bracc_etl.loader.time.sleep")
-    def test_run_query_with_retry_recovers_from_deadlock(self, mock_sleep: MagicMock) -> None:
-        loader, session = self._make_loader()
-        session.run.side_effect = [TransientError("deadlock"), None]
-        rows = [{"a": 1}]
-        count = loader.run_query_with_retry("UNWIND $rows AS row CREATE (n:T)", rows, batch_size=10)
-        assert count == 1
-        assert session.run.call_count == 2
-        mock_sleep.assert_called_once_with(1)  # 2^0
 
-    @patch("bracc_etl.loader.time.sleep")
-    def test_run_query_with_retry_skips_after_max_retries(self, mock_sleep: MagicMock) -> None:
-        loader, session = self._make_loader()
-        session.run.side_effect = TransientError("deadlock")
-        rows = [{"a": 1}]
-        count = loader.run_query_with_retry("UNWIND $rows AS row CREATE (n:T)", rows, batch_size=10)
-        assert count == 0
-        assert session.run.call_count == 5
-        assert mock_sleep.call_count == 5
+def test_nonpositive_batch_size_is_rejected():
+    with pytest.raises(ValueError):
+        Neo4jBatchLoader(MagicMock(), batch_size=0)
+    loader, _ = make_loader()
+    with pytest.raises(ValueError):
+        loader.run_query_with_retry("RETURN 1", [], batch_size=0)

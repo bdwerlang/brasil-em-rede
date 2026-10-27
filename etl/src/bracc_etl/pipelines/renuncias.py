@@ -15,8 +15,8 @@ from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
     deduplicate_rows,
     format_cnpj,
+    normalize_cnpj,
     normalize_name,
-    strip_document,
 )
 
 logger = logging.getLogger(__name__)
@@ -89,7 +89,7 @@ class RenunciasPipeline(Pipeline):
 
         for _, row in self._raw.iterrows():
             cnpj_raw = str(row.get("CNPJ", "")).strip().strip('"')
-            digits = strip_document(cnpj_raw)
+            digits = normalize_cnpj(cnpj_raw)
 
             if len(digits) != 14:
                 continue

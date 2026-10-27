@@ -83,9 +83,9 @@ donations_schema = pa.DataFrameSchema(
             nullable=True,
             coerce=True,
             checks=[
-                # Formatted CPF or CNPJ (11 or 14 digits, with or without punctuation)
+                # Formatted CPF or CNPJ (11 or 14 characters, with or without punctuation)
                 pa.Check.str_matches(
-                    r"^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}|\d{11}|\d{14})$",
+                    r"^(\d{3}\.\d{3}\.\d{3}-\d{2}|[A-Za-z0-9]{2}\.[A-Za-z0-9]{3}\.[A-Za-z0-9]{3}/[A-Za-z0-9]{4}-[0-9]{2}|\d{11}|[A-Za-z0-9]{12}[0-9]{2})$",
                     error="donor_doc must be formatted CPF or CNPJ",
                 ),
             ],

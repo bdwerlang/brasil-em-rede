@@ -22,8 +22,8 @@ from bracc_etl.transforms import (
     cap_contract_value,
     deduplicate_rows,
     format_cnpj,
+    normalize_cnpj,
     normalize_name,
-    strip_document,
 )
 
 if TYPE_CHECKING:
@@ -178,7 +178,7 @@ class PncpPipeline(Pipeline):
             # Extract agency CNPJ
             org = rec.get("orgaoEntidade") or {}
             cnpj_raw = str(org.get("cnpj", "")).strip()
-            cnpj_digits = strip_document(cnpj_raw)
+            cnpj_digits = normalize_cnpj(cnpj_raw)
 
             if len(cnpj_digits) != 14:
                 skipped_no_cnpj += 1
