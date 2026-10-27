@@ -89,3 +89,26 @@ def test_nonpositive_batch_size_is_rejected():
     loader, _ = make_loader()
     with pytest.raises(ValueError):
         loader.run_query_with_retry("RETURN 1", [], batch_size=0)
+
+
+def test_explicit_metrics_are_shared_across_threads():
+    from concurrent.futures import ThreadPoolExecutor
+
+    from bracc_etl.loader import LoadMetrics
+
+    metrics = LoadMetrics()
+
+    def work(_):
+        loader, tx = make_loader()
+        loader = Neo4jBatchLoader(loader.driver, metrics=metrics)
+        tx.run.return_value.consume.return_value.counters.nodes_created = 1
+        loader.load_nodes("Node", [{"id": "x"}], "id")
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(work, range(40)))
+    assert (metrics.submitted, metrics.attempts, metrics.verified_rows, metrics.nodes_created) == (
+        40,
+        40,
+        40,
+        40,
+    )

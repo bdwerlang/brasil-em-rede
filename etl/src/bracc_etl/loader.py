@@ -3,7 +3,8 @@ import os
 import re
 import time
 from contextvars import ContextVar
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from threading import RLock
 from typing import Any
 
 from neo4j import Driver
@@ -18,6 +19,10 @@ _MAX_RETRIES = 5
 class LoadMetrics:
     """Cumulative counts for this loader; writes count only committed transactions."""
 
+    _lock: Any = field(default_factory=RLock, repr=False, compare=False)
+    failed_batches: int = 0
+    direct_updates: int = 0
+    untracked_writes: int = 0
     submitted: int = 0
     attempts: int = 0  # batch executions, including retries
     rejected: int = 0  # rows missing required keys
@@ -39,7 +44,11 @@ class Neo4jBatchLoader:
     """Bulk loader with one atomic transaction per batch."""
 
     def __init__(
-        self, driver: Driver, batch_size: int = 10_000, neo4j_database: str | None = None
+        self,
+        driver: Driver,
+        batch_size: int = 10_000,
+        neo4j_database: str | None = None,
+        metrics: LoadMetrics | None = None,
     ) -> None:
         if batch_size <= 0:
             raise ValueError("batch_size must be positive")
@@ -47,7 +56,13 @@ class Neo4jBatchLoader:
         self.batch_size = batch_size
         self.neo4j_database = neo4j_database or os.getenv("NEO4J_DATABASE", "neo4j")
         active = _active_load.get()
-        self.metrics = active[1] if active is not None and active[0] is driver else LoadMetrics()
+        self.metrics = (
+            metrics
+            if metrics is not None
+            else active[1]
+            if active is not None and active[0] is driver
+            else LoadMetrics()
+        )
         self._total_written = 0
 
     def _run_batch_once(
@@ -83,40 +98,48 @@ class Neo4jBatchLoader:
         for i in range(0, len(rows), size):
             batch = rows[i : i + size]
             for attempt in range(_MAX_RETRIES):
-                self.metrics.attempts += 1
+                with self.metrics._lock:
+                    self.metrics.attempts += 1
                 try:
                     counters, resolved = self._run_batch_once(query, batch, relationship)
                     break
                 except TransientError:
                     if attempt == _MAX_RETRIES - 1:
+                        with self.metrics._lock:
+                            self.metrics.failed_batches += 1
                         raise
                     wait = 2**attempt
                     logger.warning(
                         "Transient failure in batch %d; retrying in %ds", i // size, wait
                     )
                     time.sleep(wait)
-            self.metrics.committed_rows += len(batch)
-            self.metrics.nodes_created += counters.nodes_created
-            self.metrics.relationships_created += counters.relationships_created
-            if relationship:
-                self.metrics.verified_rows += resolved
-                self.metrics.relationships_resolved += resolved
-                self.metrics.unresolved += len(batch) - resolved
-                total += resolved
-            elif nodes:
-                self.metrics.verified_rows += len(batch)
-                total += len(batch)
-            else:
-                self.metrics.generic_updates += (
-                    counters.nodes_created
-                    + counters.relationships_created
-                    + counters.nodes_deleted
-                    + counters.relationships_deleted
-                    + counters.properties_set
-                    + counters.labels_added
-                    + counters.labels_removed
-                )
-                total += len(batch)
+                except Exception:
+                    with self.metrics._lock:
+                        self.metrics.failed_batches += 1
+                    raise
+            with self.metrics._lock:
+                self.metrics.committed_rows += len(batch)
+                self.metrics.nodes_created += counters.nodes_created
+                self.metrics.relationships_created += counters.relationships_created
+                if relationship:
+                    self.metrics.verified_rows += resolved
+                    self.metrics.relationships_resolved += resolved
+                    self.metrics.unresolved += len(batch) - resolved
+                    total += resolved
+                elif nodes:
+                    self.metrics.verified_rows += len(batch)
+                    total += len(batch)
+                else:
+                    self.metrics.generic_updates += (
+                        counters.nodes_created
+                        + counters.relationships_created
+                        + counters.nodes_deleted
+                        + counters.relationships_deleted
+                        + counters.properties_set
+                        + counters.labels_added
+                        + counters.labels_removed
+                    )
+                    total += len(batch)
             self._total_written += len(batch)
         return total
 
@@ -128,13 +151,16 @@ class Neo4jBatchLoader:
         Arbitrary Cypher cannot establish per-input matches. Inspect metrics for
         actual database update counters; idempotent writes can have zero updates.
         """
-        self.metrics.submitted += len(rows)
+        with self.metrics._lock:
+            self.metrics.submitted += len(rows)
         return self._run_batches(query, rows, batch_size)
 
     def load_nodes(self, label: str, rows: list[dict[str, Any]], key_field: str) -> int:
-        self.metrics.submitted += len(rows)
+        with self.metrics._lock:
+            self.metrics.submitted += len(rows)
         accepted = [r for r in rows if r.get(key_field)]
-        self.metrics.rejected += len(rows) - len(accepted)
+        with self.metrics._lock:
+            self.metrics.rejected += len(rows) - len(accepted)
         all_keys: set[str] = set()
         for row in accepted:
             all_keys.update(row.keys())
@@ -157,9 +183,11 @@ class Neo4jBatchLoader:
         target_key: str,
         properties: list[str] | None = None,
     ) -> int:
-        self.metrics.submitted += len(rows)
+        with self.metrics._lock:
+            self.metrics.submitted += len(rows)
         accepted = [r for r in rows if r.get("source_key") and r.get("target_key")]
-        self.metrics.rejected += len(rows) - len(accepted)
+        with self.metrics._lock:
+            self.metrics.rejected += len(rows) - len(accepted)
         props = ""
         if properties:
             props = "SET " + ", ".join(f"r.{p} = row.{p}" for p in properties)
@@ -182,5 +210,6 @@ class Neo4jBatchLoader:
 
     def run_query(self, query: str, rows: list[dict[str, Any]]) -> int:
         """Return committed input rows, not matched rows or writes; see metrics."""
-        self.metrics.submitted += len(rows)
+        with self.metrics._lock:
+            self.metrics.submitted += len(rows)
         return self._run_batches(query, rows)

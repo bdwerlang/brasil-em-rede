@@ -177,3 +177,43 @@ def test_pipeline_no_match_fails_and_idempotent_nodes_succeed():
         assert (run["status"], run["rows_loaded"], run["nodes_created"]) == ("loaded", 1, 0)
     finally:
         driver.close()
+
+
+@pytest.mark.skipif(not os.getenv("BRACC_TEST_NEO4J_URI"), reason="requires disposable Neo4j")
+def test_threaded_loader_metrics_and_direct_commit_receipt():
+    from concurrent.futures import ThreadPoolExecutor
+
+    from bracc_etl.base import Pipeline
+
+    class Synthetic(Pipeline):
+        name = "cnpj"
+        source_id = "receita_federal"
+
+        def extract(self):
+            pass
+
+        def transform(self):
+            pass
+
+        def load(self):
+            prefix = uuid4().hex
+
+            def worker(i):
+                loader = Neo4jBatchLoader(self.driver, metrics=self.load_metrics)
+                loader.load_nodes("F06Thread", [{"id": f"{prefix}-{i}"}], "id")
+
+            with ThreadPoolExecutor(max_workers=4) as pool:
+                list(pool.map(worker, range(4)))
+            self.run_direct_write("CREATE (:F06Direct {id: $id})", {"id": prefix})
+
+    driver = GraphDatabase.driver(os.environ["BRACC_TEST_NEO4J_URI"], auth=None)
+    try:
+        pipeline = Synthetic(driver)
+        pipeline.run()
+        with driver.session() as session:
+            run = session.run(
+                "MATCH (r:IngestionRun {run_id: $id}) RETURN r", id=pipeline.run_id
+            ).single()["r"]
+        assert (run["nodes_created"], run["rows_loaded"], run["direct_updates"]) == (5, 4, 3)
+    finally:
+        driver.close()

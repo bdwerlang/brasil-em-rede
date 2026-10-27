@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import csv
 import hashlib
 import http.client
@@ -12,13 +13,25 @@ import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.parse import unquote, urlsplit
+from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+import aioftp
+
+from .host_lock import host_lock
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+
+
+class RejectRedirects(HTTPRedirectHandler):
+    """Reject redirects so every request stays on its validated host and scheme."""
+
+    def redirect_request(self, req: Any, fp: Any, code: int, msg: str,
+                         headers: Any, newurl: str) -> None:
+        return None
 
 
 class AcquisitionError(Exception):
@@ -126,7 +139,10 @@ class Acquisition:
                     and _digest(target) == record["sha256"]
                     and (expected is None or record["sha256"] == expected.lower())):
                 continue
-            with self._host(url):
+            host = urlsplit(url).hostname
+            if not host:
+                raise ValueError("URL requires a host")
+            with self._host(url), host_lock(host):
                 self._download(url, target, kind, expected)
             manifest.pages[page] = {"sha256": _digest(target), "bytes": target.stat().st_size,
                                     "source_sha256": source_hash}
@@ -164,20 +180,49 @@ class Acquisition:
         for attempt in range(self.retries + 1):
             try:
                 if scheme == "ftp":
-                    # FTP transfers restart: no reliable identity check for partial content.
-                    with urlopen(url, timeout=self.timeout) as response, partial.open("wb") as out:
-                        self._copy(response, out)
+                    asyncio.run(self._ftp(url, partial, metadata, checksum))
                 else:
                     self._http(url, partial, metadata)
                 self._publish(partial, target, kind, checksum)
                 metadata.unlink(missing_ok=True)
                 return
-            except (OSError, URLError, http.client.HTTPException) as exc:
+            except (
+                OSError, URLError, http.client.HTTPException, aioftp.errors.AIOFTPException,
+            ) as exc:
                 if isinstance(exc, HTTPError) and exc.code < 500 and exc.code not in {408, 429}:
                     raise AcquisitionError(f"HTTP {exc.code}") from exc
                 if attempt == self.retries:
                     raise AcquisitionError("transfer failed after retries") from exc
                 self.sleep(self.backoff * (2 ** attempt))
+
+    async def _ftp(self, url: str, partial: Path, metadata: Path, checksum: str | None) -> None:
+        parsed = urlsplit(url)
+        if not parsed.hostname or parsed.query or parsed.fragment:
+            raise ValueError("invalid FTP URL")
+        fingerprint = hashlib.sha256(url.encode()).hexdigest()
+        info = json.loads(metadata.read_text()) if metadata.exists() else {}
+        offset = (partial.stat().st_size if checksum and partial.exists()
+                  and info.get("url_hash") == fingerprint
+                  and info.get("checksum") == checksum.lower() else 0)
+        async with aioftp.Client.context(
+            parsed.hostname, port=parsed.port or 21, user=unquote(parsed.username or "anonymous"),
+            password=unquote(parsed.password or "anon@"), socket_timeout=self.timeout,
+        ) as client:
+            path = unquote(parsed.path)
+            stat = await client.stat(path)
+            size = int(stat["size"])
+            if offset > size:
+                offset = 0
+            _atomic_json(metadata, {"url_hash": fingerprint, "checksum": checksum.lower()
+                                    if checksum else ""})
+            if offset == size and offset:
+                return
+            async with client.download_stream(path, offset=offset) as stream:
+                with partial.open("ab" if offset else "wb") as out:
+                    async for block in stream.iter_by_block(65536):
+                        out.write(block)
+            if partial.stat().st_size != size:
+                raise OSError("incomplete FTP response")
 
     @staticmethod
     def _copy(response: object, out: object) -> None:
@@ -192,7 +237,9 @@ class Acquisition:
         headers = {"Accept-Encoding": "identity"}
         if offset:
             headers.update({"Range": f"bytes={offset}-", "If-Range": info["etag"]})
-        with urlopen(Request(url, headers=headers), timeout=self.timeout) as response:
+        with build_opener(RejectRedirects()).open(
+            Request(url, headers=headers), timeout=self.timeout
+        ) as response:
             etag = response.headers.get("ETag", "")
             resumed = (offset > 0 and response.status == 206 and etag == info.get("etag")
                        and response.headers.get("Content-Range", "").startswith(f"bytes {offset}-"))
