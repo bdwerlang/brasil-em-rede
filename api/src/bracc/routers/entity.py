@@ -16,7 +16,7 @@ from bracc.models.entity import (
     TimelineResponse,
 )
 from bracc.services.intelligence_provider import IntelligenceProvider
-from bracc.services.neo4j_service import execute_query, execute_query_single, sanitize_props
+from bracc.services.neo4j_service import execute_query, sanitize_props
 from bracc.services.public_guard import (
     enforce_entity_lookup_enabled,
     enforce_entity_lookup_policy,
@@ -60,10 +60,10 @@ def _infer_identity_quality(
     return None
 
 
-def _node_to_entity(
-    node: Any, labels: list[str], entity_id: str
-) -> EntityResponse:
+def _node_to_entity(node: Any, labels: list[str], entity_id: str) -> EntityResponse:
     props = dict(node)
+    for key in ("identity_snapshot", "identity_legacy_id", "identity_migration"):
+        props.pop(key, None)
     entity_type = labels[0].lower() if labels else "unknown"
     entity_label = labels[0] if labels else None
     sources = []
@@ -112,17 +112,53 @@ async def get_entity(
     else:
         identifier_formatted = _format_cnpj(identifier)
 
-    record = await execute_query_single(
+    records = await execute_query(
         session,
         "entity_lookup",
         {"identifier": identifier, "identifier_formatted": identifier_formatted},
     )
-    if record is None:
+    if not records:
         raise HTTPException(status_code=404, detail="Entity not found")
+    if len(records) != 1:
+        raise HTTPException(status_code=409, detail="Ambiguous entity identifier")
+    record = records[0]
     enforce_person_access_policy(record["entity_labels"])
 
-    return _node_to_entity(
-        record["e"], record["entity_labels"], record["entity_id"]
+    return _node_to_entity(record["e"], record["entity_labels"], record["entity_id"])
+
+
+async def _transition_entity(
+    session: AsyncSession, query: str, params: dict[str, str]
+) -> EntityResponse:
+    enforce_entity_lookup_enabled()
+    records = await execute_query(session, query, params)
+    if not records:
+        raise HTTPException(status_code=404, detail="Entity not found")
+    if len(records) != 1:
+        raise HTTPException(status_code=409, detail="Ambiguous entity identifier")
+    record = records[0]
+    enforce_person_access_policy(record["entity_labels"])
+    return _node_to_entity(record["e"], record["entity_labels"], record["entity_id"])
+
+
+@router.get("/by-canonical-id/{entity_id}", response_model=EntityResponse)
+async def get_entity_by_canonical_id(
+    entity_id: str, session: Annotated[AsyncSession, Depends(get_session)]
+) -> EntityResponse:
+    return await _transition_entity(session, "entity_by_canonical_id", {"entity_id": entity_id})
+
+
+@router.get("/by-snapshot-alias/{snapshot}/{legacy_id}", response_model=EntityResponse)
+async def get_entity_by_snapshot_alias(
+    snapshot: str, legacy_id: str, session: Annotated[AsyncSession, Depends(get_session)]
+) -> EntityResponse:
+    return await _transition_entity(
+        session,
+        "entity_by_snapshot_alias",
+        {
+            "snapshot": snapshot,
+            "legacy_id": legacy_id,
+        },
     )
 
 
@@ -132,16 +168,14 @@ async def get_entity_by_element_id(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> EntityResponse:
     enforce_entity_lookup_enabled()
-    record = await execute_query_single(
-        session, "entity_by_element_id", {"element_id": element_id}
-    )
-    if record is None:
+    records = await execute_query(session, "entity_by_element_id", {"element_id": element_id})
+    if not records:
         raise HTTPException(status_code=404, detail="Entity not found")
+    if len(records) != 1:
+        raise HTTPException(status_code=409, detail="Ambiguous entity identifier")
+    record = records[0]
     enforce_person_access_policy(record["entity_labels"])
-
-    return _node_to_entity(
-        record["e"], record["entity_labels"], element_id
-    )
+    return _node_to_entity(record["e"], record["entity_labels"], record["entity_id"])
 
 
 @router.get("/{entity_id}/exposure", response_model=ExposureResponse)
@@ -177,14 +211,16 @@ async def get_entity_timeline(
 
         label = props.get("object", props.get("type", entity_type))
 
-        events.append(TimelineEvent(
-            id=record["id"],
-            date=event_date,
-            label=str(label),
-            entity_type=entity_type,
-            properties=sanitize_public_properties(sanitize_props(props)),
-            sources=[SourceAttribution(database="neo4j_graph")],
-        ))
+        events.append(
+            TimelineEvent(
+                id=record["id"],
+                date=event_date,
+                label=str(label),
+                entity_type=entity_type,
+                properties=sanitize_public_properties(sanitize_props(props)),
+                sources=[SourceAttribution(database="neo4j_graph")],
+            )
+        )
 
     next_cursor = events[-1].date if len(events) == limit else None
 
@@ -205,6 +241,11 @@ async def get_connections(
     include_probable: Annotated[bool, Query()] = False,
 ) -> EntityWithConnections:
     enforce_entity_lookup_enabled()
+    matches = await execute_query(session, "node_degree", {"entity_id": entity_id})
+    if not matches:
+        raise HTTPException(status_code=404, detail="Entity not found")
+    if len(matches) != 1:
+        raise HTTPException(status_code=409, detail="Ambiguous entity identifier")
     records = await execute_query(
         session,
         "entity_connections",
@@ -220,9 +261,7 @@ async def get_connections(
 
     first = records[0]
     enforce_person_access_policy(first["source_labels"])
-    entity = _node_to_entity(
-        first["e"], first["source_labels"], first["source_id"]
-    )
+    entity = _node_to_entity(first["e"], first["source_labels"], first["center_id"])
 
     type_filter = {t.strip().lower() for t in types.split(",")} if types else None
 
@@ -231,13 +270,20 @@ async def get_connections(
     seen_ids: set[str] = set()
 
     for record in records:
-        target_labels = record["target_labels"]
-        target_type = target_labels[0].lower() if target_labels else "unknown"
-        if should_hide_person_entities() and has_person_labels(target_labels):
+        endpoints = [
+            (record["source_id"], record["source_node"], record["source_node_labels"]),
+            (record["target_id"], record["target_node"], record["target_node_labels"]),
+        ]
+        other_endpoints = [endpoint for endpoint in endpoints if endpoint[0] != first["center_id"]]
+        if should_hide_person_entities() and any(
+            has_person_labels(labels) for _, _, labels in endpoints
+        ):
             continue
-
-        if type_filter and target_type not in type_filter:
+        if type_filter and not all(
+            labels and labels[0].lower() in type_filter for _, _, labels in other_endpoints
+        ):
             continue
+        target_labels = record["target_node_labels"]
 
         rel_props = dict(record["r"])
         confidence = float(rel_props.pop("confidence", 1.0))
@@ -248,22 +294,24 @@ async def get_connections(
         elif isinstance(source_val, list):
             rel_sources = [SourceAttribution(database=s) for s in source_val]
 
-        connections.append(ConnectionResponse(
-            source_id=record["source_id"],
-            target_id=record["target_id"],
-            relationship_type=record["rel_type"],
-            properties=sanitize_public_properties(sanitize_props(rel_props)),
-            confidence=confidence,
-            sources=rel_sources,
-            exposure_tier=infer_exposure_tier(target_labels),
-        ))
-
-        target_id = record["target_id"]
-        if target_id not in seen_ids:
-            seen_ids.add(target_id)
-            connected_entities.append(
-                _node_to_entity(record["connected"], target_labels, target_id)
+        connections.append(
+            ConnectionResponse(
+                source_id=record["source_id"],
+                target_id=record["target_id"],
+                relationship_type=record["rel_type"],
+                properties=sanitize_public_properties(sanitize_props(rel_props)),
+                confidence=confidence,
+                sources=rel_sources,
+                exposure_tier=infer_exposure_tier(target_labels),
             )
+        )
+
+        for connected_id, connected_node, connected_labels in other_endpoints:
+            if connected_id not in seen_ids:
+                seen_ids.add(connected_id)
+                connected_entities.append(
+                    _node_to_entity(connected_node, connected_labels, connected_id)
+                )
 
     return EntityWithConnections(
         entity=entity,

@@ -6,15 +6,33 @@ from bracc.services.neo4j_service import CypherLoader
 # Expected node labels that form the IDOR allowlist.
 # If a new label is added to the queries, add it here too.
 EXPECTED_LABELS = {
-    "Person", "Company", "Contract", "Sanction", "Election",
-    "Amendment", "Finance", "Embargo", "Health", "Education",
-    "Convenio", "LaborStats", "PublicOffice",
+    "Person",
+    "Company",
+    "Contract",
+    "Sanction",
+    "Election",
+    "Amendment",
+    "Finance",
+    "Embargo",
+    "Health",
+    "Education",
+    "Convenio",
+    "LaborStats",
+    "PublicOffice",
 }
 
 # Expected entity ID property fields in lookup/coalesce chains.
 EXPECTED_ID_FIELDS = {
-    "cpf", "cnpj", "contract_id", "sanction_id", "amendment_id",
-    "cnes_code", "finance_id", "embargo_id", "school_id", "convenio_id",
+    "cpf",
+    "cnpj",
+    "contract_id",
+    "sanction_id",
+    "amendment_id",
+    "cnes_code",
+    "finance_id",
+    "embargo_id",
+    "school_id",
+    "convenio_id",
     "stats_id",
 }
 
@@ -30,9 +48,7 @@ def test_entity_by_id_has_label_allowlist() -> None:
     """IDOR prevention: entity_by_id.cypher must restrict to known labels."""
     cypher = _load_cypher("entity_by_id")
     for label in EXPECTED_LABELS:
-        assert f"e:{label}" in cypher, (
-            f"entity_by_id.cypher missing label allowlist entry: {label}"
-        )
+        assert f"e:{label}" in cypher, f"entity_by_id.cypher missing label allowlist entry: {label}"
 
 
 def test_investigation_add_entity_has_label_allowlist() -> None:
@@ -77,9 +93,7 @@ def test_entity_by_id_has_all_id_fields() -> None:
     """entity_by_id.cypher must look up by all entity ID property fields."""
     cypher = _load_cypher("entity_by_id")
     for field in EXPECTED_ID_FIELDS:
-        assert f"e.{field}" in cypher, (
-            f"entity_by_id.cypher missing ID field lookup: e.{field}"
-        )
+        assert f"e.{field}" in cypher, f"entity_by_id.cypher missing ID field lookup: e.{field}"
 
 
 @pytest.mark.anyio
@@ -120,14 +134,20 @@ def test_entity_by_id_has_all_11_id_fields() -> None:
     """entity_by_id.cypher must resolve all 11 entity ID property fields."""
     cypher = _load_cypher("entity_by_id")
     all_fields = {
-        "cpf", "cnpj", "contract_id", "sanction_id", "amendment_id",
-        "cnes_code", "finance_id", "embargo_id", "school_id",
-        "convenio_id", "stats_id",
+        "cpf",
+        "cnpj",
+        "contract_id",
+        "sanction_id",
+        "amendment_id",
+        "cnes_code",
+        "finance_id",
+        "embargo_id",
+        "school_id",
+        "convenio_id",
+        "stats_id",
     }
     for field in all_fields:
-        assert f"e.{field}" in cypher, (
-            f"entity_by_id.cypher missing ID field: e.{field}"
-        )
+        assert f"e.{field}" in cypher, f"entity_by_id.cypher missing ID field: e.{field}"
 
 
 # ── entity_by_element_id: PublicOffice label ────────────────────────────
@@ -136,18 +156,14 @@ def test_entity_by_id_has_all_11_id_fields() -> None:
 def test_entity_by_element_id_has_public_office_label() -> None:
     """entity_by_element_id.cypher must include PublicOffice in label allowlist."""
     cypher = _load_cypher("entity_by_element_id")
-    assert "e:PublicOffice" in cypher, (
-        "entity_by_element_id.cypher missing PublicOffice label"
-    )
+    assert "e:PublicOffice" in cypher, "entity_by_element_id.cypher missing PublicOffice label"
 
 
 def test_entity_by_element_id_has_all_labels() -> None:
     """entity_by_element_id.cypher must include all 13 entity labels."""
     cypher = _load_cypher("entity_by_element_id")
     for label in EXPECTED_LABELS:
-        assert f"e:{label}" in cypher, (
-            f"entity_by_element_id.cypher missing label: {label}"
-        )
+        assert f"e:{label}" in cypher, f"entity_by_element_id.cypher missing label: {label}"
 
 
 # ── Investigation coalesce chains: all 6 queries include all 11 ID fields ──
@@ -162,9 +178,17 @@ INVESTIGATION_COALESCE_QUERIES = [
 ]
 
 ALL_ID_FIELDS = [
-    "e.cpf", "e.cnpj", "e.contract_id", "e.sanction_id", "e.amendment_id",
-    "e.cnes_code", "e.finance_id", "e.embargo_id", "e.school_id",
-    "e.convenio_id", "e.stats_id",
+    "e.cpf",
+    "e.cnpj",
+    "e.contract_id",
+    "e.sanction_id",
+    "e.amendment_id",
+    "e.cnes_code",
+    "e.finance_id",
+    "e.embargo_id",
+    "e.school_id",
+    "e.convenio_id",
+    "e.stats_id",
 ]
 
 
@@ -173,9 +197,7 @@ def test_investigation_coalesce_has_all_id_fields(query_name: str) -> None:
     """Every investigation coalesce chain must include all 11 entity ID fields."""
     cypher = _load_cypher(query_name)
     for field in ALL_ID_FIELDS:
-        assert field in cypher, (
-            f"{query_name}.cypher coalesce chain missing {field}"
-        )
+        assert field in cypher, f"{query_name}.cypher coalesce chain missing {field}"
 
 
 INVESTIGATION_WHERE_QUERIES = [
@@ -189,9 +211,7 @@ def test_investigation_where_has_all_id_fields(query_name: str) -> None:
     """Investigation add/remove WHERE clauses must look up all 11 entity ID fields."""
     cypher = _load_cypher(query_name)
     for field in ALL_ID_FIELDS:
-        assert field in cypher, (
-            f"{query_name}.cypher WHERE clause missing {field}"
-        )
+        assert field in cypher, f"{query_name}.cypher WHERE clause missing {field}"
 
 
 # ── pattern_self_dealing: uses correct Amendment field names ─────────
@@ -222,17 +242,162 @@ def test_self_dealing_uses_value_committed_or_value_paid() -> None:
                 f"amendment_object line missing dual-source fallback: {line.strip()}"
             )
 
+
 @pytest.mark.anyio
 async def test_entity_lookup_alphanumeric_cnpj(client: AsyncClient) -> None:
     from unittest.mock import AsyncMock, patch
 
-    with patch("bracc.routers.entity.execute_query_single", new_callable=AsyncMock, return_value={
+    with patch(
+        "bracc.routers.entity.execute_query",
+        new_callable=AsyncMock,
+        return_value=[
+            {
         "e": {"cnpj": "00.ABC.123/0001-35", "razao_social": "Example"},
-        "entity_labels": ["Company"], "entity_id": "4:company:1",
-    }) as query:
+                "entity_labels": ["Company"],
+                "entity_id": "4:company:1",
+            }
+        ],
+    ) as query:
         response = await client.get("/api/v1/entity/00abc123000135")
     assert response.status_code == 200
     assert response.json()["id"] == "4:company:1"
     assert query.await_args.args[2] == {
-        "identifier": "00ABC123000135", "identifier_formatted": "00.ABC.123/0001-35"
+        "identifier": "00ABC123000135",
+        "identifier_formatted": "00.ABC.123/0001-35",
     }
+
+
+@pytest.mark.anyio
+async def test_transition_readers_reject_ambiguous_ids(client: AsyncClient) -> None:
+    from unittest.mock import AsyncMock, patch
+
+    row = {"e": {}, "entity_labels": ["Company"], "entity_id": "id"}
+    with patch(
+        "bracc.routers.entity.execute_query", new_callable=AsyncMock, return_value=[row, row]
+    ):
+        for path in (
+            "/api/v1/entity/by-canonical-id/id",
+            "/api/v1/entity/by-snapshot-alias/snapshot/old",
+            "/api/v1/entity/11222333000181",
+        ):
+            response = await client.get(path)
+            assert response.status_code == 409
+
+
+@pytest.mark.anyio
+async def test_snapshot_alias_returns_canonical_id(client: AsyncClient) -> None:
+    from unittest.mock import AsyncMock, patch
+
+    row = {"e": {"name": "Synthetic"}, "entity_labels": ["Company"], "entity_id": "opaque-id"}
+    with patch(
+        "bracc.routers.entity.execute_query", new_callable=AsyncMock, return_value=[row]
+    ) as query:
+        response = await client.get("/api/v1/entity/by-snapshot-alias/snapshot/old")
+    assert response.status_code == 200
+    assert response.json()["id"] == "opaque-id"
+    assert query.await_args.args[2] == {"snapshot": "snapshot", "legacy_id": "old"}
+
+
+@pytest.mark.anyio
+async def test_legacy_element_route_returns_canonical_id_and_hides_metadata(
+    client: AsyncClient,
+) -> None:
+    from unittest.mock import AsyncMock, patch
+
+    row = {
+        "e": {"name": "Synthetic", "identity_snapshot": "private", "identity_legacy_id": "old"},
+        "entity_labels": ["Company"],
+        "entity_id": "opaque-id",
+    }
+    with patch("bracc.routers.entity.execute_query", new_callable=AsyncMock, return_value=[row]):
+        response = await client.get("/api/v1/entity/by-element-id/4:abcd:1")
+    assert response.status_code == 200
+    assert response.json()["id"] == "opaque-id"
+    assert "identity_snapshot" not in response.json()["properties"]
+    assert "identity_legacy_id" not in response.json()["properties"]
+
+
+@pytest.mark.anyio
+async def test_snapshot_alias_accepts_element_id_colons(client: AsyncClient) -> None:
+    from unittest.mock import AsyncMock, patch
+
+    row = {"e": {}, "entity_labels": ["Company"], "entity_id": "opaque-id"}
+    with patch(
+        "bracc.routers.entity.execute_query", new_callable=AsyncMock, return_value=[row]
+    ) as query:
+        response = await client.get("/api/v1/entity/by-snapshot-alias/snapshot/4:abcd:1")
+    assert response.status_code == 200
+    assert query.await_args.args[2]["legacy_id"] == "4:abcd:1"
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("incoming", [False, True])
+async def test_connections_keep_center_and_relationship_direction(
+    client: AsyncClient, incoming: bool
+) -> None:
+    from unittest.mock import AsyncMock, patch
+
+    center, other = "center-uuid", "other-uuid"
+    row = {
+        "e": {"name": "Center"},
+        "source_labels": ["Company"],
+        "source_node": {"name": "Other" if incoming else "Center"},
+        "target_node": {"name": "Center" if incoming else "Other"},
+        "source_node_labels": ["Company"],
+        "target_node_labels": ["Company"],
+        "center_id": center,
+        "source_id": other if incoming else center,
+        "target_id": center if incoming else other,
+        "r": {},
+        "rel_type": "SOCIO_DE",
+    }
+    with patch(
+        "bracc.routers.entity.execute_query",
+        new_callable=AsyncMock,
+        side_effect=[[{"degree": 1}], [row]],
+    ):
+        response = await client.get(f"/api/v1/entity/{center}/connections")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["entity"]["id"] == center
+    assert body["connected_entities"][0]["id"] == other
+    assert body["connections"][0]["source_id"] == row["source_id"]
+    assert body["connections"][0]["target_id"] == row["target_id"]
+
+
+@pytest.mark.anyio
+async def test_connections_include_both_endpoints_of_two_hop_edge(client: AsyncClient) -> None:
+    from unittest.mock import AsyncMock, patch
+
+    center = "center-uuid"
+
+    def row(source: str, target: str) -> dict:
+        return {
+            "e": {"name": "Center"},
+            "source_labels": ["Company"],
+            "center_id": center,
+            "source_id": source,
+            "target_id": target,
+            "source_node": {"name": source},
+            "target_node": {"name": target},
+            "source_node_labels": ["Company"],
+            "target_node_labels": ["Company"],
+            "r": {},
+            "rel_type": "SOCIO_DE",
+        }
+
+    rows = [row(center, "middle-uuid"), row("middle-uuid", "end-uuid")]
+    with patch(
+        "bracc.routers.entity.execute_query",
+        new_callable=AsyncMock,
+        side_effect=[[{"degree": 1}], rows],
+    ):
+        response = await client.get(f"/api/v1/entity/{center}/connections?depth=2")
+    assert response.status_code == 200
+    body = response.json()
+    assert {entity["id"] for entity in body["connected_entities"]} == {"middle-uuid", "end-uuid"}
+    assert len(body["connected_entities"]) == 2
+    assert [(edge["source_id"], edge["target_id"]) for edge in body["connections"]] == [
+        (center, "middle-uuid"),
+        ("middle-uuid", "end-uuid"),
+    ]
