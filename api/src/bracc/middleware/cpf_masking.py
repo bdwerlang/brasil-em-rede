@@ -103,7 +103,24 @@ def _mask_text(text: str, safe: set[str]) -> str:
 
 def _mask_json_value(value: Any, safe: set[str], field: str = "") -> Any:
     if isinstance(value, dict):
-        return {key: _mask_json_value(item, safe, key) for key, item in value.items()}
+        # Search results expose the company CNPJ again under the generic document key.
+        properties = value.get("properties")
+        document = value.get("document")
+        cnpj = properties.get("cnpj") if isinstance(properties, dict) else None
+        company_document = (
+            value.get("type") == "company"
+            and isinstance(document, str)
+            and isinstance(cnpj, str)
+            and re.sub(r"[.\-/]", "", document).upper()
+            == re.sub(r"[.\-/]", "", cnpj).upper()
+            and bool(_CNPJ_RAW.fullmatch(re.sub(r"[.\-/]", "", document)))
+        )
+        return {
+            key: _mask_json_value(
+                item, safe, "cnpj" if key == "document" and company_document else key
+            )
+            for key, item in value.items()
+        }
     if isinstance(value, list):
         return [_mask_json_value(item, safe, field) for item in value]
     if isinstance(value, str):

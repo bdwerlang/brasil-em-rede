@@ -44,3 +44,23 @@ async def test_search_alphanumeric_cnpj_uses_exact_forms(client: AsyncClient) ->
     assert query.await_args.args[1] == "search_cnpj"
     assert query.await_args.args[2]["identifier"] == "00ABC123000135"
     assert query.await_args.args[2]["identifier_formatted"] == "00.ABC.123/0001-35"
+
+
+@pytest.mark.anyio
+async def test_search_preserves_raw_alphanumeric_cnpj_in_response(client: AsyncClient) -> None:
+    from unittest.mock import AsyncMock, patch
+
+    with (
+        patch("bracc.routers.search.execute_query", new_callable=AsyncMock, return_value=[{
+            "node": {"cnpj": "ABC12345678901", "razao_social": "Example"},
+            "node_labels": ["Company"], "node_id": "4:company:1", "score": 1.0,
+            "document_id": "ABC12345678901",
+        }]),
+        patch("bracc.routers.search.execute_query_single", new_callable=AsyncMock,
+              return_value={"total": 1}),
+    ):
+        response = await client.get("/api/v1/search", params={"q": "ABC12345678901"})
+    assert response.status_code == 200
+    result = response.json()["results"][0]
+    assert result["document"] == "ABC12345678901"
+    assert result["properties"]["cnpj"] == "ABC12345678901"
