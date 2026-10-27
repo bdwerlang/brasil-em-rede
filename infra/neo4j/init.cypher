@@ -5,6 +5,13 @@
 CREATE CONSTRAINT person_cpf_unique IF NOT EXISTS
   FOR (p:Person) REQUIRE p.cpf IS UNIQUE;
 
+// Snapshot identities are unique within Person; cross-label uniqueness requires F03/U06.
+CREATE CONSTRAINT person_entity_id_unique IF NOT EXISTS
+  FOR (p:Person) REQUIRE p.entity_id IS UNIQUE;
+
+CREATE CONSTRAINT person_snapshot_alias_unique IF NOT EXISTS
+  FOR (p:Person) REQUIRE (p.identity_snapshot, p.identity_legacy_id) IS UNIQUE;
+
 CREATE CONSTRAINT partner_id_unique IF NOT EXISTS
   FOR (p:Partner) REQUIRE p.partner_id IS UNIQUE;
 
@@ -148,6 +155,24 @@ CREATE CONSTRAINT ingestion_run_id_unique IF NOT EXISTS
 
 CREATE CONSTRAINT temporal_violation_id_unique IF NOT EXISTS
   FOR (t:TemporalViolation) REQUIRE t.violation_id IS UNIQUE;
+
+CREATE CONSTRAINT payment_transfer_id_unique IF NOT EXISTS
+  FOR (p:Payment) REQUIRE p.transfer_id IS UNIQUE;
+
+CREATE CONSTRAINT territory_id_unique IF NOT EXISTS
+  FOR (n:Territory) REQUIRE n.territory_id IS UNIQUE;
+
+CREATE CONSTRAINT public_body_id_unique IF NOT EXISTS
+  FOR (n:PublicBody) REQUIRE n.public_body_id IS UNIQUE;
+
+CREATE CONSTRAINT economic_activity_id_unique IF NOT EXISTS
+  FOR (n:EconomicActivity) REQUIRE n.activity_id IS UNIQUE;
+
+CREATE CONSTRAINT unit_id_unique IF NOT EXISTS
+  FOR (n:Unit) REQUIRE n.unit_id IS UNIQUE;
+
+CREATE CONSTRAINT fiscal_year_id_unique IF NOT EXISTS
+  FOR (n:FiscalYear) REQUIRE n.fiscal_year_id IS UNIQUE;
 
 // ── Indexes ─────────────────────────────────────────────
 CREATE INDEX person_name IF NOT EXISTS

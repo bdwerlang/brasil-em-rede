@@ -57,13 +57,13 @@ async def test_company_api_contract(client, monkeypatch, raw, formatted):
         result_id = result["id"]
 
         with patch(
-            "bracc.routers.entity.execute_query_single",
+            "bracc.routers.entity.execute_query",
             new_callable=AsyncMock,
-            return_value={
+            return_value=[{
                 "e": node,
                 "entity_labels": ["Company"],
                 "entity_id": node.element_id,
-            },
+            }],
         ) as lookup:
             entity = await client.get(f"/api/v1/entity/{raw}")
         assert entity.status_code == 200
@@ -72,12 +72,13 @@ async def test_company_api_contract(client, monkeypatch, raw, formatted):
         assert lookup.await_args.args[2] == {"identifier": raw, "identifier_formatted": formatted}
 
         with patch(
-            "bracc.routers.entity.execute_query_single",
+            "bracc.routers.entity.execute_query",
             new_callable=AsyncMock,
-            return_value={
+            return_value=[{
                 "e": node,
                 "entity_labels": ["Company"],
-            },
+                "entity_id": node.element_id,
+            }],
         ) as by_id:
             entity_by_id = await client.get(f"/api/v1/entity/by-element-id/{result_id}")
         assert entity_by_id.status_code == 200
