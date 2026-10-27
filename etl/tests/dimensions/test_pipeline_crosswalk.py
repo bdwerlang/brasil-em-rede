@@ -40,7 +40,7 @@ def test_siconfi_optional_crosswalk():
         [{key: dimensions[key] for key in ("territory", "unit")}]
     )
     pipeline.transform()
-    assert pipeline.finances[0]["code_validation_status"] == "matched_local"
+    assert pipeline.finances[0]["territory_unit_validation_status"] == "matched_local"
     row["uf"] = "RJ"
     pipeline.transform()
     assert pipeline.finances[0]["code_validation_status"] == "pending"
@@ -98,7 +98,7 @@ def test_siconfi_duplicate_order_and_conflicting_value():
         pipeline._raw = rows
         pipeline.transform()
         results.append((deepcopy(pipeline.finances), deepcopy(pipeline.dimension_observations)))
-        assert pipeline.finances[0]["code_validation_status"] == "matched_local"
+        assert pipeline.finances[0]["territory_unit_validation_status"] == "matched_local"
     assert results[0] == results[1]
     changed = deepcopy(full)
     changed["valor"] = "2"
@@ -153,6 +153,115 @@ def test_siconfi_duplicate_status_persists_in_disposable_graph():
                     "RETURN f.code_validation_status AS status",
                     id=pipeline.finances[0]["finance_id"],
                 ).single(strict=True)
-                assert result["status"] == "matched_local"
+                assert result["status"] == "pending"
+    finally:
+        driver.close()
+
+
+def test_siconfi_body_crosswalk_independent_and_duplicates():
+    from copy import deepcopy
+
+    row = {
+        "cod_ibge": "0012345",
+        "exercicio": "2022",
+        "uf": "SP",
+        "versao_territorial": "v1",
+        "tipo_territorio": "municipio",
+        "unidade_sistema": "test",
+        "unidade_codigo": "BRL",
+        "valor": "1",
+        "orgao_jurisdicao": "SP",
+        "orgao_sistema": "test",
+        "orgao_papel": "ug",
+        "orgao_codigo": "00012",
+        "orgao_versao": "v1",
+    }
+    pipeline = SiconfiPipeline(MagicMock())
+    pipeline._raw = [row]
+    pipeline.transform()
+    assert pipeline.finances[0]["public_body_validation_status"] == "pending"
+    dims = pipeline.dimension_observations[0]["dimensions"]
+    pipeline.dimension_crosswalk = crosswalk([{key: dims[key] for key in ("territory", "unit")}])
+    pipeline.transform()
+    assert pipeline.finances[0]["territory_unit_validation_status"] == "matched_local"
+    assert pipeline.finances[0]["public_body_validation_status"] == "pending"
+    pipeline.dimension_crosswalk = crosswalk([dims])
+    partial = deepcopy(row)
+    for key in ("orgao_jurisdicao", "orgao_sistema", "orgao_papel", "orgao_codigo", "orgao_versao"):
+        del partial[key]
+    for rows in ([partial, row], [row, partial]):
+        pipeline._raw = rows
+        pipeline.transform()
+        assert pipeline.finances[0]["public_body_validation_status"] == "matched_local"
+        assert pipeline.finances[0]["code_validation_status"] == "matched_local"
+    pipeline._raw = [partial]
+    pipeline.transform()
+    assert pipeline.finances[0]["public_body_validation_reason"] == "public_body_metadata_missing"
+    for field, value in (
+        ("orgao_papel", "ente"),
+        ("orgao_codigo", "00013"),
+        ("orgao_versao", "v2"),
+    ):
+        altered = deepcopy(row)
+        altered[field] = value
+        pipeline._raw = [altered]
+        pipeline.transform()
+        assert pipeline.finances[0]["public_body_validation_status"] == "pending"
+
+
+def test_siconfi_body_status_persists_in_disposable_graph():
+    import os
+
+    import pytest
+    from neo4j import GraphDatabase
+
+    uri = os.environ.get("F09_NEO4J_URI")
+    if not uri:
+        pytest.skip("requires disposable Neo4j")
+    driver = GraphDatabase.driver(uri, auth=("neo4j", os.environ["F09_NEO4J_PASSWORD"]))
+    try:
+        row = {
+            "cod_ibge": "0088888",
+            "exercicio": "2022",
+            "uf": "SP",
+            "versao_territorial": "v1",
+            "tipo_territorio": "municipio",
+            "unidade_sistema": "test",
+            "unidade_codigo": "BRL",
+            "valor": "1",
+            "orgao_jurisdicao": "SP",
+            "orgao_sistema": "test",
+            "orgao_papel": "ug",
+            "orgao_codigo": "00012",
+            "orgao_versao": "v1",
+        }
+        pipeline = SiconfiPipeline(driver)
+        pipeline._raw = [row]
+        pipeline.transform()
+        dims = pipeline.dimension_observations[0]["dimensions"]
+        pipeline.dimension_crosswalk = crosswalk(
+            [{key: dims[key] for key in ("territory", "unit")}]
+        )
+        pipeline.transform()
+        pipeline.load()
+        with driver.session() as session:
+            result = session.run(
+                "MATCH (f:MunicipalFinance {finance_id: $id}) "
+                "RETURN f.code_validation_status AS overall, "
+                "f.public_body_validation_status AS body",
+                id=pipeline.finances[0]["finance_id"],
+            ).single(strict=True)
+            assert (result["overall"], result["body"]) == ("pending", "pending")
+        pipeline.dimension_crosswalk = crosswalk([dims])
+        pipeline.transform()
+        pipeline.load()
+        with driver.session() as session:
+            result = session.run(
+                "MATCH (f:MunicipalFinance {finance_id: $id}) "
+                "RETURN f.code_validation_status AS overall, "
+                "f.public_body_validation_status AS body",
+                id=pipeline.finances[0]["finance_id"],
+            ).single(strict=True)
+            assert (result["overall"], result["body"]) == ("matched_local", "matched_local")
     finally:
         driver.close()
