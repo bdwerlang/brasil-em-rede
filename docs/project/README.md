@@ -11,6 +11,10 @@ de cada informação e navegar pelos vínculos documentados com sanções e
 contratos públicos. A primeira entrega usa um recorte pequeno e reproduzível.
 Expandir a cobertura exige repetir os mesmos critérios por fonte.
 
+O [plano de ação](action-plan.md) organiza a execução em cinco rodadas, com
+primeira fila de quatro tarefas, limite de duas implementações em andamento e
+oito gates para concluir a v0.1. Ele reaproveita os marcos e planos técnicos abaixo.
+
 ## Marcos
 
 | Marco | Resultado e condição de conclusão |

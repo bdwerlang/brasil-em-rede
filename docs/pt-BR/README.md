@@ -22,6 +22,9 @@ A primeira entrega será um piloto reproduzível **CNPJ → sanções → contra
 públicos**, com evidência de origem e data. O trabalho começa pela fundação
 registrada no [roteiro](../project/README.md). Ainda não há serviço de produção.
 
+O [plano de ação](../project/action-plan.md) define a fila inicial, cinco rodadas
+e oito gates para concluir a primeira v0.1 utilizável e seguir com a expansão.
+
 O [plano de unificação das bases](../unification/README.md) define identidades,
 evidências, responsabilidades de armazenamento, migração, reversão e a rota de
 integração das 169 fontes. São doze etapas de implementação propostas, com
