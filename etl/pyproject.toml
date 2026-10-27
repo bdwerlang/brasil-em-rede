@@ -34,6 +34,9 @@ bigquery = [
     "db-dtypes>=1.3.0",
     "pyarrow>=17.0.0",
 ]
+control = [
+    "psycopg[binary]==3.2.13",
+]
 
 [project.scripts]
 bracc-etl = "bracc_etl.runner:cli"
