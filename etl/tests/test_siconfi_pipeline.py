@@ -57,8 +57,9 @@ class TestTransform:
         pipeline.extract()
         pipeline.transform()
         pipeline.load()
-        session = pipeline.driver.session.return_value.__enter__.return_value
-        assert all("Company" not in str(call) for call in session.run.call_args_list)
+        tx = transaction(pipeline.driver)
+        assert tx.run.called
+        assert all("Company" not in str(call) for call in tx.run.call_args_list)
 
     def test_transform_deduplicates(self, pipeline: SiconfiPipeline) -> None:
         pipeline.extract()
