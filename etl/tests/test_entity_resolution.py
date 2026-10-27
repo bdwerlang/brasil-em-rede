@@ -53,3 +53,31 @@ class TestGetPersonSettings:
         except ImportError:
             return
         assert "blocking_rules_to_generate_predictions" in settings
+
+
+def test_splink_trains_and_predicts_with_pandas() -> None:
+    import pytest
+
+    pytest.importorskip("splink")
+    import pandas as pd
+    from splink import DuckDBAPI
+
+    from bracc_etl.entity_resolution.linker import PersonLinker
+
+    rows = [
+        {
+            "unique_id": i,
+            "name": f"Pessoa {i // 2}",
+            "cpf": str(i // 2),
+            "birth_date": f"1980-01-{i // 2 % 28 + 1:02d}",
+        }
+        for i in range(100)
+    ]
+    frame = pd.DataFrame(rows)
+    linker = PersonLinker(DuckDBAPI())
+    linker.train(frame)
+    results = linker.predict(frame, threshold=0.0)
+    assert len(results) == 50
+    assert set(zip(results["unique_id_l"], results["unique_id_r"], strict=True)) == {
+        (i, i + 1) for i in range(0, 100, 2)
+    }
