@@ -14,8 +14,8 @@ from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
     deduplicate_rows,
     format_cnpj,
+    normalize_cnpj,
     parse_date,
-    strip_document,
 )
 
 if TYPE_CHECKING:
@@ -23,7 +23,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_CNPJ_COMBINED_RE = re.compile(r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}|\d{14}")
+_CNPJ_COMBINED_RE = re.compile(
+    r"(?<![A-Za-z0-9])(?:[A-Za-z0-9]{2}\.[A-Za-z0-9]{3}\.[A-Za-z0-9]{3}/"
+    r"[A-Za-z0-9]{4}-[0-9]{2}|[A-Za-z0-9]{12}[0-9]{2})(?![A-Za-z0-9])"
+)
 
 
 def _stable_id(*parts: str, length: int = 24) -> str:
@@ -41,7 +44,7 @@ def _extract_cnpjs_with_spans(text: str) -> list[tuple[str, str]]:
 
     for match in _CNPJ_COMBINED_RE.finditer(text):
         raw = match.group(0)
-        digits = strip_document(raw)
+        digits = normalize_cnpj(raw)
         if len(digits) != 14 or digits in seen:
             continue
         seen.add(digits)

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import logging
 import zipfile
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 import httpx
 
@@ -12,55 +15,36 @@ logger = logging.getLogger(__name__)
 
 
 def download_file(url: str, dest: Path, *, timeout: int = 600) -> bool:
-    """Download a file with streaming and resume support.
+    """Download a file with streaming and safe restart support.
 
     Returns True on success, False on failure.
     """
+    # Restart when the partial has no verified representation identity.
     partial = dest.with_suffix(dest.suffix + ".partial")
-    start_byte = partial.stat().st_size if partial.exists() else 0
-
-    headers = {}
-    if start_byte > 0:
-        headers["Range"] = f"bytes={start_byte}-"
-        logger.info("Resuming %s from %.1f MB", dest.name, start_byte / 1e6)
-
     try:
         with httpx.stream(
-            "GET", url, follow_redirects=True, timeout=timeout, headers=headers,
+            "GET", url, follow_redirects=True, timeout=timeout,
+            headers={"Accept-Encoding": "identity"},
         ) as response:
-            if response.status_code == 416:
-                logger.info("Already complete: %s", dest.name)
-                if partial.exists():
-                    partial.rename(dest)
-                return True
-
             response.raise_for_status()
-
-            # If we requested a range but server returned full content (200 vs 206),
-            # start fresh to avoid corruption
-            if start_byte > 0 and response.status_code != 206:
-                logger.warning(
-                    "Server ignored Range header for %s, restarting download",
-                    dest.name,
-                )
-                start_byte = 0
-
-            total = response.headers.get("content-length")
-            total_mb = f"{int(total) / 1e6:.1f} MB" if total else "unknown size"
-            logger.info("Downloading %s (%s)...", dest.name, total_mb)
-
-            mode = "ab" if start_byte > 0 and response.status_code == 206 else "wb"
-            downloaded = start_byte if mode == "ab" else 0
-            with open(partial, mode) as f:
+            if response.status_code != 200:
+                logger.warning("Unexpected HTTP status for %s: %s", dest.name, response.status_code)
+                return False
+            with partial.open("wb") as stream:
                 for chunk in response.iter_bytes(chunk_size=65_536):
-                    f.write(chunk)
-                    downloaded += len(chunk)
-
-            partial.rename(dest)
-            logger.info("Downloaded: %s (%.1f MB)", dest.name, downloaded / 1e6)
+                    stream.write(chunk)
+            length = response.headers.get("content-length")
+            if length is not None and partial.stat().st_size != int(length):
+                logger.warning("Incomplete download: %s", dest.name)
+                return False
+            with partial.open("rb") as stream:
+                prefix = stream.read(1024).lstrip().lower()
+            if prefix.startswith((b"<!doctype html", b"<html", b"<head", b"<body")):
+                logger.warning("HTML response rejected: %s", dest.name)
+                return False
+            partial.replace(dest)
             return True
-
-    except httpx.HTTPError as e:
+    except (httpx.HTTPError, OSError, ValueError) as e:
         logger.warning("Failed to download %s: %s", dest.name, e)
         return False
 

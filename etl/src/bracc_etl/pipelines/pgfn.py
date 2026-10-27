@@ -13,9 +13,9 @@ if TYPE_CHECKING:
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
     format_cnpj,
+    normalize_cnpj,
     normalize_name,
     parse_date,
-    strip_document,
 )
 
 logger = logging.getLogger(__name__)
@@ -95,7 +95,7 @@ class PgfnPipeline(Pipeline):
 
                 for _, row in filtered.iterrows():
                     cnpj_raw = str(row["CPF_CNPJ"]).strip()
-                    digits = strip_document(cnpj_raw)
+                    digits = normalize_cnpj(cnpj_raw)
                     if len(digits) != 14:
                         skipped_bad_cnpj += 1
                         continue

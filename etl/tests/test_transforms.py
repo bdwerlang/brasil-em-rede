@@ -96,3 +96,13 @@ class TestDeduplication:
 
     def test_empty(self) -> None:
         assert deduplicate_rows([], ["cpf"]) == []
+
+
+def test_alphanumeric_cnpj_and_partial_cpf() -> None:
+    assert format_cnpj("00abc123000135") == "00.ABC.123/0001-35"
+    assert classify_document("00.ABC.123/0001-35") == "cnpj_valid"
+    assert classify_document("***.123.456-**") == "cpf_partial"
+    assert classify_document("A0012345678901") == "cnpj_valid"
+    assert validate_cnpj("12.ABC.345/01DE-35")
+    assert not validate_cnpj("12.ABC.345/01DE-36")
+    assert not validate_cpf("A52998224725")
