@@ -6,8 +6,9 @@ from datetime import timedelta
 from typing import Any
 from uuid import UUID
 
-from psycopg import Connection
-from psycopg.types.json import Jsonb
+# psycopg is installed only with the optional control extra.
+from psycopg import Connection  # type: ignore[import-not-found,unused-ignore]
+from psycopg.types.json import Jsonb  # type: ignore[import-not-found,unused-ignore]
 
 
 class Catalog:
