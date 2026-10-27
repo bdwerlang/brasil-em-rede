@@ -218,3 +218,17 @@ def test_load_calls_batch_loader() -> None:
     session = transaction(driver)
     # Should have called session.run for Contract nodes, Company nodes, VENCEU and REFERENTE_A rels
     assert session.run.call_count >= 4
+
+
+def test_supplier_alphanumeric_and_invalid_shape() -> None:
+    import copy
+
+    pipeline = _make_pipeline()
+    _extract_from_fixtures(pipeline)
+    valid = copy.deepcopy(pipeline._raw_records[0])
+    invalid = copy.deepcopy(valid)
+    valid["niFornecedor"] = "00ABC123000135"
+    invalid["niFornecedor"] = "00ABC1230001!5"
+    pipeline._raw_records = [valid, invalid]
+    pipeline.transform()
+    assert [row["cnpj"] for row in pipeline.contracts] == ["00.ABC.123/0001-35"]
