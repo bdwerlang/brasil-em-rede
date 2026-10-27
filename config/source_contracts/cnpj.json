@@ -1,0 +1,51 @@
+{
+  "$schema": "./source-contract.schema.json",
+  "contract_version": "1.0",
+  "source_id": "cnpj",
+  "provider": "Receita Federal do Brasil",
+  "dataset": "CNPJ: amostra de empresas, estabelecimentos e sócios do snapshot mensal proposto",
+  "status": "proposed_not_acquired",
+  "execution_enabled": false,
+  "reviewed_on": "2026-10-27",
+  "evidence_state": {"acquired": false, "loaded": false, "linked": false},
+  "acquisition": {
+    "method": "public_file_export",
+    "urls": ["https://dadosabertos.rfb.gov.br/CNPJ/dados_abertos_cnpj/"],
+    "authentication": "Somente exportação oficial pública, sem credencial presumida. Confirmar o recurso final; não contornar autenticação ou usar espelho automaticamente.",
+    "verification": "documentation_only",
+    "costs": "Preço não verificado; nenhum serviço pago contratado. Medir tráfego, descompressão, processamento, retenção e backup antes de estimar custo.",
+    "official_limits": ["Cota, tamanho e condições dos arquivos finais não confirmados nesta inspeção."],
+    "local_limits": {"concurrency": 1, "requests_per_minute": 10, "max_retries_per_resource": 3},
+    "stop_conditions": ["Autenticação não prevista, CAPTCHA ou HTTP 401/403.", "Respeitar Retry-After; parar após 3 retentativas, schema incompatível ou orçamento de bytes/disco não definido ou excedido.", "Snapshot/arquivo ausente exige revisão do contrato; não selecionar latest silenciosamente."]
+  },
+  "scope": {
+    "period_start": "2026-09-01",
+    "period_end": "2026-09-30",
+    "period_basis": "monthly_snapshot",
+    "partitions": ["2026-09/Empresas0.zip", "2026-09/Estabelecimentos0.zip", "2026-09/Socios0.zip", "2026-09/Cnaes.zip", "2026-09/Motivos.zip", "2026-09/Municipios.zip", "2026-09/Naturezas.zip", "2026-09/Paises.zip", "2026-09/Qualificacoes.zip"],
+    "selection": "Proposta: ordenar CNPJ canônico completo de Estabelecimentos0; selecionar até 1000 estabelecimentos cuja raiz esteja em Empresas0. Deduplicar por CNPJ; incluir apenas sócios dessas raízes encontrados em Socios0. Mesmos arquivos e hashes são pré-condição de repetição; resultado vazio é válido.",
+    "max_output_records": 1000,
+    "coverage_exclusions": ["Teto refere-se aos estabelecimentos selecionados; sócios e referências devem ser contabilizados separadamente.", "Nenhuma cobertura nacional, regional, histórica ou completude do QSA; shards não garantem a mesma população.", "O teto de saída não limita o tamanho dos ZIPs; não autoriza adquirir outros shards para completar os vínculos."]
+  },
+  "format": {
+    "expected_raw": ["ZIP RFB e arquivos tabulares sem cabeçalho separados por ponto e vírgula; codificação e leiaute do snapshot a confirmar.", "Preservar bruto e dicionário; nenhum arquivo real foi adquirido nesta tarefa."],
+    "existing_adapter": "etl/src/bracc_etl/pipelines/cnpj.py; alias receita_federal e entradas data/cnpj precisam ser reconciliados antes de usar os destinos planejados.",
+    "validation_pending": ["Listagem oficial, nomes das partições, tamanho, integridade ZIP, encoding e leiaute.", "CNPJ alfanumérico, raiz separada e documentos mascarados; não converter identificador em número.", "Reconciliar bruto, selecionado, rejeitado e vínculo pendente sem exigir coincidência entre shards."]
+  },
+  "identity": {
+    "record_key": "CNPJ completo identifica estabelecimento; raiz societária em campo próprio. Identidade de sócio depende de contrato específico da fundação.",
+    "link_policy": "CNPJ completo validado por igualdade exata; nunca unir empresas pela raiz ou nome, nem pessoas por CPF parcial/mascarado. Preservar snapshot e origem."
+  },
+  "destinations": {
+    "raw_relative": "audit-results/local/pilot/cnpj/raw/",
+    "staged_relative": "audit-results/local/pilot/cnpj/staged/",
+    "manifest_relative": "audit-results/local/pilot/cnpj/manifests/",
+    "database_role": "bracc-m0-pilot"
+  },
+  "blockers": ["Listagem e disponibilidade do snapshot 2026-09 não verificadas; acesso oficial precisa ser confirmado.", "Condições de reutilização, leiaute do recurso final e orçamento de bytes/disco pendentes.", "Normalização/IDs, aquisição com manifesto, loader verificável e instância isolada ainda dependem da fundação M0."],
+  "required_measurements": ["Bytes comprimidos, expansão por família, temporários e retenção.", "Pico de RAM/CPU/disco e duração por etapa/lote, antes de estimar capacidade ou datas.", "Interseção entre shards, documentos válidos/rejeitados, sócios sem documento completo e volume do grafo com índices/backup."],
+  "references": [
+    {"url": "https://dadosabertos.rfb.gov.br/CNPJ/dados_abertos_cnpj/", "checked_on": "2026-10-27", "observed": "URL cadastrada no repositório; ferramenta de consulta não conseguiu acessá-la. Não confirma disponibilidade dos arquivos."},
+    {"url": "https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/cadastros/consultas/dados-publicos-cnpj", "checked_on": "2026-10-27", "observed": "Consulta da página legada redirecionou para login; nenhum arquivo de dados foi obtido."}
+  ]
+}
