@@ -87,6 +87,7 @@ scripts/audit-prompts/
 data/comprasnet/
 data/rais/
 data/tse/
+data/unified/
 
 # Local MCP runtime config (keep example only)
 .mcp.json

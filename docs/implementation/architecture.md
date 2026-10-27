@@ -123,6 +123,15 @@ apaga dados, não cria credenciais e não aciona reset global.
 
 ## Modelo de cadastro e proveniência
 
+O [modelo de unificação](../unification/canonical-model.md) especializa este
+contrato para a integração entre fontes: distingue cadastro por raiz de
+estabelecimento, usa identidade estável da aplicação e separa artefato de
+observação por registro. `SourceDocument` representa o artefato no contexto de
+origem; localização de linha/página fica na observação. Fórmulas genéricas de
+`doc_id` por registro nas fichas devem ser adaptadas durante a implementação,
+preservando IDs legados como aliases. O [runbook](../unification/migration-runbook.md)
+define publicação coerente e migração; esses componentes ainda são propostos.
+
 Reutilizar `Company`, `Partner`, `Person`, `Contract`, `Amendment`, `Sanction`,
 `Finance`, `Health`, `Education`, `SourceDocument` e `IngestionRun` quando a
 semântica e as chaves coincidirem. Entidades novas indicadas nas fichas são
