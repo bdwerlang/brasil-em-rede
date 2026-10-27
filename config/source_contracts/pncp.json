@@ -1,0 +1,52 @@
+{
+  "$schema": "./source-contract.schema.json",
+  "contract_version": "1.0",
+  "source_id": "pncp",
+  "provider": "Portal Nacional de Contratações Públicas",
+  "dataset": "Contratos por data de publicação; sem cobertura de legado ComprasNet",
+  "status": "proposed_not_acquired",
+  "execution_enabled": false,
+  "reviewed_on": "2026-10-27",
+  "evidence_state": {"acquired": false, "loaded": false, "linked": false},
+  "acquisition": {
+    "method": "public_read_api",
+    "urls": ["https://pncp.gov.br/api/consulta/v1/contratos"],
+    "authentication": "Consulta pública documentada; confirmar resposta operacional sem credenciais. Não usar endpoints de manutenção autenticados.",
+    "verification": "documentation_only",
+    "costs": "Preço não verificado nas referências consultadas; nenhum serviço pago contratado. Medir tráfego, processamento, retenção e backup antes de estimar custo.",
+    "official_limits": ["OpenAPI consultada: dataInicial/dataFinal em yyyyMMdd; pagina obrigatória e >= 1; tamanhoPagina entre 10 e 500.", "Não foi identificada cota por minuto na documentação consultada; não pressupor acesso ilimitado ou SLA."],
+    "local_limits": {"concurrency": 1, "requests_per_minute": 10, "max_retries_per_resource": 3},
+    "stop_conditions": ["Autenticação não prevista, CAPTCHA ou HTTP 401/403.", "Respeitar Retry-After; parar após 3 retentativas, schema incompatível ou orçamento de bytes/disco não definido ou excedido.", "Parar em 10 páginas e declarar parcial se houver páginas restantes; não promover o dia a cobertura completa."]
+  },
+  "scope": {
+    "period_start": "2026-09-01",
+    "period_end": "2026-09-01",
+    "period_basis": "publication_date",
+    "partitions": ["GET /v1/contratos?dataInicial=20260901&dataFinal=20260901&pagina={1..10}&tamanhoPagina=50; sem filtro implícito de órgão ou esfera"],
+    "selection": "Preservar cada página bruta e seu envelope; parar no fim documentado da paginação ou no teto de 10 páginas. Deduplicar por controle oficial, registrar mutações e só projetar ligação PJ por documento completo validado. Ordenação e estabilidade entre consultas precisam ser verificadas; reprodução depende dos mesmos payloads/hash, não da imutabilidade do portal.",
+    "max_output_records": 500,
+    "coverage_exclusions": ["No máximo 500 registros brutos antes de deduplicação/projeção, sem estimativa de total do dia.", "Não cobre licitações, atas/adesões, histórico completo, contratos fora da janela ou legado ComprasNet.", "Sem garantia de interseção com a amostra CNPJ ou sanções; PF/estrangeiros e dados inválidos devem ser contabilizados fora da projeção PJ."]
+  },
+  "format": {
+    "expected_raw": ["JSON da API de consulta, com páginas e envelope preservados; confirmar schema e resposta vazia no endpoint real."],
+    "existing_adapter": "etl/src/bracc_etl/pipelines/comprasnet.py lê listas de contratos PNCP em data/comprasnet/*_contratos.json; pncp.py lê licitações. Reconciliar namespace, provider e adaptação de envelope antes de carga, sem mudar catálogo nesta tarefa.",
+    "validation_pending": ["Validar paginação, totais, ordenação, vazios, fusos, publicação versus atualização e retificações.", "Preservar controle PNCP, fornecedor e órgão em papéis separados, tipos de contrato e valores/datas sem truncamento silencioso.", "Normalizar CNPJ alfanumérico e manter referência da contratação somente quando existir prova oficial."]
+  },
+  "identity": {
+    "record_key": "Namespace pncp:contrato + numeroControlePNCP; fallback órgão/ano/sequencial somente se completo e validado.",
+    "link_policy": "Fornecedor PJ por CNPJ completo validado; órgão comprador em papel separado; Contract não nasce de Bid. Documento parcial/nome não faz merge. Referência a Bid exige controle oficial."
+  },
+  "destinations": {
+    "raw_relative": "audit-results/local/pilot/pncp/raw/",
+    "staged_relative": "audit-results/local/pilot/pncp/staged/",
+    "manifest_relative": "audit-results/local/pilot/pncp/manifests/",
+    "database_role": "bracc-m0-pilot"
+  },
+  "blockers": ["Nenhuma consulta de registros executada; disponibilidade operacional, ordenação e limites efetivos não verificados.", "Reconciliação pncp/comprasnet e separação de contrato/licitação, condições de reutilização e orçamento pendentes.", "IDs/normalização, aquisição com manifesto, loader verificável e instância isolada dependem da fundação M0."],
+  "required_measurements": ["Bytes por página, total de páginas, duplicatas e mutações da janela; tempo por requisição.", "Memória, tempo de transformação/escrita e crescimento do grafo/índices/backup.", "Totais bruto/deduplicado/projetado/rejeitado, fornecedores não PJ, documentos inválidos e interseção real com CNPJ/sanções."],
+  "references": [
+    {"url": "https://pncp.gov.br/api/consulta/v3/api-docs", "checked_on": "2026-10-27", "observed": "OpenAPI 1.0 retornou HTTP 200; confirma GET /v1/contratos e parâmetros/limites de página. Nenhum registro de contrato foi solicitado."},
+    {"url": "https://pncp.gov.br/manual/pt-br/latest/singlehtml/index.html", "checked_on": "2026-10-27", "observed": "Manual de integração v2.6 acessível; seção 5.4 distingue consulta pública de manutenção autenticada."},
+    {"url": "https://pncp.gov.br/manual/pt-br/latest/contrato_empenho/consultar_contrato_ou_empenho.html", "checked_on": "2026-10-27", "observed": "Documenta GET de detalhe por órgão, ano e sequencial e campos de retorno; documentação consultada, sem consulta de dados."}
+  ]
+}
