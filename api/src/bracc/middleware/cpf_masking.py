@@ -11,7 +11,7 @@ import re
 from typing import TYPE_CHECKING, Any
 
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response, StreamingResponse
+from starlette.responses import Response
 
 from bracc.constants import PEP_ROLES
 
@@ -24,6 +24,28 @@ if TYPE_CHECKING:
 # (e.g. 14-digit CNPJ).
 _CPF_FORMATTED = re.compile(r"\d{3}\.\d{3}\.\d{3}-\d{2}")
 _CPF_RAW = re.compile(r"(?<!\d)\d{11}(?!\d)")
+_CNPJ_RAW = re.compile(r"[A-Za-z0-9]{12}[0-9]{2}")
+_CNPJ_FIELDS = {
+    "cnpj",
+    "company_cnpj",
+    "agency_cnpj",
+    "supplier_cnpj",
+    "winner_cnpj",
+    "fund_cnpj",
+    "administrator_cnpj",
+    "manager_cnpj",
+    "holding_cnpj",
+    "party_cnpj",
+    "mentioned_cnpj",
+    "cnpj_empresa",
+    "cnpj_socia",
+    "cnpj_favorecido",
+    "cnpj_contratada",
+    "cnpj_fornecedor",
+    "cnpj_vencedor",
+    "numero_cnpj",
+    "numero_cnpj_entidade",
+}
 
 
 def mask_formatted_cpf(cpf: str) -> str:
@@ -82,36 +104,70 @@ def _digits_only(cpf: str) -> str:
     return re.sub(r"\D", "", cpf)
 
 
+def _mask_text(text: str, safe: set[str]) -> str:
+    def replace_formatted(match: re.Match[str]) -> str:
+        if _digits_only(match.group()) in safe:
+            return match.group()
+        return mask_formatted_cpf(match.group())
+
+    def replace_raw(match: re.Match[str]) -> str:
+        return match.group() if match.group() in safe else mask_raw_cpf(match.group())
+
+    return _CPF_RAW.sub(replace_raw, _CPF_FORMATTED.sub(replace_formatted, text))
+
+
+def _mask_json_value(value: Any, safe: set[str], field: str = "") -> Any:
+    if isinstance(value, dict):
+        # Search results expose the company CNPJ again under the generic document key.
+        properties = value.get("properties")
+        cnpj = properties.get("cnpj") if isinstance(properties, dict) else None
+        company_document = value.get("type") == "company" and isinstance(cnpj, str)
+        return {
+            key: _mask_json_value(
+                item,
+                safe,
+                "cnpj"
+                if (
+                    key in {"document", "document_id", "id"}
+                    and company_document
+                    and isinstance(cnpj, str)
+                    and isinstance(item, str)
+                    and re.sub(r"[.\-/]", "", item).upper() == re.sub(r"[.\-/]", "", cnpj).upper()
+                )
+                else key,
+            )
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_mask_json_value(item, safe, field) for item in value]
+    if isinstance(value, str):
+        normalized = re.sub(r"[.\-/]", "", value)
+        if field.lower() in _CNPJ_FIELDS and _CNPJ_RAW.fullmatch(normalized):
+            return value
+        return _mask_text(value, safe)
+    if isinstance(value, int) and not isinstance(value, bool):
+        masked = _mask_text(str(value), safe)
+        return value if masked == str(value) else masked
+    return value
+
+
 def mask_cpfs_in_json(text: str, pep_cpfs: set[str] | None = None) -> str:
-    """Replace CPF patterns in *text* with masked versions.
-
-    CPFs whose digits-only form appears in *pep_cpfs* are left untouched.
-    CNPJ (14-digit) numbers are never touched because the regex only
-    matches exactly 11 contiguous digits.
-    """
-    safe: set[str] = pep_cpfs or set()
-
-    def _replace_formatted(m: re.Match[str]) -> str:
-        if _digits_only(m.group()) in safe:
-            return m.group()
-        return mask_formatted_cpf(m.group())
-
-    def _replace_raw(m: re.Match[str]) -> str:
-        if m.group() in safe:
-            return m.group()
-        return mask_raw_cpf(m.group())
-
-    text = _CPF_FORMATTED.sub(_replace_formatted, text)
-    text = _CPF_RAW.sub(_replace_raw, text)
-    return text
+    """Mask CPF-like text, preserving complete CNPJ only in known CNPJ fields."""
+    safe = pep_cpfs or set()
+    try:
+        data = json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        return _mask_text(text, safe)
+    masked = _mask_json_value(data, safe)
+    if masked == data:
+        return text
+    return json.dumps(masked, ensure_ascii=False, separators=(",", ":"))
 
 
 class CPFMaskingMiddleware(BaseHTTPMiddleware):
     """Starlette middleware that masks CPF numbers in JSON responses."""
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         response = await call_next(request)
 
         content_type = response.headers.get("content-type", "")
@@ -120,7 +176,7 @@ class CPFMaskingMiddleware(BaseHTTPMiddleware):
 
         # Read the full body from the streaming response.
         body_bytes = b""
-        if isinstance(response, StreamingResponse):
+        if hasattr(response, "body_iterator"):
             chunks: list[bytes] = []
             async for chunk in response.body_iterator:
                 if isinstance(chunk, str):
@@ -149,9 +205,11 @@ class CPFMaskingMiddleware(BaseHTTPMiddleware):
         masked_text = mask_cpfs_in_json(body_text, pep_cpfs)
         masked_bytes = masked_text.encode("utf-8")
 
+        headers = dict(response.headers)
+        headers.pop("content-length", None)
         return Response(
             content=masked_bytes,
             status_code=response.status_code,
-            headers=dict(response.headers),
+            headers=headers,
             media_type=response.media_type,
         )

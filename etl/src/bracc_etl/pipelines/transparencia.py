@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
     cap_contract_value,
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     normalize_cnpj,
@@ -128,9 +129,9 @@ class TransparenciaPipeline(Pipeline):
             if raw_cnpj == _SIGILOSO_CNPJ:
                 continue
 
-            # Skip rows where CNPJ has no digits (produces malformed contract_ids)
+            # Skip rows without a structurally complete CNPJ.
             cnpj_digits = normalize_cnpj(raw_cnpj)
-            if len(cnpj_digits) != 14:
+            if classify_document(raw_cnpj) != "cnpj_valid":
                 continue
 
             cnpj = format_cnpj(raw_cnpj)

@@ -475,11 +475,20 @@ class CNPJPipeline(Pipeline):
     # --- Vectorized transform helpers ---
 
     def _build_estab_lookup(self, df: pd.DataFrame) -> None:
-        """Add estabelecimentos rows to estab_lookup (vectorized prep, zip on deduped)."""
+        """Index complete establishment components without inventing missing zeros.
+
+        Input must retain the original 8/4/2 character widths; truncated rows fail
+        the batch so they can be corrected at the source.
+        """
         df = df.copy()
-        df["basico"] = df["cnpj_basico"].astype(str).str.zfill(8)
-        df["ordem"] = df["cnpj_ordem"].astype(str).str.zfill(4)
-        df["dv"] = df["cnpj_dv"].astype(str).str.zfill(2)
+        df["basico"] = df["cnpj_basico"].astype(str).str.strip().str.upper()
+        df["ordem"] = df["cnpj_ordem"].astype(str).str.strip().str.upper()
+        df["dv"] = df["cnpj_dv"].astype(str).str.strip()
+        valid = (df["basico"].str.fullmatch(r"[A-Z0-9]{8}")
+                 & df["ordem"].str.fullmatch(r"[A-Z0-9]{4}")
+                 & df["dv"].str.fullmatch(r"[0-9]{2}"))
+        if not valid.all():
+            raise ValueError(f"Incomplete or invalid establishment in {int((~valid).sum())} rows")
         df["cnpj_raw"] = df["basico"] + df["ordem"] + df["dv"]
         # Skip already-seen basico keys, then dedup within chunk
         mask = ~df["basico"].isin(self._estab_lookup)
@@ -499,7 +508,7 @@ class CNPJPipeline(Pipeline):
     def _transform_empresas_rf(self, df: pd.DataFrame) -> list[dict[str, Any]]:
         """Vectorized transform for RF-format empresas."""
         df = df.copy()
-        df["basico"] = df["cnpj_basico"].astype(str).str.zfill(8)
+        df["basico"] = df["cnpj_basico"].astype(str).str.strip().str.upper()
         lookup = self._estab_lookup
         # A root alone cannot identify a complete establishment.
         missing = ~df["basico"].isin(lookup)
@@ -563,7 +572,7 @@ class CNPJPipeline(Pipeline):
         """
         df = df.copy()
         lookup = self._estab_lookup
-        df["basico"] = df["cnpj_basico"].astype(str).str.zfill(8)
+        df["basico"] = df["cnpj_basico"].astype(str).str.strip().str.upper()
         missing = ~df["basico"].isin(lookup)
         if missing.any():
             raise ValueError(f"Missing establishment for {int(missing.sum())} partner rows")

@@ -181,9 +181,10 @@ class DouPipeline(Pipeline):
 
     def _extract_parquet(self, parquet_files: list[Path]) -> None:
         """Extract acts from BigQuery parquet exports (basedosdados DOU)."""
-        import pyarrow as pa  # type: ignore[import-not-found]
-        import pyarrow.compute as pc  # type: ignore[import-not-found]
-        import pyarrow.parquet as pq  # type: ignore[import-not-found]
+        # PyArrow ships without type information; it is an optional extra.
+        import pyarrow as pa  # type: ignore[import-not-found,import-untyped,unused-ignore]
+        import pyarrow.compute as pc  # type: ignore[import-not-found,import-untyped,unused-ignore]
+        import pyarrow.parquet as pq  # type: ignore[import-not-found,import-untyped,unused-ignore]
 
         parquet_cols = [
             "titulo", "orgao", "ementa", "excerto",

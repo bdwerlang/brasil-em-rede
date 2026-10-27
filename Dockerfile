@@ -13,6 +13,9 @@ COPY api/pyproject.toml api/uv.lock ./
 RUN uv sync --no-dev --no-install-project
 
 COPY api/src ./src
+COPY docs/source_registry_br_v1.csv /app/docs/source_registry_br_v1.csv
+COPY infra/scripts/api-readiness.py /app/api-readiness.py
+ENV BRACC_SOURCE_REGISTRY_PATH=/app/docs/source_registry_br_v1.csv
 RUN uv sync --no-dev
 
 EXPOSE 8000
@@ -20,6 +23,11 @@ CMD ["uv", "run", "uvicorn", "bracc.main:app", "--host", "0.0.0.0", "--port", "8
 
 
 FROM node:22-slim AS frontend-build
+
+ARG VITE_API_URL
+ARG VITE_PUBLIC_MODE=false
+ARG VITE_PATTERNS_ENABLED=false
+ENV VITE_API_URL=${VITE_API_URL} VITE_PUBLIC_MODE=${VITE_PUBLIC_MODE} VITE_PATTERNS_ENABLED=${VITE_PATTERNS_ENABLED}
 
 WORKDIR /app
 

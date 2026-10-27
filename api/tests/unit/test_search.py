@@ -85,3 +85,23 @@ async def test_search_hides_identity_metadata(client: AsyncClient) -> None:
         response = await client.get("/api/v1/search?q=example")
     assert response.status_code == 200
     assert not any(k.startswith("identity_") for k in response.json()["results"][0]["properties"])
+
+
+@pytest.mark.anyio
+async def test_search_preserves_raw_alphanumeric_cnpj_in_response(client: AsyncClient) -> None:
+    from unittest.mock import AsyncMock, patch
+
+    with (
+        patch("bracc.routers.search.execute_query", new_callable=AsyncMock, return_value=[{
+            "node": {"cnpj": "ABC12345678901", "razao_social": "Example"},
+            "node_labels": ["Company"], "node_id": "4:company:1", "score": 1.0,
+            "document_id": "ABC12345678901",
+        }]),
+        patch("bracc.routers.search.execute_query_single", new_callable=AsyncMock,
+              return_value={"total": 1}),
+    ):
+        response = await client.get("/api/v1/search", params={"q": "ABC12345678901"})
+    assert response.status_code == 200
+    result = response.json()["results"][0]
+    assert result["document"] == "ABC12345678901"
+    assert result["properties"]["cnpj"] == "ABC12345678901"
