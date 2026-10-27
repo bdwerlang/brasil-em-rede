@@ -1,11 +1,13 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import "@/i18n";
 
 // Mock API client
 vi.mock("@/api/client", () => ({
+  searchEntities: vi.fn(),
   getEntityByElementId: vi.fn(),
   getEntityPatterns: vi.fn(),
   getBaseline: vi.fn(),
@@ -115,8 +117,9 @@ vi.mock("@/stores/graphExplorer", () => ({
   }),
 }));
 
-import { getEntityByElementId, getEntityPatterns, getBaseline } from "@/api/client";
+import { searchEntities, getEntityByElementId, getEntityPatterns, getBaseline } from "@/api/client";
 import { EntityAnalysis } from "./EntityAnalysis";
+import { Search } from "./Search";
 
 const mockGetEntity = vi.mocked(getEntityByElementId);
 const mockGetPatterns = vi.mocked(getEntityPatterns);
@@ -171,5 +174,42 @@ describe("EntityAnalysis", () => {
     });
 
     expect(screen.getByText("Entity: entity-42")).toBeInTheDocument();
+  });
+});
+
+
+describe("search to entity analysis", () => {
+  it.each([
+    ["00123456000199", "4:company:001"],
+    ["00ABC123000135", "4:company:002"],
+  ])("preserves document %s and resolves the returned element ID", async (document, elementId) => {
+    const user = userEvent.setup();
+    vi.clearAllMocks();
+    vi.mocked(searchEntities).mockResolvedValue({
+      results: [{ id: elementId, name: "Empresa Exemplo", type: "company", document, sources: [], score: 1 }],
+      total: 1, page: 1, size: 20,
+    });
+    mockGetEntity.mockImplementation(async (id) => {
+      if (id !== elementId) throw new Error("Unknown element ID");
+      return { id, type: "company", properties: { cnpj: document }, sources: [], is_pep: false };
+    });
+    mockGetPatterns.mockResolvedValue({ entity_id: elementId, patterns: [], total: 0 });
+    mockGetBaseline.mockResolvedValue({ entity_id: elementId, comparisons: [], total: 0 });
+
+    render(
+      <MemoryRouter initialEntries={["/app/search"]}>
+        <Routes>
+          <Route path="/app/search" element={<Search />} />
+          <Route path="/app/analysis/:entityId" element={<EntityAnalysis />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await user.type(screen.getByPlaceholderText(/CPF/), document);
+    await user.click(screen.getByRole("button", { name: /buscar/i }));
+    expect(await screen.findByText(document)).toBeInTheDocument();
+    expect(searchEntities).toHaveBeenCalledWith(document, "all");
+    await user.click(screen.getByRole("link", { name: /Empresa Exemplo/ }));
+    expect(await screen.findByText(`Entity: ${elementId}`)).toBeInTheDocument();
+    expect(mockGetEntity).toHaveBeenCalledWith(elementId);
   });
 });
