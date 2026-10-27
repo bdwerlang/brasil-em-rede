@@ -2,105 +2,150 @@ import logging
 import os
 import re
 import time
+from contextvars import ContextVar
+from dataclasses import dataclass
 from typing import Any
 
 from neo4j import Driver
 from neo4j.exceptions import TransientError
 
 logger = logging.getLogger(__name__)
-
 _SAFE_KEY = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
-
 _MAX_RETRIES = 5
 
 
+@dataclass
+class LoadMetrics:
+    """Cumulative counts for this loader; writes count only committed transactions."""
+
+    submitted: int = 0
+    attempts: int = 0  # batch executions, including retries
+    rejected: int = 0  # rows missing required keys
+    committed_rows: int = 0  # accepted input rows in committed batches
+    verified_rows: int = 0  # input rows resolved by node/relationship loaders
+    generic_updates: int = 0  # database update operations from arbitrary queries
+    nodes_created: int = 0
+    relationships_created: int = 0
+    relationships_resolved: int = 0  # input rows with both endpoints
+    unresolved: int = 0  # relationship rows without both endpoints
+
+
+_active_load: ContextVar[tuple[Driver, LoadMetrics] | None] = ContextVar(
+    "active_load", default=None
+)
+
+
 class Neo4jBatchLoader:
-    """Bulk loader using UNWIND for efficient Neo4j writes."""
+    """Bulk loader with one atomic transaction per batch."""
 
     def __init__(
-        self,
-        driver: Driver,
-        batch_size: int = 10_000,
-        neo4j_database: str | None = None,
+        self, driver: Driver, batch_size: int = 10_000, neo4j_database: str | None = None
     ) -> None:
+        if batch_size <= 0:
+            raise ValueError("batch_size must be positive")
         self.driver = driver
         self.batch_size = batch_size
         self.neo4j_database = neo4j_database or os.getenv("NEO4J_DATABASE", "neo4j")
+        active = _active_load.get()
+        self.metrics = active[1] if active is not None and active[0] is driver else LoadMetrics()
         self._total_written = 0
 
-    def _run_batch_once(self, query: str, batch: list[dict[str, Any]]) -> None:
-        with self.driver.session(database=self.neo4j_database) as session:
-            session.run(query, {"rows": batch})
+    def _run_batch_once(
+        self, query: str, batch: list[dict[str, Any]], relationship: bool = False
+    ) -> tuple[Any, int]:
+        with (
+            self.driver.session(database=self.neo4j_database) as session,
+            session.begin_transaction() as tx,
+        ):
+            result = tx.run(query, {"rows": batch})
+            resolved = 0
+            if relationship:
+                record = result.single(strict=True)
+                resolved = record["resolved"]
+                if record["ambiguous"] or not 0 <= resolved <= len(batch):
+                    raise ValueError("relationship endpoint matches are not unique")
+            summary = result.consume()
+            tx.commit()
+        return summary.counters, resolved
 
-    def _run_batches(self, query: str, rows: list[dict[str, Any]]) -> int:
-        total = 0
-        for i in range(0, len(rows), self.batch_size):
-            batch = rows[i : i + self.batch_size]
-            self._run_batch_once(query, batch)
-            total += len(batch)
-            self._total_written += len(batch)
-        if total >= 10_000:
-            logger.info("  Batch written: %d rows (cumulative: %d)", total, self._total_written)
-        return total
-
-    def run_query_with_retry(
+    def _run_batches(
         self,
         query: str,
         rows: list[dict[str, Any]],
-        batch_size: int = 500,
+        batch_size: int | None = None,
+        relationship: bool = False,
+        nodes: bool = False,
     ) -> int:
-        """Run query in batches with exponential-backoff retry on deadlocks."""
+        size = self.batch_size if batch_size is None else batch_size
+        if size <= 0:
+            raise ValueError("batch_size must be positive")
         total = 0
-        for i in range(0, len(rows), batch_size):
-            batch = rows[i : i + batch_size]
+        for i in range(0, len(rows), size):
+            batch = rows[i : i + size]
             for attempt in range(_MAX_RETRIES):
+                self.metrics.attempts += 1
                 try:
-                    self._run_batch_once(query, batch)
-                    total += len(batch)
-                    self._total_written += len(batch)
+                    counters, resolved = self._run_batch_once(query, batch, relationship)
                     break
                 except TransientError:
-                    wait = 2 ** attempt
+                    if attempt == _MAX_RETRIES - 1:
+                        raise
+                    wait = 2**attempt
                     logger.warning(
-                        "Deadlock on batch %d, retry %d/%d in %ds",
-                        i // batch_size,
-                        attempt + 1,
-                        _MAX_RETRIES,
-                        wait,
+                        "Transient failure in batch %d; retrying in %ds", i // size, wait
                     )
                     time.sleep(wait)
+            self.metrics.committed_rows += len(batch)
+            self.metrics.nodes_created += counters.nodes_created
+            self.metrics.relationships_created += counters.relationships_created
+            if relationship:
+                self.metrics.verified_rows += resolved
+                self.metrics.relationships_resolved += resolved
+                self.metrics.unresolved += len(batch) - resolved
+                total += resolved
+            elif nodes:
+                self.metrics.verified_rows += len(batch)
+                total += len(batch)
             else:
-                logger.error(
-                    "Failed batch %d after %d retries, skipping",
-                    i // batch_size,
-                    _MAX_RETRIES,
+                self.metrics.generic_updates += (
+                    counters.nodes_created
+                    + counters.relationships_created
+                    + counters.nodes_deleted
+                    + counters.relationships_deleted
+                    + counters.properties_set
+                    + counters.labels_added
+                    + counters.labels_removed
                 )
-            if total > 0 and total % 100_000 == 0:
-                logger.info("  Progress: %d rows loaded", total)
+                total += len(batch)
+            self._total_written += len(batch)
         return total
 
-    def load_nodes(
-        self,
-        label: str,
-        rows: list[dict[str, Any]],
-        key_field: str,
+    def run_query_with_retry(
+        self, query: str, rows: list[dict[str, Any]], batch_size: int = 500
     ) -> int:
-        rows = [r for r in rows if r.get(key_field)]
+        """Return committed input rows, not matched rows or writes.
+
+        Arbitrary Cypher cannot establish per-input matches. Inspect metrics for
+        actual database update counters; idempotent writes can have zero updates.
+        """
+        self.metrics.submitted += len(rows)
+        return self._run_batches(query, rows, batch_size)
+
+    def load_nodes(self, label: str, rows: list[dict[str, Any]], key_field: str) -> int:
+        self.metrics.submitted += len(rows)
+        accepted = [r for r in rows if r.get(key_field)]
+        self.metrics.rejected += len(rows) - len(accepted)
         all_keys: set[str] = set()
-        for r in rows:
-            all_keys.update(r.keys())
+        for row in accepted:
+            all_keys.update(row.keys())
         all_keys.discard(key_field)
-        all_keys = {k for k in all_keys if _SAFE_KEY.match(k)}
-        props = ", ".join(
-            f"n.{k} = row.{k}" for k in sorted(all_keys)
-        ) if rows else ""
+        all_keys = {key for key in all_keys if _SAFE_KEY.match(key)}
+        props = ", ".join(f"n.{key} = row.{key}" for key in sorted(all_keys))
         set_clause = f"SET {props}" if props else ""
         query = (
-            f"UNWIND $rows AS row "
-            f"MERGE (n:{label} {{{key_field}: row.{key_field}}}) "
-            f"{set_clause}"
+            f"UNWIND $rows AS row MERGE (n:{label} {{{key_field}: row.{key_field}}}) {set_clause}"
         )
-        return self._run_batches(query, rows)
+        return self._run_batches(query, accepted, nodes=True)
 
     def load_relationships(
         self,
@@ -112,19 +157,30 @@ class Neo4jBatchLoader:
         target_key: str,
         properties: list[str] | None = None,
     ) -> int:
-        rows = [r for r in rows if r.get("source_key") and r.get("target_key")]
+        self.metrics.submitted += len(rows)
+        accepted = [r for r in rows if r.get("source_key") and r.get("target_key")]
+        self.metrics.rejected += len(rows) - len(accepted)
         props = ""
         if properties:
-            prop_str = ", ".join(f"r.{p} = row.{p}" for p in properties)
-            props = f"SET {prop_str}"
+            props = "SET " + ", ".join(f"r.{p} = row.{p}" for p in properties)
         query = (
-            f"UNWIND $rows AS row "
-            f"MATCH (a:{source_label} {{{source_key}: row.source_key}}) "
-            f"MATCH (b:{target_label} {{{target_key}: row.target_key}}) "
-            f"MERGE (a)-[r:{rel_type}]->(b) "
-            f"{props}"
+            "UNWIND range(0, size($rows) - 1) AS idx WITH idx, $rows[idx] AS row "
+            f"OPTIONAL MATCH (source:{source_label} {{{source_key}: row.source_key}}) "
+            "WITH idx, row, collect(DISTINCT source) AS sources "
+            f"OPTIONAL MATCH (target:{target_label} {{{target_key}: row.target_key}}) "
+            "WITH idx, row, sources, collect(DISTINCT target) AS targets "
+            "FOREACH (a IN CASE WHEN size(sources) = 1 AND size(targets) = 1 "
+            "THEN sources ELSE [] END | "
+            "FOREACH (b IN targets | "
+            f"MERGE (a)-[r:{rel_type}]->(b) {props})) "
+            "RETURN sum(CASE WHEN size(sources) = 1 AND size(targets) = 1 "
+            "THEN 1 ELSE 0 END) AS resolved, "
+            "sum(CASE WHEN size(sources) > 1 OR size(targets) > 1 "
+            "THEN 1 ELSE 0 END) AS ambiguous"
         )
-        return self._run_batches(query, rows)
+        return self._run_batches(query, accepted, relationship=True)
 
     def run_query(self, query: str, rows: list[dict[str, Any]]) -> int:
+        """Return committed input rows, not matched rows or writes; see metrics."""
+        self.metrics.submitted += len(rows)
         return self._run_batches(query, rows)

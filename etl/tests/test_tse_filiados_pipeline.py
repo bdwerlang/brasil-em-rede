@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 
 from bracc_etl.pipelines.tse_filiados import TseFiliadosPipeline, _membership_id
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> TseFiliadosPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     pipeline = TseFiliadosPipeline(driver=driver, data_dir=str(FIXTURES.parent))
     return pipeline
 
@@ -179,7 +179,7 @@ class TestTseFiliadosLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         membership_calls = [
@@ -194,7 +194,7 @@ class TestTseFiliadosLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         rel_calls = [
@@ -209,7 +209,7 @@ class TestTseFiliadosLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         # Should have match_confidence in relationship queries
@@ -225,7 +225,7 @@ class TestTseFiliadosLoad:
         pipeline.transform()
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         run_calls = session_mock.run.call_args_list
 
         high_calls = [c for c in run_calls if "'high'" in str(c)]
@@ -240,5 +240,5 @@ class TestTseFiliadosLoad:
         pipeline.person_rels = []
         pipeline.load()
 
-        session_mock = pipeline.driver.session.return_value.__enter__.return_value
+        session_mock = transaction(pipeline.driver)
         assert session_mock.run.call_count == 0

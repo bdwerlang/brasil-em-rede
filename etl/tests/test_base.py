@@ -1,8 +1,11 @@
+import hashlib
+import json
 from unittest.mock import MagicMock
 
 import pytest
 
-from bracc_etl.base import Pipeline
+from bracc_etl.base import EmptyLoadEvidence, Pipeline
+from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.source_aliases import UnknownSourceError
 
 
@@ -24,6 +27,12 @@ class DummyPipeline(Pipeline):
 
     def load(self) -> None:
         self.loaded = True
+        session = self.driver.session.return_value.__enter__.return_value
+        tx = session.begin_transaction.return_value.__enter__.return_value
+        counters = tx.run.return_value.consume.return_value.counters
+        counters.nodes_created = 1
+        counters.relationships_created = 0
+        Neo4jBatchLoader(self.driver).load_nodes("Test", [{"id": "1"}], "id")
 
 
 def test_pipeline_run_executes_all_stages() -> None:
@@ -58,3 +67,45 @@ def test_unregistered_pipeline_is_rejected() -> None:
 
     with pytest.raises(UnknownSourceError):
         UnregisteredPipeline()
+
+
+def test_empty_load_requires_evidence_and_records_failure() -> None:
+    pipeline = DummyPipeline()
+    pipeline.load = lambda: None
+    with pytest.raises(ValueError, match="empty load requires evidence"):
+        pipeline.run()
+    session = pipeline.driver.session.return_value.__enter__.return_value
+    assert session.run.call_args.args[1]["status"] == "quality_fail"
+
+
+def test_empty_load_with_evidence_is_recorded(tmp_path) -> None:
+    pipeline = DummyPipeline()
+    pipeline.load = lambda: None
+    content = json.dumps({"source_id": "cnpj", "record_count": 0}).encode()
+    path = tmp_path / "manifest.json"
+    path.write_bytes(content)
+    pipeline.empty_load_evidence = EmptyLoadEvidence(str(path), hashlib.sha256(content).hexdigest())
+    pipeline.run()
+    session = pipeline.driver.session.return_value.__enter__.return_value
+    params = session.run.call_args.args[1]
+    assert params["status"] == "loaded"
+    assert params["empty_load_evidence_sha256"] == pipeline.empty_load_evidence.sha256
+
+
+def test_pipeline_does_not_succeed_when_run_status_cannot_be_persisted() -> None:
+    pipeline = DummyPipeline()
+    result = pipeline.driver.session.return_value.__enter__.return_value.run.return_value
+    result.consume.side_effect = [None, RuntimeError("status unavailable"), None]
+    with pytest.raises(RuntimeError, match="status unavailable"):
+        pipeline.run()
+    assert pipeline.loaded
+
+
+def test_empty_manifest_hash_must_match(tmp_path) -> None:
+    pipeline = DummyPipeline()
+    pipeline.load = lambda: None
+    path = tmp_path / "manifest.json"
+    path.write_text('{"source_id":"cnpj","record_count":0}')
+    pipeline.empty_load_evidence = EmptyLoadEvidence(str(path), "0" * 64)
+    with pytest.raises(ValueError, match="empty load requires evidence"):
+        pipeline.run()

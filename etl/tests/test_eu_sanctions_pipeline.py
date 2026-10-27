@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pandas as pd
 
@@ -11,12 +10,13 @@ from bracc_etl.pipelines.eu_sanctions import (
     _clean_entity_type,
     _generate_sanction_id,
 )
+from tests.neo4j_mocks import make_driver, transaction
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def _make_pipeline() -> EuSanctionsPipeline:
-    driver = MagicMock()
+    driver = make_driver()
     return EuSanctionsPipeline(driver, data_dir=str(FIXTURES))
 
 
@@ -92,14 +92,14 @@ def test_extract_has_expected_columns() -> None:
 
 
 def test_extract_missing_file_no_error() -> None:
-    driver = MagicMock()
+    driver = make_driver()
     pipeline = EuSanctionsPipeline(driver, data_dir="/nonexistent")
     pipeline.extract()
     assert len(pipeline._raw) == 0
 
 
 def test_extract_respects_limit() -> None:
-    driver = MagicMock()
+    driver = make_driver()
     pipeline = EuSanctionsPipeline(driver, data_dir=str(FIXTURES), limit=2)
     pipeline.extract()
     assert len(pipeline._raw) == 2
@@ -207,7 +207,7 @@ def test_load_creates_sanction_nodes() -> None:
     _extract_and_transform(pipeline)
     pipeline.load()
 
-    session = pipeline.driver.session.return_value.__enter__.return_value
+    session = transaction(pipeline.driver)
     run_calls = session.run.call_args_list
     sanction_calls = [
         call for call in run_calls if "MERGE (n:InternationalSanction" in str(call)
@@ -220,7 +220,7 @@ def test_load_creates_person_rels() -> None:
     _extract_and_transform(pipeline)
     pipeline.load()
 
-    session = pipeline.driver.session.return_value.__enter__.return_value
+    session = transaction(pipeline.driver)
     run_calls = session.run.call_args_list
     rel_calls = [
         call for call in run_calls
@@ -235,7 +235,7 @@ def test_load_creates_company_rels() -> None:
     _extract_and_transform(pipeline)
     pipeline.load()
 
-    session = pipeline.driver.session.return_value.__enter__.return_value
+    session = transaction(pipeline.driver)
     run_calls = session.run.call_args_list
     rel_calls = [
         call for call in run_calls
@@ -252,7 +252,7 @@ def test_load_empty_pipeline_no_calls() -> None:
     pipeline.company_rels = []
     pipeline.load()
 
-    session = pipeline.driver.session.return_value.__enter__.return_value
+    session = transaction(pipeline.driver)
     assert session.run.call_count == 0
 
 

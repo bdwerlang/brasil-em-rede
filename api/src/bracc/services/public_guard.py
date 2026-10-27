@@ -16,11 +16,11 @@ SENSITIVE_PROP_KEYS = {
 }
 
 CPF_PATTERN = re.compile(r"^\d{11}$")
-CNPJ_PATTERN = re.compile(r"^\d{14}$")
+CNPJ_PATTERN = re.compile(r"^[A-Z0-9]{12}[0-9]{2}$")
 
 
 def _clean_identifier(value: str) -> str:
-    return re.sub(r"[.\-/]", "", value or "")
+    return re.sub(r"[.\-/]", "", value or "").upper()
 
 
 def is_public_mode() -> bool:

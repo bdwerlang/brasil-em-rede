@@ -24,3 +24,23 @@ async def test_search_rejects_invalid_page(client: AsyncClient) -> None:
 async def test_search_rejects_oversized_page(client: AsyncClient) -> None:
     response = await client.get("/api/v1/search?q=test&size=200")
     assert response.status_code == 422
+
+@pytest.mark.anyio
+async def test_search_alphanumeric_cnpj_uses_exact_forms(client: AsyncClient) -> None:
+    from unittest.mock import AsyncMock, patch
+
+    with (
+        patch("bracc.routers.search.execute_query", new_callable=AsyncMock, return_value=[{
+            "node": {"cnpj": "00.ABC.123/0001-35", "razao_social": "Example"},
+            "node_labels": ["Company"], "node_id": "4:company:1", "score": 1.0,
+            "document_id": "00.ABC.123/0001-35",
+        }]) as query,
+        patch("bracc.routers.search.execute_query_single", new_callable=AsyncMock,
+              return_value={"total": 1}),
+    ):
+        response = await client.get("/api/v1/search", params={"q": "00abc123000135"})
+    assert response.status_code == 200
+    assert response.json()["results"][0]["document"] == "00.ABC.123/0001-35"
+    assert query.await_args.args[1] == "search_cnpj"
+    assert query.await_args.args[2]["identifier"] == "00ABC123000135"
+    assert query.await_args.args[2]["identifier_formatted"] == "00.ABC.123/0001-35"
