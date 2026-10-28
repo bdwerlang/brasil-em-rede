@@ -39,7 +39,12 @@ class EmptyLoadEvidence:
             artifact = Path(self.artifact_path)
             raw = artifact.read_bytes()
             manifest = json.loads(content)
-            record = manifest["pages"][artifact.name]
+            pages = manifest["pages"]
+            # A single empty page cannot justify an empty source when the
+            # acquisition manifest contains additional pages.
+            if not isinstance(pages, dict) or len(pages) != 1:
+                return False
+            record = pages[artifact.name]
             url = urlsplit(self.source_url)
             if not (
                 hashlib.sha256(content).hexdigest() == self.sha256
