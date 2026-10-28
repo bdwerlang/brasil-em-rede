@@ -103,12 +103,16 @@ class RaisPipeline(Pipeline):
     def _from_aggregated(self, df: pd.DataFrame) -> None:
         """Load from pre-aggregated CSV."""
         rows: list[dict[str, Any]] = []
+        self.labor_stats = []
         self.dimension_observations = []
+        observations: list[dict[str, Any]] = []
+        seen: dict[str, tuple[dict[str, Any], tuple[Any, ...]]] = {}
         for _, row in df.iterrows():
             cnae = str(row.get("cnae_subclass", "")).strip()
             uf = str(row.get("uf", "")).strip()
             if not cnae or not uf:
                 continue
+            stats_id = f"rais_2022_{cnae}_{uf}"
             code_check = {"status": "pending", "reason": "dimension_metadata_missing"}
             # Only project when the source explicitly supplies all vocabulary metadata.
             fields = (
@@ -122,9 +126,9 @@ class RaisPipeline(Pipeline):
             if all(isinstance(row.get(f), str) and row.get(f) for f in fields):
                 if row["exercise"] != "2022":
                     raise ValueError("RAIS exercise does not match the 2022 aggregate")
-                self.dimension_observations.append(
+                observations.append(
                     {
-                        "stats_id": f"rais_2022_{cnae}_{uf}",
+                        "stats_id": stats_id,
                         "dimensions": {
                             "territory": {
                                 "system": "IBGE",
@@ -143,28 +147,36 @@ class RaisPipeline(Pipeline):
                         },
                     }
                 )
-                observed = self.dimension_observations[-1]["dimensions"]
+                observed = observations[-1]["dimensions"]
                 code_check = validate_crosswalk(
                     [{key: observed[key] for key in ("territory", "activity", "unit")}],
                     self.dimension_crosswalk,
                 )[0]
-            rows.append(
-                {
-                    "code_validation_status": code_check["status"],
-                    "code_validation_reason": code_check["reason"],
-                    "stats_id": f"rais_2022_{cnae}_{uf}",
-                    "cnae_subclass": cnae,
-                    "uf": uf,
-                    "year": 2022,
-                    "establishment_count": int(row.get("establishment_count", 0)),
-                    "total_employees": int(row.get("total_employees", 0)),
-                    "total_clt": int(row.get("total_clt", 0)),
-                    "total_statutory": int(row.get("total_statutory", 0)),
-                    "avg_employees": float(row.get("avg_employees", 0)),
-                    "source": "rais_mte",
-                }
-            )
+            record = {
+                "code_validation_status": code_check["status"],
+                "code_validation_reason": code_check["reason"],
+                "stats_id": stats_id,
+                "cnae_subclass": cnae,
+                "uf": uf,
+                "year": 2022,
+                "establishment_count": int(row.get("establishment_count", 0)),
+                "total_employees": int(row.get("total_employees", 0)),
+                "total_clt": int(row.get("total_clt", 0)),
+                "total_statutory": int(row.get("total_statutory", 0)),
+                "avg_employees": float(row.get("avg_employees", 0)),
+                "source": "rais_mte",
+            }
+            metadata = tuple(row.get(field, "") for field in fields)
+            if stats_id in seen:
+                if seen[stats_id] != (record, metadata):
+                    raise ValueError(f"Conflicting RAIS aggregate for {stats_id}")
+                if all(isinstance(row.get(f), str) and row.get(f) for f in fields):
+                    observations.pop()
+                continue
+            seen[stats_id] = (record, metadata)
+            rows.append(record)
         self.labor_stats = rows
+        self.dimension_observations = observations
         logger.info("Loaded %d aggregated RAIS records", len(rows))
 
     def _aggregate_raw(self, raw_path: Path) -> None:

@@ -87,3 +87,52 @@ def test_rais_projection_idempotent_in_disposable_graph():
         assert relations == 4
     finally:
         driver.close()
+
+
+def test_rais_rejects_conflicting_duplicates_before_load():
+    pipeline = make_pipeline()
+    row = {
+        "cnae_subclass": "0111301",
+        "uf": "SP",
+        "ibge_code": "35",
+        "territorial_version": "2022",
+        "cnae_version": "2.0",
+        "unit_system": "RAIS",
+        "unit_code": "vinculos",
+        "exercise": "2022",
+    }
+    for records in ([row, {**row, "ibge_code": "33"}], [{**row, "ibge_code": "33"}, row]):
+        with pytest.raises(ValueError, match="Conflicting RAIS aggregate"):
+            pipeline._from_aggregated(pd.DataFrame(records))
+        assert pipeline.labor_stats == []
+        assert pipeline.dimension_observations == []
+
+
+@pytest.mark.parametrize("with_metadata", [True, False])
+def test_rais_deduplicates_identical_aggregates(with_metadata):
+    row = {"cnae_subclass": "0111301", "uf": "SP", "total_employees": "5"}
+    if with_metadata:
+        row.update(
+            {
+                "ibge_code": "35",
+                "territorial_version": "2022",
+                "cnae_version": "2.0",
+                "unit_system": "RAIS",
+                "unit_code": "vinculos",
+                "exercise": "2022",
+            }
+        )
+    pipeline = RaisPipeline(MagicMock())
+    pipeline._from_aggregated(pd.DataFrame([row, row]))
+    assert len(pipeline.labor_stats) == 1
+    assert len(pipeline.dimension_observations) == int(with_metadata)
+
+
+def test_rais_rejects_duplicate_with_different_values_or_partial_metadata():
+    row = {"cnae_subclass": "0111301", "uf": "SP", "total_employees": "5"}
+    pipeline = RaisPipeline(MagicMock())
+    for changed in ({"total_employees": "6"}, {"ibge_code": "35"}):
+        with pytest.raises(ValueError, match="Conflicting RAIS aggregate"):
+            pipeline._from_aggregated(pd.DataFrame([row, {**row, **changed}]).fillna(""))
+        assert pipeline.labor_stats == []
+        assert pipeline.dimension_observations == []
