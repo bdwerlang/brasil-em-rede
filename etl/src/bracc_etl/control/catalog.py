@@ -53,12 +53,35 @@ class Catalog:
         )
 
     def projection(self, job: UUID, outbox: UUID, manifest: UUID, version: str) -> None:
-        self.connection.execute(
-            "INSERT INTO control.projection_job VALUES (%s, %s, %s)", (job, manifest, version)
-        )
-        self.connection.execute(
-            "INSERT INTO control.outbox (id, job_id) VALUES (%s, %s)", (outbox, job)
-        )
+        with self.connection.transaction():
+            existing = self.connection.execute(
+                "SELECT id, manifest_id, projection_version FROM control.projection_job "
+                "WHERE id = %s OR (manifest_id = %s AND projection_version = %s)",
+                (job, manifest, version),
+            ).fetchall()
+            if existing and (len(existing) != 1 or tuple(existing[0]) != (job, manifest, version)):
+                raise ValueError("projection identity mismatch")
+            if not existing:
+                self.connection.execute(
+                    "INSERT INTO control.projection_job VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
+                    (job, manifest, version),
+                )
+                row = self.connection.execute(
+                    "SELECT id, manifest_id, projection_version FROM control.projection_job "
+                    "WHERE id = %s",
+                    (job,),
+                ).fetchone()
+                if row is None or tuple(row) != (job, manifest, version):
+                    raise ValueError("projection identity mismatch")
+            self.connection.execute(
+                "INSERT INTO control.outbox (id, job_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                (outbox, job),
+            )
+            row = self.connection.execute(
+                "SELECT id, job_id FROM control.outbox WHERE id = %s", (outbox,)
+            ).fetchone()
+            if row is None or tuple(row) != (outbox, job):
+                raise ValueError("outbox identity mismatch")
 
     def acknowledge(self, outbox: UUID) -> None:
         result = self.connection.execute(
@@ -66,8 +89,11 @@ class Catalog:
             "WHERE id = %s AND acknowledged_at IS NULL",
             (outbox,),
         )
-        if result.rowcount != 1:
-            raise ValueError("outbox missing or already acknowledged")
+        if result.rowcount != 1 and self.connection.execute(
+            "SELECT 1 FROM control.outbox WHERE id = %s AND acknowledged_at IS NOT NULL",
+            (outbox,),
+        ).fetchone() is None:
+            raise ValueError("outbox missing")
 
     def bundle(
         self, release: UUID, graph: str, contract: str, identity: str,

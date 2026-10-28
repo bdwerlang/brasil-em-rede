@@ -66,4 +66,10 @@ sql < "$a/case.sql"
 [[ $(sql -Atc 'SELECT count(*) FROM control.manifest_backfill_evidence') == 1 ]]
 if sql -c "UPDATE control.partition_manifest SET token=8" > /dev/null 2>&1; then exit 1; fi
 if sql -c "UPDATE control.attempt_backfill_evidence SET evidence_ref='changed'" > /dev/null 2>&1; then exit 1; fi
+# Legacy mismatched artifacts are accepted before 005; upgrade must abort atomically.
+sql -c "INSERT INTO control.artifact VALUES (gen_random_uuid(),'p','raw/other/d/p/' || repeat('a',64),repeat('a',64),'public')"
+if sql < "$root/infra/postgres/migrations/005_artifact_identity.sql" > "$a/identity.log" 2>&1; then exit 1; fi
+rg -q 'existing artifact identity or access class mismatch' "$a/identity.log"
+[[ $(sql -Atc 'SELECT count(*) FROM control.schema_migration') == 4 ]]
+[[ $(sql -Atc 'SELECT release_id FROM control.active_release') == 30000000-0000-0000-0000-000000000001 ]]
 printf 'U03 legacy backfill passed\n'

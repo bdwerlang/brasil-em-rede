@@ -32,6 +32,15 @@ sql() { docker exec -i "$name" psql -X -q -U postgres -v ON_ERROR_STOP=1 "$@"; }
 for file in "$root"/infra/postgres/migrations/*.sql; do sql < "$file"; done
 sql < "$root/etl/tests/control/fixture.sql"
 if sql -c "INSERT INTO control.artifact VALUES ('00000000-0000-0000-0000-000000000009','p','raw/s/../p/' || repeat('a',64),repeat('a',64),'public')" 2>/dev/null; then exit 1; fi
+# Paths and access classes must agree with the entire catalog lineage.
+for key in "raw/other/d/p/" "raw/s/other/p/" "raw/s/d/other/" "parquet/d/v2/p/"; do
+  suffix=$(printf '%064d' 0); [[ "$key" == parquet/* ]] && suffix="$suffix.parquet"
+  if sql -c "INSERT INTO control.artifact VALUES (gen_random_uuid(),'p','$key$suffix',repeat('0',64),'public')" 2>/dev/null; then exit 1; fi
+done
+if sql -c "INSERT INTO control.artifact VALUES (gen_random_uuid(),'p','raw/s/d/p/' || repeat('0',64),repeat('0',64),'restricted')" 2>/dev/null; then exit 1; fi
+for command in "UPDATE control.source SET access_class='restricted' WHERE id='s'" "UPDATE control.dataset SET contract_version='v2' WHERE id='d'" "UPDATE control.partition SET dataset_id='d' WHERE id='p'"; do
+  if sql -c "$command" 2>/dev/null; then exit 1; fi
+done
 # A worker can call an explicitly granted function but cannot write tables.
 sql <<'SQL'
 CREATE ROLE u03_test_worker LOGIN;
@@ -133,12 +142,30 @@ with psycopg.connect(host=sys.argv[1], user="u03_w3", dbname="postgres") as conn
         catalog.manifest(u("20000000-0000-0000-0000-000000000004"), "r", [u("00000000-0000-0000-0000-000000000003"), u("00000000-0000-0000-0000-000000000004")], u("10000000-0000-0000-0000-000000000003"), token, u("80000000-0000-0000-0000-000000000004"))
         catalog.quality(u("40000000-0000-0000-0000-000000000003"), u("20000000-0000-0000-0000-000000000004"), True, {})
         catalog.projection(u("50000000-0000-0000-0000-000000000003"), u("60000000-0000-0000-0000-000000000003"), u("20000000-0000-0000-0000-000000000004"), "v1")
+        # A new job with an existing outbox ID must roll back even when caught.
+        orphan = u("50000000-0000-0000-0000-000000000010")
+        try:
+            catalog.projection(orphan, u("60000000-0000-0000-0000-000000000003"), u("20000000-0000-0000-0000-000000000004"), "v2")
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("outbox conflict accepted")
+        assert conn.execute("SELECT 1 FROM control.projection_job WHERE id = %s", (orphan,)).fetchone() is None
         catalog.bundle(u("30000000-0000-0000-0000-000000000004"), "g4", "v1", "v1", [("r", u("20000000-0000-0000-0000-000000000004"))])
 with psycopg.connect(host=sys.argv[1], user="u03_projector", dbname="postgres") as conn:
     with Catalog(conn).transaction() as catalog:
         catalog.acknowledge(u("60000000-0000-0000-0000-000000000003"))
+        catalog.acknowledge(u("60000000-0000-0000-0000-000000000003"))
 with psycopg.connect(host=sys.argv[1], user="u03_w3", dbname="postgres") as conn:
     with Catalog(conn).transaction() as catalog:
+        catalog.projection(u("50000000-0000-0000-0000-000000000003"), u("60000000-0000-0000-0000-000000000003"), u("20000000-0000-0000-0000-000000000004"), "v1")
+        for job, outbox in [("50000000-0000-0000-0000-000000000009", "60000000-0000-0000-0000-000000000003"), ("50000000-0000-0000-0000-000000000003", "60000000-0000-0000-0000-000000000009")]:
+            try:
+                catalog.projection(u(job), u(outbox), u("20000000-0000-0000-0000-000000000004"), "v1")
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("conflicting projection identity accepted")
         catalog.promote(u("30000000-0000-0000-0000-000000000004"), u("30000000-0000-0000-0000-000000000003"), "r", u("10000000-0000-0000-0000-000000000003"), 1)
 with psycopg.connect(host=sys.argv[1], user="u03_reader", dbname="postgres") as conn:
     with Catalog(conn).transaction() as catalog:
@@ -183,7 +210,7 @@ docker exec -i "$restore_name" psql -X -q -U postgres -d postgres -v ON_ERROR_ST
 docker exec "$restore_name" createdb -U postgres restored
 docker exec -i "$restore_name" pg_restore -U postgres -d restored --exit-on-error < "$a/control.dump"
 restored() { docker exec -i "$restore_name" psql -X -q -U postgres -d restored -v ON_ERROR_STOP=1 "$@"; }
-[[ $(restored -Atc 'SELECT count(*) FROM control.schema_migration') == 4 ]]
+[[ $(restored -Atc 'SELECT count(*) FROM control.schema_migration') == 5 ]]
 [[ $(sql -Atc 'SELECT release_id FROM control.active_release') == $(restored -Atc 'SELECT release_id FROM control.active_release') ]]
 [[ $(sql -Atc "SELECT string_agg(id::text || ':' || run_id::text || ':' || partition_id || ':' || owner::text || ':' || token::text, ',' ORDER BY id) FROM control.run_attempt") == $(restored -Atc "SELECT string_agg(id::text || ':' || run_id::text || ':' || partition_id || ':' || owner::text || ':' || token::text, ',' ORDER BY id) FROM control.run_attempt") ]]
 [[ $(sql -Atc "SELECT string_agg(id::text || ':' || run_attempt_id::text, ',' ORDER BY id) FROM control.partition_manifest") == $(restored -Atc "SELECT string_agg(id::text || ':' || run_attempt_id::text, ',' ORDER BY id) FROM control.partition_manifest") ]]
