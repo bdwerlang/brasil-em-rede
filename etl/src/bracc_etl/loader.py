@@ -31,6 +31,11 @@ class LoadMetrics:
     generic_updates: int = 0  # database update operations from arbitrary queries
     nodes_created: int = 0
     relationships_created: int = 0
+    nodes_deleted: int = 0
+    relationships_deleted: int = 0
+    properties_set: int = 0
+    labels_added: int = 0
+    labels_removed: int = 0
     relationships_resolved: int = 0  # input rows with both endpoints
     unresolved: int = 0  # relationship rows without both endpoints
 
@@ -38,6 +43,29 @@ class LoadMetrics:
 _active_load: ContextVar[tuple[Driver, LoadMetrics] | None] = ContextVar(
     "active_load", default=None
 )
+_active_metrics_lock = RLock()
+_active_metrics_by_driver: dict[int, LoadMetrics] = {}
+
+
+def register_active_metrics(driver: Driver, metrics: LoadMetrics) -> None:
+    """Make a run's metrics discoverable by loaders created in worker threads."""
+    with _active_metrics_lock:
+        key = id(driver)
+        current = _active_metrics_by_driver.get(key)
+        if current is not None and current is not metrics:
+            raise RuntimeError("concurrent pipeline runs cannot share one Neo4j driver")
+        _active_metrics_by_driver[key] = metrics
+
+
+def unregister_active_metrics(driver: Driver, metrics: LoadMetrics) -> None:
+    with _active_metrics_lock:
+        if _active_metrics_by_driver.get(id(driver)) is metrics:
+            del _active_metrics_by_driver[id(driver)]
+
+
+def active_metrics_for_driver(driver: Driver) -> LoadMetrics | None:
+    with _active_metrics_lock:
+        return _active_metrics_by_driver.get(id(driver))
 
 
 class Neo4jBatchLoader:
@@ -56,11 +84,14 @@ class Neo4jBatchLoader:
         self.batch_size = batch_size
         self.neo4j_database = neo4j_database or os.getenv("NEO4J_DATABASE", "neo4j")
         active = _active_load.get()
+        registered = active_metrics_for_driver(driver)
         self.metrics = (
             metrics
             if metrics is not None
             else active[1]
             if active is not None and active[0] is driver
+            else registered
+            if registered is not None
             else LoadMetrics()
         )
         self._total_written = 0
@@ -121,6 +152,11 @@ class Neo4jBatchLoader:
                 self.metrics.committed_rows += len(batch)
                 self.metrics.nodes_created += counters.nodes_created
                 self.metrics.relationships_created += counters.relationships_created
+                self.metrics.nodes_deleted += counters.nodes_deleted
+                self.metrics.relationships_deleted += counters.relationships_deleted
+                self.metrics.properties_set += counters.properties_set
+                self.metrics.labels_added += counters.labels_added
+                self.metrics.labels_removed += counters.labels_removed
                 if relationship:
                     self.metrics.verified_rows += resolved
                     self.metrics.relationships_resolved += resolved
