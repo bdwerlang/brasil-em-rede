@@ -306,10 +306,6 @@ def main() -> int:
             print("Bootstrap contract and inputs validated")
         return int(bool(issues))
 
-    if shutil.which("docker") is None:
-        print("docker is required", file=sys.stderr)
-        return 1
-
     contract_path = repo_root / args.contract_path
     registry_path = repo_root / args.registry_path
     compose_path = (repo_root / args.compose_file).resolve()
@@ -340,6 +336,17 @@ def main() -> int:
             print(f"- missing in contract: {missing}", file=sys.stderr)
         if extra:
             print(f"- extra in contract: {extra}", file=sys.stderr)
+        return 1
+
+    contract_issues = diagnose(repo_root, contract, implemented_ids, check_inputs=False)
+    if contract_issues:
+        print("Bootstrap contract validation failed", file=sys.stderr)
+        for issue in contract_issues:
+            print(f"- {issue}", file=sys.stderr)
+        return 1
+
+    if shutil.which("docker") is None:
+        print("docker is required", file=sys.stderr)
         return 1
 
     selected_ids: set[str] | None = None
