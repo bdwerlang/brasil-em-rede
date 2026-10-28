@@ -216,6 +216,22 @@ class SiconfiPipeline(Pipeline):
                 fact["code_validation_status"] = check["status"]
                 fact["code_validation_reason"] = check["reason"]
                 dimension_by_fact[finance_id] = dimensions
+        for fact in self.finances:
+            dimensions = dimension_by_fact.get(fact["finance_id"], {})
+            body = dimensions.get("public_body")
+            if body is None:
+                body_check = {"status": "pending", "reason": "public_body_metadata_missing"}
+            else:
+                assert prepared is not None
+                body_check = prepared.validate([{"public_body": body}])[0]
+            fact["territory_unit_validation_status"] = fact["code_validation_status"]
+            fact["territory_unit_validation_reason"] = fact["code_validation_reason"]
+            if body_check["status"] != "matched_local":
+                fact["code_validation_status"] = "pending"
+                fact["code_validation_reason"] = "public_body:" + body_check["reason"]
+            fact["public_body_validation_status"] = body_check["status"]
+            fact["public_body_validation_reason"] = body_check["reason"]
+
         self.dimension_observations = [
             {"finance_id": key, "dimensions": dimension_by_fact[key]}
             for key in sorted(dimension_by_fact)

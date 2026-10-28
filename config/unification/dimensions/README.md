@@ -28,3 +28,13 @@ No Siconfi, linhas com o mesmo identificador são reconciliadas sem depender da
 ordem: uma observação completa prevalece sobre uma incompleta compatível.
 Valores ou metadados explícitos divergentes para o mesmo identificador causam
 erro; a reconciliação de revisões históricas continua pendente de U05/U06.
+
+O Siconfi registra também `public_body_validation_status` e
+`public_body_validation_reason` separadamente: `pending` quando faltam dados
+institucionais, tabela ou entrada; `matched_local` quando jurisdição, sistema,
+papel, código e versão coincidem com a tabela local. Esse resultado não atesta
+oficialidade nem confirma vínculos entre órgãos, UGs e entes.
+O status geral `code_validation_status` só chega a `matched_local` se a
+verificação de território/unidade e a institucional coincidirem; a verificação
+territorial separada está em `territory_unit_validation_status` e
+`territory_unit_validation_reason`, mesmo quando o órgão também está pendente.
