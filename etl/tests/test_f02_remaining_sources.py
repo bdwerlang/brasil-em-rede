@@ -33,12 +33,31 @@ def test_dataframe_sources_preserve_cnpj(pipeline_class, attribute, column, outp
     assert FORMATTED in repr(getattr(pipeline, output))
 
 
-def test_siconfi_preserves_alphanumeric_company() -> None:
+def test_siconfi_preserves_observed_cnpj_without_company_link() -> None:
     pipeline = SiconfiPipeline(driver=make_driver(), data_dir=str(FIXTURES))
     pipeline.extract()
     pipeline._raw[0]["cnpj"] = RAW
     pipeline.transform()
-    assert FORMATTED in repr(pipeline.municipality_rels)
+    assert pipeline.finances[0]["observed_cnpj"] == FORMATTED
+    assert not hasattr(pipeline, "municipality_rels")
+
+
+def test_siconfi_reconciles_observed_cnpj_and_rejects_conflicts() -> None:
+    pipeline = SiconfiPipeline(driver=make_driver(), data_dir=str(FIXTURES))
+    pipeline.extract()
+    without_cnpj = pipeline._raw[0].copy()
+    without_cnpj.pop("cnpj", None)
+    row = without_cnpj.copy()
+    row["cnpj"] = RAW
+    for records in ([without_cnpj, row], [row, without_cnpj]):
+        pipeline._raw = records
+        pipeline.transform()
+        assert pipeline.finances[0]["observed_cnpj"] == FORMATTED
+    conflicting = row.copy()
+    conflicting["cnpj"] = "11ABC123000135"
+    pipeline._raw = [row, conflicting]
+    with pytest.raises(ValueError, match="conflicting observed CNPJ"):
+        pipeline.transform()
 
 
 def test_inep_preserves_alphanumeric_company() -> None:

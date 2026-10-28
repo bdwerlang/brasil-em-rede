@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -16,6 +17,8 @@ if TYPE_CHECKING:
     from neo4j import Driver
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    format_cnpj,
+    normalize_cnpj,
     normalize_name,
 )
 
@@ -75,6 +78,7 @@ class SiconfiPipeline(Pipeline):
         finances: list[dict[str, Any]] = []
         dimension_by_fact: dict[str, dict[str, Any]] = {}
         metadata_by_fact: dict[str, dict[str, str]] = {}
+        cnpj_by_fact: dict[str, str] = {}
 
         for row in self._raw:
             cod_ibge = str(row.get("cod_ibge", "")).strip()
@@ -98,6 +102,12 @@ class SiconfiPipeline(Pipeline):
 
             id_source = f"{cod_ibge}_{exercicio}_{conta}_{coluna}"
             finance_id = hashlib.sha256(id_source.encode()).hexdigest()[:16]
+            cnpj = normalize_cnpj(str(row.get("cnpj") or ""))
+            if re.fullmatch(r"[A-Z0-9]{12}[0-9]{2}", cnpj):
+                observed_cnpj = format_cnpj(cnpj)
+                previous_cnpj = cnpj_by_fact.setdefault(finance_id, observed_cnpj)
+                if previous_cnpj != observed_cnpj:
+                    raise ValueError("conflicting observed CNPJ for same finance_id")
 
             finances.append(
                 {
@@ -216,6 +226,9 @@ class SiconfiPipeline(Pipeline):
             ):
                 facts_by_id[fact_id] = fact
         self.finances = [facts_by_id[key] for key in sorted(facts_by_id)]
+        for fact in self.finances:
+            if fact["finance_id"] in cnpj_by_fact:
+                fact["observed_cnpj"] = cnpj_by_fact[fact["finance_id"]]
         self.dimension_observations = [
             {"finance_id": key, "dimensions": dimension_by_fact[key]}
             for key in sorted(dimension_by_fact)
