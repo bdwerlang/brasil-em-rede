@@ -13,7 +13,12 @@ from uuid import uuid4
 
 from neo4j import Driver
 
-from bracc_etl.loader import LoadMetrics, _active_load
+from bracc_etl.loader import (
+    LoadMetrics,
+    _active_load,
+    register_active_metrics,
+    unregister_active_metrics,
+)
 from bracc_etl.source_aliases import SCHEMA_VERSION, source_aliases
 
 logger = logging.getLogger(__name__)
@@ -125,7 +130,10 @@ class Pipeline(ABC):
         self.rows_loaded = 0
         self._upsert_ingestion_run(status="running", started_at=started_at)
         token = _active_load.set((self.driver, self.load_metrics))
+        metrics_registered = False
         try:
+            register_active_metrics(self.driver, self.load_metrics)
+            metrics_registered = True
             logger.info("[%s] Starting extraction...", self.name)
             self.extract()
             logger.info("[%s] Starting transformation...", self.name)
@@ -166,6 +174,8 @@ class Pipeline(ABC):
             )
             raise
         finally:
+            if metrics_registered:
+                unregister_active_metrics(self.driver, self.load_metrics)
             _active_load.reset(token)
             self.empty_load_evidence = None
 
@@ -178,6 +188,11 @@ class Pipeline(ABC):
             with self.load_metrics._lock:
                 self.load_metrics.nodes_created += counters.nodes_created
                 self.load_metrics.relationships_created += counters.relationships_created
+                self.load_metrics.nodes_deleted += counters.nodes_deleted
+                self.load_metrics.relationships_deleted += counters.relationships_deleted
+                self.load_metrics.properties_set += counters.properties_set
+                self.load_metrics.labels_added += counters.labels_added
+                self.load_metrics.labels_removed += counters.labels_removed
                 self.load_metrics.direct_updates += (
                     counters.nodes_created
                     + counters.relationships_created
@@ -230,8 +245,11 @@ class Pipeline(ABC):
             "    r.submitted = $submitted, r.attempts = $attempts, "
             "    r.rejected = $rejected, r.committed_rows = $committed_rows, "
             "    r.verified_rows = $verified_rows, r.generic_updates = $generic_updates, "
-            "    r.nodes_created = $nodes_created, "
+            "    r.nodes_created = $nodes_created, r.nodes_deleted = $nodes_deleted, "
             "    r.relationships_created = $relationships_created, "
+            "    r.relationships_deleted = $relationships_deleted, "
+            "    r.properties_set = $properties_set, r.labels_added = $labels_added, "
+            "    r.labels_removed = $labels_removed, "
             "    r.relationships_resolved = $relationships_resolved, r.unresolved = $unresolved"
         )
         run_id = getattr(self, "run_id", f"{self.source_id}_manual")

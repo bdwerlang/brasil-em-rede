@@ -282,12 +282,13 @@ class RaisPipeline(Pipeline):
             logger.warning("RAIS dimensions pending: explicit vocabulary metadata unavailable")
 
         # Create index for efficient matching
-        with self.driver.session(database=self.neo4j_database) as session:
-            session.run(
-                "CREATE INDEX labor_stats_cnae IF NOT EXISTS "
-                "FOR (l:LaborStats) ON (l.cnae_subclass)"
-            )
-            session.run("CREATE INDEX labor_stats_uf IF NOT EXISTS FOR (l:LaborStats) ON (l.uf)")
+        self.run_direct_write(
+            "CREATE INDEX labor_stats_cnae IF NOT EXISTS "
+            "FOR (l:LaborStats) ON (l.cnae_subclass)"
+        )
+        self.run_direct_write(
+            "CREATE INDEX labor_stats_uf IF NOT EXISTS FOR (l:LaborStats) ON (l.uf)"
+        )
 
         logger.info("LaborStats nodes loaded. Indexes created.")
         logger.info(

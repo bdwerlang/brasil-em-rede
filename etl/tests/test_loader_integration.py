@@ -164,7 +164,11 @@ def test_pipeline_no_match_fails_and_idempotent_nodes_succeed():
             run = session.run(
                 "MATCH (r:IngestionRun {run_id: $id}) RETURN r", id=first_id
             ).single()["r"]
-        assert (run["status"], run["rows_loaded"], run["generic_updates"]) == ("quality_fail", 0, 0)
+        assert (
+            run["status"], run["rows_loaded"], run["generic_updates"],
+            run["submitted"], run["committed_rows"], run["verified_rows"],
+            run["nodes_created"], run["relationships_created"],
+        ) == ("quality_fail", 0, 0, 1, 1, 0, 0, 0)
         pipeline.mode = "nodes"
         pipeline.run()
         second_id = pipeline.run_id
@@ -199,7 +203,7 @@ def test_threaded_loader_metrics_and_direct_commit_receipt():
             prefix = uuid4().hex
 
             def worker(i):
-                loader = Neo4jBatchLoader(self.driver, metrics=self.load_metrics)
+                loader = Neo4jBatchLoader(self.driver)
                 loader.load_nodes("F06Thread", [{"id": f"{prefix}-{i}"}], "id")
 
             with ThreadPoolExecutor(max_workers=4) as pool:
