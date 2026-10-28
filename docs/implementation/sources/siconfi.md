@@ -17,9 +17,9 @@ Cadastrar declarações fiscais por ente e conta, com dimensões explícitas de 
 
 - [etl/src/bracc_etl/pipelines/siconfi.py](../../../etl/src/bracc_etl/pipelines/siconfi.py): Conector existente: leitura, transformação e carga auditadas; existência de código não comprova dados baixados ou banco carregado.
 - [etl/tests/test_siconfi_pipeline.py](../../../etl/tests/test_siconfi_pipeline.py): Testes existentes do parser/carga; ampliar com os critérios específicos desta ficha.
-- [config/bootstrap_all_contract.yml](../../../config/bootstrap_all_contract.yml): Contrato do bootstrap: modos e entradas; esperado ainda é 45, enquanto o runner/registro têm 47.
+- [config/bootstrap_all_contract.yml](../../../config/bootstrap_all_contract.yml): Contrato do bootstrap: modos e entradas; esperado é 47, alinhado ao runner e ao registro.
 - [etl/src/bracc_etl/linking_hooks.py](../../../etl/src/bracc_etl/linking_hooks.py): Despacho de hooks pós-carga; scripts Cypher referidos estão ausentes.
-- [api/src/bracc/queries/schema_init.cypher](../../../api/src/bracc/queries/schema_init.cypher): Constraints e índices; diversas labels usadas pelos conectores ainda não têm constraint de chave.
+- [api/src/bracc/queries/schema_init.cypher](../../../api/src/bracc/queries/schema_init.cypher): Constraints e índices, incluindo a chave de MunicipalFinance; a unicidade de identidades entre labels requer tratamento adicional.
 
 ## Download e atualização
 
