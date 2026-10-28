@@ -45,3 +45,19 @@ class TestDatajudLoad:
         pipeline.extract()
         pipeline.transform()
         pipeline.load()
+
+
+def test_party_cnpj_preserves_letters_and_never_becomes_cpf() -> None:
+    import pandas as pd
+
+    pipeline = _make_pipeline()
+    pipeline._raw_parties = pd.DataFrame([
+        {"judicial_case_id": "case-1", "party_name": "Example",
+         "party_cpf": "ABC12345678901", "party_cnpj": "00ABC123000135"},
+        {"judicial_case_id": "case-2", "party_name": "Invalid",
+         "party_cpf": "ABC12345678901", "party_cnpj": "00ABC1230001!5"},
+    ])
+    pipeline._transform_parties()
+    assert pipeline.persons == []
+    assert pipeline.companies == [{"cnpj": "00.ABC.123/0001-35", "razao_social": "EXAMPLE"}]
+    assert pipeline.company_case_rels[0]["source_key"] == "00.ABC.123/0001-35"

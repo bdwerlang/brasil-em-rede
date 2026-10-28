@@ -48,19 +48,18 @@ class TestTransform:
         ibge_codes = {f["cod_ibge"] for f in pipeline.finances}
         assert "" not in ibge_codes
 
-    def test_transform_formats_cnpj(self, pipeline: SiconfiPipeline) -> None:
+    def test_missing_dimension_metadata_remains_pending(self, pipeline: SiconfiPipeline) -> None:
         pipeline.extract()
         pipeline.transform()
-        for rel in pipeline.municipality_rels:
-            assert "." in rel["cnpj"]
-            assert "/" in rel["cnpj"]
-            assert "-" in rel["cnpj"]
+        assert pipeline.dimension_observations == []
 
-    def test_transform_municipality_rels(self, pipeline: SiconfiPipeline) -> None:
+    def test_aggregate_does_not_infer_company(self, pipeline: SiconfiPipeline) -> None:
         pipeline.extract()
         pipeline.transform()
-        # 3 records have valid CNPJs (São Paulo, Rio, Brasília); Salvador has empty CNPJ
-        assert len(pipeline.municipality_rels) == 3
+        pipeline.load()
+        tx = transaction(pipeline.driver)
+        assert tx.run.called
+        assert all("Company" not in str(call) for call in tx.run.call_args_list)
 
     def test_transform_deduplicates(self, pipeline: SiconfiPipeline) -> None:
         pipeline.extract()
@@ -92,7 +91,7 @@ class TestTransform:
         pipeline._raw = []
         pipeline.transform()
         assert len(pipeline.finances) == 0
-        assert len(pipeline.municipality_rels) == 0
+        assert len(pipeline.dimension_observations) == 0
 
     def test_transform_skips_null_valor(self, pipeline: SiconfiPipeline) -> None:
         pipeline._raw = [
@@ -120,7 +119,7 @@ class TestLoad:
 
     def test_load_empty_data(self, pipeline: SiconfiPipeline) -> None:
         pipeline.finances = []
-        pipeline.municipality_rels = []
+        pipeline.dimension_observations = []
         pipeline.load()
         # No errors on empty data
 
@@ -135,13 +134,6 @@ class TestLoad:
                 "column": "Valor",
                 "amount": 1000.0,
                 "source": "siconfi",
-            }
-        ]
-        pipeline.municipality_rels = [
-            {
-                "cnpj": "46.395.000/0001-39",
-                "finance_id": "abc123",
-                "municipality": "SAO PAULO",
             }
         ]
         pipeline.load()

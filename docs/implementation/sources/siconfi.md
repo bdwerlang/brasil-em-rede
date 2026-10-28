@@ -1,6 +1,6 @@
 # siconfi — SICONFI municipal finance
 
-Cadastrar declarações fiscais por ente e conta, conectando municípios por código IBGE e CNPJ oficial quando disponível.
+Cadastrar declarações fiscais por ente e conta, com dimensões explícitas de território, exercício, unidade e órgão quando os metadados estiverem disponíveis.
 
 [Índice geral](../README.md) · [Arquitetura e regras comuns](../architecture.md)
 
@@ -17,9 +17,9 @@ Cadastrar declarações fiscais por ente e conta, conectando municípios por có
 
 - [etl/src/bracc_etl/pipelines/siconfi.py](../../../etl/src/bracc_etl/pipelines/siconfi.py): Conector existente: leitura, transformação e carga auditadas; existência de código não comprova dados baixados ou banco carregado.
 - [etl/tests/test_siconfi_pipeline.py](../../../etl/tests/test_siconfi_pipeline.py): Testes existentes do parser/carga; ampliar com os critérios específicos desta ficha.
-- [config/bootstrap_all_contract.yml](../../../config/bootstrap_all_contract.yml): Contrato do bootstrap: modos e entradas; esperado ainda é 45, enquanto o runner/registro têm 47.
+- [config/bootstrap_all_contract.yml](../../../config/bootstrap_all_contract.yml): Contrato do bootstrap: modos e entradas; esperado é 47, alinhado ao runner e ao registro.
 - [etl/src/bracc_etl/linking_hooks.py](../../../etl/src/bracc_etl/linking_hooks.py): Despacho de hooks pós-carga; scripts Cypher referidos estão ausentes.
-- [api/src/bracc/queries/schema_init.cypher](../../../api/src/bracc/queries/schema_init.cypher): Constraints e índices; diversas labels usadas pelos conectores ainda não têm constraint de chave.
+- [api/src/bracc/queries/schema_init.cypher](../../../api/src/bracc/queries/schema_init.cypher): Constraints e índices, incluindo a chave de MunicipalFinance; a unicidade de identidades entre labels requer tratamento adicional.
 
 ## Download e atualização
 
@@ -36,14 +36,15 @@ Cadastrar declarações fiscais por ente e conta, conectando municípios por có
 
 Limites e pré-condições:
 
-- Conector atual fica sem ligação quando CSV não tem CNPJ.
-- MunicipalFinance não tem constraint e a chave não inclui anexo/relatório.
+- A projeção dimensional fica pendente quando faltam metadados explícitos; CNPJ observado não certifica entidade nem cria Company a partir de agregado.
+- A constraint de MunicipalFinance.finance_id garante unicidade da chave atual, que não inclui anexo/relatório.
 - Bootstrap só verifica presença em data/siconfi/*; não baixa, não valida schema, não verifica completude e não comprova carga.
 - Não há hook pós-carga configurado; vínculos dependentes de outra carga precisam de religação idempotente explícita.
+- Cada fato registra dimension_status e dimension_reason: pendente antes da projeção ou quando faltam metadados, parcial quando só o órgão falta e projetado após concluir os vínculos. Consultas que usavam DECLAROU_FINANCA exigem adaptação; vínculos antigos precisam de migração separada.
 
 ## Contrato de ingestão
 
-**Entrada esperada:** data/siconfi/dca_*.csv ou *.json com items; cod_ibge, exercicio, conta, coluna, valor e opcional cnpj.
+**Entrada esperada:** data/siconfi/dca_*.csv ou *.json com items; cod_ibge, exercicio, conta, coluna e valor. A projeção requer também uf, tipo_territorio, versao_territorial, unidade_sistema e unidade_codigo explícitos; órgão requer orgao_jurisdicao, orgao_sistema, orgao_papel, orgao_codigo e orgao_versao. CNPJ estruturalmente válido é guardado como observação, sem certificar entidade.
 
 **Chave natural / namespace:** Ente + exercício + demonstrativo/anexo/conta/coluna + período/retificação; chave atual só cod_ibge/exercicio/conta/coluna é insuficiente para expansão.
 
@@ -52,7 +53,7 @@ Normalização:
 - Código IBGE identifica município, não CNPJ: obter crosswalk oficial e nunca preencher por nome.
 - Separar conta contábil, coluna, anexo, período e tipo de relatório.
 - Guardar status/homologação e versão da declaração; retificação substitui valor vigente sem apagar histórico.
-- Projetar dimensões comuns conforme F09: Territory.territory_id=sistema:tipo:codigo:versao_territorial; EconomicActivity.activity_id=classificacao:versao:codigo; PublicBody.public_body_id=jurisdicao:sistema:identificador:versao. Aplicar somente as dimensões usadas nesta fonte, preservar códigos originais e validar crosswalks; município é Territory, sem dimensão paralela incompatível.
+- Projetar dimensões comuns conforme F09: Territory.territory_id=sistema:tipo:codigo:versao_territorial; EconomicActivity.activity_id=classificacao:versao:codigo; PublicBody.public_body_id=jurisdicao:sistema:papel:identificador:versao. Aplicar somente as dimensões usadas nesta fonte, preservar códigos originais e validar crosswalks; município é Territory, sem dimensão paralela incompatível.
 
 ## Cadastro no Neo4j
 
@@ -63,15 +64,19 @@ fracos existentes. Toda nova chave/label exige constraint, migração e fixture.
 | Entidade | Chave | Estado no plano |
 |---|---|---|
 | `MunicipalFinance` | finance_id | existing |
-| `Company` | cnpj | existing |
-| `Territory` | territory_id | proposed |
+| `Territory` | territory_id | existing |
+| `PublicBody` | public_body_id | existing |
+| `Unit` | unit_id | existing |
+| `FiscalYear` | fiscal_year_id | existing |
 
 ## Ligações e evidências
 
 | Relação | Campos de ligação | Regra e limite | Estado no plano |
 |---|---|---|---|
-| `Company` → `DECLAROU_FINANCA` → `MunicipalFinance` | CNPJ oficial do ente quando publicado | Não construir CNPJ a partir de nome ou código IBGE. | existing |
-| `Territory` → `DECLAROU_FINANCA` → `MunicipalFinance` | cod_ibge | Manter relatório vinculado ao território mesmo sem CNPJ, com versão e período. | proposed |
+| `MunicipalFinance` → `IN_TERRITORY` → `Territory` | código IBGE, UF, tipo e versão territorial explícitos | Sem metadados completos, projeção pendente. | existing |
+| `MunicipalFinance` → `MEASURED_IN` → `Unit` | sistema e código de unidade explícitos | Unidade declarada pela fonte. | existing |
+| `MunicipalFinance` → `IN_FISCAL_YEAR` → `FiscalYear` | exercício explícito | Ano textual de quatro dígitos. | existing |
+| `MunicipalFinance` → `REFERENCES_BODY` → `PublicBody` | jurisdição, sistema, papel, código e versão explícitos | Sem código institucional completo, projeção parcial. | existing |
 
 ## Pacote de implementação
 
@@ -87,8 +92,8 @@ que um novo conector já existe.
 Tarefas específicas, em ordem:
 
 1. Criar aquisição da dimensão de entes e das páginas DCA com checkpoint por ente/ano.
-1. Adicionar Municipality por código IBGE e mapear CNPJ apenas com campo oficial comprovado.
-1. Ampliar finance_id para grão contábil e criar constraint MunicipalFinance.
+1. Validar códigos IBGE e metadados institucionais contra fontes oficiais e definir crosswalks comprovados.
+1. Ampliar finance_id para o grão contábil e planejar a transição da constraint existente.
 1. Evitar ler simultaneamente JSON e CSV da mesma extração como dados independentes.
 1. Validar balanços e totais por anexo e declarar cobertura DCA, expandindo RREO/RGF em contratos separados.
 
@@ -104,8 +109,8 @@ download validado, transformação, cadastro, ligações e operação incrementa
 
 ## Riscos e decisões pendentes
 
-- Conector atual fica sem ligação quando CSV não tem CNPJ.
-- MunicipalFinance não tem constraint e a chave não inclui anexo/relatório.
+- A projeção dimensional fica pendente quando faltam metadados explícitos; CNPJ observado não certifica entidade nem cria Company a partir de agregado.
+- A constraint de MunicipalFinance.finance_id garante unicidade da chave atual, que não inclui anexo/relatório.
 - Status loaded herdado não foi confirmado no banco local; só manifestos, cobertura e execução real validados poderão atualizar load_state.
 
 ## Evidências e referências

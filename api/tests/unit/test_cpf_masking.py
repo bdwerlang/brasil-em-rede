@@ -319,3 +319,46 @@ async def test_asgi_masks_non_pep_text() -> None:
         response = await client.get("/sample")
     assert response.json() == {"cnpj": "ABC12345678901", "text": "ABC*******8901"}
     assert int(response.headers["content-length"]) == len(response.content)
+
+
+def test_generic_document_without_matching_company_cnpj_is_masked() -> None:
+    payload = {"type": "company", "document": "ABC12345678901",
+               "properties": {"cnpj": "XYZ12345678902"}}
+    result = json.loads(mask_cpfs_in_json(json.dumps(payload)))
+    assert result["document"] == "ABC*******8901"
+
+
+def test_company_document_mismatch_preserves_privacy_for_all_fields() -> None:
+    payload = {"type": "company", "document": "ABC12345678901",
+               "properties": {"cnpj": "XYZ12345678902", "cpf": "52998224725"}}
+    result = json.loads(mask_cpfs_in_json(json.dumps(payload)))
+    assert result["document"] == "ABC*******8901"
+    assert result["properties"]["cnpj"] == "XYZ12345678902"
+    assert result["properties"]["cpf"] == "*******4725"
+
+
+def test_company_generic_ids_require_matching_typed_cnpj() -> None:
+    payload = [
+        {
+            "type": "company",
+            "id": "ABC12345678901",
+            "document_id": "ABC12345678901",
+            "properties": {"cnpj": "ABC12345678901"},
+        },
+        {
+            "type": "person",
+            "id": "12345678901",
+            "document_id": "12345678901",
+            "properties": {"cnpj": "ABC12345678901"},
+        },
+        {
+            "type": "company",
+            "id": "12345678901",
+            "document_id": "12345678901",
+            "properties": {"cnpj": "ABC12345678901"},
+        },
+    ]
+    result = json.loads(mask_cpfs_in_json(json.dumps(payload)))
+    assert result[0]["id"] == result[0]["document_id"] == "ABC12345678901"
+    for record in result[1:]:
+        assert record["id"] == record["document_id"] == "*******8901"

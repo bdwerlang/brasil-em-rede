@@ -26,10 +26,25 @@ _CPF_FORMATTED = re.compile(r"\d{3}\.\d{3}\.\d{3}-\d{2}")
 _CPF_RAW = re.compile(r"(?<!\d)\d{11}(?!\d)")
 _CNPJ_RAW = re.compile(r"[A-Za-z0-9]{12}[0-9]{2}")
 _CNPJ_FIELDS = {
-    "cnpj", "company_cnpj", "agency_cnpj", "supplier_cnpj", "winner_cnpj",
-    "fund_cnpj", "administrator_cnpj", "manager_cnpj", "holding_cnpj", "party_cnpj",
-    "mentioned_cnpj", "cnpj_empresa", "cnpj_socia", "cnpj_favorecido", "cnpj_contratada",
-    "cnpj_fornecedor", "cnpj_vencedor", "numero_cnpj", "numero_cnpj_entidade",
+    "cnpj",
+    "company_cnpj",
+    "agency_cnpj",
+    "supplier_cnpj",
+    "winner_cnpj",
+    "fund_cnpj",
+    "administrator_cnpj",
+    "manager_cnpj",
+    "holding_cnpj",
+    "party_cnpj",
+    "mentioned_cnpj",
+    "cnpj_empresa",
+    "cnpj_socia",
+    "cnpj_favorecido",
+    "cnpj_contratada",
+    "cnpj_fornecedor",
+    "cnpj_vencedor",
+    "numero_cnpj",
+    "numero_cnpj_entidade",
 }
 
 
@@ -103,7 +118,26 @@ def _mask_text(text: str, safe: set[str]) -> str:
 
 def _mask_json_value(value: Any, safe: set[str], field: str = "") -> Any:
     if isinstance(value, dict):
-        return {key: _mask_json_value(item, safe, key) for key, item in value.items()}
+        # Search results expose the company CNPJ again under the generic document key.
+        properties = value.get("properties")
+        cnpj = properties.get("cnpj") if isinstance(properties, dict) else None
+        company_document = value.get("type") == "company" and isinstance(cnpj, str)
+        return {
+            key: _mask_json_value(
+                item,
+                safe,
+                "cnpj"
+                if (
+                    key in {"document", "document_id", "id"}
+                    and company_document
+                    and isinstance(cnpj, str)
+                    and isinstance(item, str)
+                    and re.sub(r"[.\-/]", "", item).upper() == re.sub(r"[.\-/]", "", cnpj).upper()
+                )
+                else key,
+            )
+            for key, item in value.items()
+        }
     if isinstance(value, list):
         return [_mask_json_value(item, safe, field) for item in value]
     if isinstance(value, str):
@@ -133,9 +167,7 @@ def mask_cpfs_in_json(text: str, pep_cpfs: set[str] | None = None) -> str:
 class CPFMaskingMiddleware(BaseHTTPMiddleware):
     """Starlette middleware that masks CPF numbers in JSON responses."""
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         response = await call_next(request)
 
         content_type = response.headers.get("content-type", "")
