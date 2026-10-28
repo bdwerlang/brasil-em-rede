@@ -3,7 +3,7 @@
   "planned_on": "2026-10-27",
   "status": "planning",
   "registry_sha256": "06f9cc0175ca3b57c7a7a251ff3b52ca2dbdfc60da4fd275650751c702b9ee1a",
-  "source_plan_sha256": "0450e6f716d704465dd4afca832dd5edb4b0786ef4f5f60e7c19c0b26d09fb66",
+  "source_plan_sha256": "5485b558b1d9846898fb4ce510c28bc5830650b9cec322c3546f319e217b9d80",
   "families": [
     {
       "id": "identity_organizations",
@@ -2211,19 +2211,23 @@
       "integration_mode": "aggregate_series",
       "entity_targets": [
         "MunicipalFinance",
-        "Company",
-        "Territory"
+        "Territory",
+        "PublicBody",
+        "Unit",
+        "FiscalYear"
       ],
       "join_keys": [
-        "Identidade de origem/grão: Ente + exercício + demonstrativo/anexo/conta/coluna + período/retificação; chave atual só cod_ibge/exercicio/conta/coluna é insuficiente para expansão.",
-        "Company → MunicipalFinance [DECLAROU_FINANCA]: CNPJ oficial do ente quando publicado. Regra: Não construir CNPJ a partir de nome ou código IBGE.",
-        "Territory → MunicipalFinance [DECLAROU_FINANCA]: cod_ibge. Regra: Manter relatório vinculado ao território mesmo sem CNPJ, com versão e período."
+        "Identidade de origem/grão: Ente + exercício + demonstrativo/anexo/conta/coluna + período/retificação; chave atual é insuficiente para expansão.",
+        "MunicipalFinance → Territory [IN_TERRITORY]: código IBGE, UF, tipo e versão territorial explícitos.",
+        "MunicipalFinance → Unit [MEASURED_IN]: sistema e código de unidade explícitos.",
+        "MunicipalFinance → FiscalYear [IN_FISCAL_YEAR]: exercício explícito.",
+        "MunicipalFinance → PublicBody [REFERENCES_BODY]: jurisdição, sistema, papel, código e versão explícitos."
       ],
       "blockers": [
-        "Conector atual fica sem ligação quando CSV não tem CNPJ.",
-        "MunicipalFinance não tem constraint e a chave não inclui anexo/relatório."
+        "Projeção depende de metadados explícitos e validação contra fontes oficiais.",
+        "Chave finance_id não inclui anexo/relatório; replay e vínculos legados exigem reconciliação."
       ],
-      "notes": "Declaração fiscal por ente, relatório/anexo/conta/coluna/período e retificação; Territory integra sem CNPJ. Se Company existir, é CNPJ oficial do ente, não empresa inferida do valor. Modo principal estatístico: nenhuma pessoa/empresa é criada a partir do valor agregado; eventual entidade emissora/candidato/estabelecimento só liga por identificador explicitamente publicado. Classificação deriva da ficha de planejamento e não afirma implementação/carga concluída. Company conserva CNPJ completo do estabelecimento; eventual ligação à LegalEntity por raiz é projeção separada, sem colapsar filiais."
+      "notes": "Declaração agregada com dimensões explícitas quando disponíveis. CNPJ estruturalmente válido é observado no fato sem certificar entidade ou criar Company. Classificação deriva da ficha de planejamento e não afirma carga concluída."
     },
     {
       "source_id": "siga_brasil",
