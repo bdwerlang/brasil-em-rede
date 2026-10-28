@@ -18,6 +18,7 @@ COPY infra/scripts/api-readiness.py /app/api-readiness.py
 ENV BRACC_SOURCE_REGISTRY_PATH=/app/docs/source_registry_br_v1.csv
 RUN uv sync --no-dev
 
+LABEL org.brasil-em-rede.api-source-catalog="v1"
 EXPOSE 8000
 CMD ["uv", "run", "uvicorn", "bracc.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
@@ -38,8 +39,10 @@ COPY frontend/ ./
 RUN npm run build
 
 FROM nginx:alpine AS frontend
+LABEL org.brasil-em-rede.frontend-runtime-config="v1"
 COPY --from=frontend-build /app/dist /usr/share/nginx/html
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY frontend/docker-entrypoint.d/40-runtime-config.sh /docker-entrypoint.d/40-runtime-config.sh
 
 EXPOSE 3000
 CMD ["nginx", "-g", "daemon off;"]

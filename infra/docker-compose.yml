@@ -59,6 +59,10 @@ services:
         VITE_PATTERNS_ENABLED: ${PATTERNS_ENABLED:-false}
     ports:
       - "3000:3000"
+    environment:
+      PUBLIC_MODE: ${PUBLIC_MODE:-false}
+      PATTERNS_ENABLED: ${PATTERNS_ENABLED:-false}
+      VITE_API_URL: ${VITE_API_URL:-}
     depends_on:
       api:
         condition: service_healthy

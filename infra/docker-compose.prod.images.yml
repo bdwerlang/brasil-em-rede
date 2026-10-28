@@ -9,3 +9,7 @@ services:
   frontend:
     image: ${REGISTRY_IMAGE_PREFIX}_frontend:${REGISTRY_IMAGE_TAG:-latest}
     build: ~
+    environment:
+      PUBLIC_MODE: ${PUBLIC_MODE:-false}
+      PATTERNS_ENABLED: ${PATTERNS_ENABLED:-false}
+      VITE_API_URL: ${VITE_API_URL:-}

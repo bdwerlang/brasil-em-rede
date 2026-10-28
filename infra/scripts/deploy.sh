@@ -65,6 +65,16 @@ else
   fi
 fi
 
+PROFILE_PREFLIGHT=(python3 "$DEPLOY_DIR/infra/scripts/profile-preflight.py" --compose-file "$COMPOSE_BASE" --production)
+if [ "${USE_GHCR_IMAGES:-false}" = "true" ]; then
+  PROFILE_PREFLIGHT+=(--compose-file "$DEPLOY_DIR/infra/docker-compose.prod.images.yml" --verify-images)
+fi
+if [ "$DRY_RUN" = true ]; then
+  printf '[%s] [DRY RUN] Would run profile preflight before starting services\n' "$(date '+%Y-%m-%d %H:%M:%S')"
+else
+  "${PROFILE_PREFLIGHT[@]}"
+fi
+
 log "Starting services..."
 if [ "$DRY_RUN" = true ]; then
   log "[DRY RUN] Would run: docker compose up -d"
@@ -80,7 +90,7 @@ log "Waiting for health check..."
 if [ "$DRY_RUN" = false ]; then
     sleep 15
     HEALTH_URL="https://${DOMAIN}/health"
-    if curl -sf -k "$HEALTH_URL" > /dev/null 2>&1; then
+    if curl -sf "$HEALTH_URL" > /dev/null 2>&1; then
         log "Health check passed ($HEALTH_URL)."
     else
         log "Health check failed ($HEALTH_URL)!"
