@@ -62,7 +62,8 @@ def _validate(path: Path, kind: str) -> None:
         return
     with path.open("r", encoding="utf-8-sig", newline="") as stream:
         prefix = stream.read(1024).lstrip().lower()
-        if prefix.startswith(("<!doctype html", "<html", "<head", "<body")):
+        prefix = re.sub(r"^(?:\s|<!--.*?-->|<\?xml.*?\?>)*", "", prefix, flags=re.DOTALL)
+        if prefix.startswith(("<!doctype html", "<html", "<head", "<body", "<form")):
             raise AcquisitionError("HTML response is not a data export")
         stream.seek(0)
         try:
@@ -106,13 +107,15 @@ class Acquisition:
     """One instance shares per-host concurrency limits across its callers."""
 
     def __init__(self, retries: int = 3, backoff: float = 0.2, per_host: int = 2,
-                 timeout: float = 30, sleep: Callable[[float], None] = time.sleep):
-        if retries < 0 or backoff < 0 or per_host < 1 or timeout <= 0:
+                 timeout: float = 30, sleep: Callable[[float], None] = time.sleep,
+                 max_pages: int = 10000):
+        if retries < 0 or backoff < 0 or per_host < 1 or timeout <= 0 or max_pages < 1:
             raise ValueError("invalid acquisition limits")
         self.retries = retries
         self.backoff = backoff
         self.per_host = per_host
         self.timeout = timeout
+        self.max_pages = max_pages
         self.sleep = sleep
         self._lock = threading.Lock()
         self._hosts: dict[str, threading.BoundedSemaphore] = {}
@@ -128,7 +131,9 @@ class Acquisition:
                       kind: str, checksums: dict[str, str] | None = None) -> None:
         """Consume pages in order. A page is checkpointed only after validation and rename."""
         directory.mkdir(parents=True, exist_ok=True)
-        for page, url in pages:
+        for index, (page, url) in enumerate(pages):
+            if index >= self.max_pages:
+                raise AcquisitionError("page limit exceeded")
             if not page or Path(page).name != page or page in {".", ".."}:
                 raise ValueError("page must be a safe filename")
             target = directory / page
@@ -182,7 +187,7 @@ class Acquisition:
                 if scheme == "ftp":
                     asyncio.run(self._ftp(url, partial, metadata, checksum))
                 else:
-                    self._http(url, partial, metadata)
+                    self._http(url, partial, metadata, kind)
                 self._publish(partial, target, kind, checksum)
                 metadata.unlink(missing_ok=True)
                 return
@@ -229,7 +234,7 @@ class Acquisition:
         while block := response.read(65536):  # type: ignore[attr-defined]
             out.write(block)  # type: ignore[attr-defined]
 
-    def _http(self, url: str, partial: Path, metadata: Path) -> None:
+    def _http(self, url: str, partial: Path, metadata: Path, kind: str) -> None:
         info = json.loads(metadata.read_text()) if metadata.exists() else {}
         url_hash = hashlib.sha256(url.encode()).hexdigest()
         offset = (partial.stat().st_size if partial.exists() and info.get("etag")
@@ -240,15 +245,20 @@ class Acquisition:
         with build_opener(RejectRedirects()).open(
             Request(url, headers=headers), timeout=self.timeout
         ) as response:
+            content_type = response.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+            if kind in {"csv", "json"} and content_type in {"text/html", "application/xhtml+xml"}:
+                raise AcquisitionError("HTML response is not a data export")
             etag = response.headers.get("ETag", "")
             resumed = (offset > 0 and response.status == 206 and etag == info.get("etag")
                        and response.headers.get("Content-Range", "").startswith(f"bytes {offset}-"))
+            total = None
             if response.status == 206:
                 match = re.fullmatch(r"bytes (\d+)-(\d+)/(\d+)",
                                      response.headers.get("Content-Range", ""))
                 if (not resumed or not match or int(match[1]) != offset
                         or int(match[2]) + 1 != int(match[3])):
                     raise AcquisitionError("invalid partial response")
+                total = int(match[3])
             if not resumed:
                 offset = 0
             # Only strong ETags bind a subsequent range to the same representation.
@@ -257,5 +267,7 @@ class Acquisition:
             with partial.open("ab" if resumed else "wb") as out:
                 self._copy(response, out)
             length = response.headers.get("Content-Length")
+            if total is not None and partial.stat().st_size != total:
+                raise OSError("incomplete partial response")
             if length is not None and partial.stat().st_size - offset != int(length):
                 raise OSError("incomplete response")

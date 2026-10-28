@@ -306,3 +306,197 @@ def test_ftp_interruption_resumes(monkeypatch, tmp_path):
     )
     assert offsets == [0, 5]
     assert (tmp_path / "page").read_bytes() == data
+
+
+def test_truncated_range_without_content_length_is_not_published(monkeypatch, tmp_path):
+    import io
+    import json
+
+    import bracc_etl.acquisition.client as module
+
+    class Response(io.BytesIO):
+        status = 206
+        headers = {"ETag": '"v1"', "Content-Range": "bytes 3-9/10"}
+
+    class Opener:
+        def open(self, *args, **kwargs):
+            return Response(b"12")
+
+    url = "http://example.test/page"
+    (tmp_path / "page.part").write_bytes(b"abc")
+    (tmp_path / "page.part.json").write_text(json.dumps({
+        "etag": '"v1"', "url_hash": hashlib.sha256(url.encode()).hexdigest(),
+    }))
+    monkeypatch.setattr(module, "build_opener", lambda *args: Opener())
+    manifest = Manifest.open(tmp_path / "manifest.json", "source", "partition")
+    with pytest.raises(AcquisitionError):
+        Acquisition(retries=0).acquire_pages(manifest, [("page", url)], tmp_path, "binary")
+    assert not (tmp_path / "page").exists()
+    assert not manifest.pages
+
+
+def test_html_content_type_rejected_for_csv(monkeypatch, tmp_path):
+    import io
+
+    import bracc_etl.acquisition.client as module
+
+    class Response(io.BytesIO):
+        status = 200
+        headers = {"Content-Type": "text/html; charset=utf-8"}
+
+    class Opener:
+        def open(self, *args, **kwargs):
+            return Response(b"Sign in to continue")
+
+    monkeypatch.setattr(module, "build_opener", lambda *args: Opener())
+    manifest = Manifest.open(tmp_path / "manifest.json", "source", "partition")
+    with pytest.raises(AcquisitionError):
+        Acquisition().acquire_pages(
+            manifest, [("page", "http://example.test/login")], tmp_path, "csv",
+        )
+    assert not (tmp_path / "page").exists()
+    assert not manifest.pages
+
+
+def test_pagination_has_a_limit(monkeypatch, tmp_path):
+    manifest = Manifest.open(tmp_path / "manifest.json", "source", "partition")
+    client = Acquisition(max_pages=1)
+    monkeypatch.setattr(
+        client, "_download", lambda url, target, kind, checksum: target.write_bytes(b"ok"),
+    )
+    with pytest.raises(AcquisitionError, match="page limit"):
+        client.acquire_pages(
+            manifest, (("page", "http://example.test/") for _ in range(2)), tmp_path, "binary",
+        )
+
+
+def test_resume_across_instances_preserves_pages(tmp_path):
+    class Handler(BaseHTTPRequestHandler):
+        calls = []
+        interrupted = False
+        bodies = {
+            f"/{page}": b'{"page":"' + page.encode() + b'","value":"' + b'x' * 100000 + b'"}'
+            for page in ("one", "two", "three")
+        }
+
+        def log_message(self, *args):
+            pass
+
+        def do_GET(self):
+            self.calls.append((self.path, self.headers.get("Range")))
+            body = self.bodies[self.path]
+            range_header = self.headers.get("Range")
+            offset = int(range_header.split("=")[1].split("-")[0]) if range_header else 0
+            self.send_response(206 if offset else 200)
+            self.send_header("ETag", '"v1"')
+            self.send_header("Content-Length", str(len(body) - offset))
+            if offset:
+                self.send_header("Content-Range", f"bytes {offset}-{len(body) - 1}/{len(body)}")
+            self.end_headers()
+            if self.path == "/two" and not Handler.interrupted:
+                Handler.interrupted = True
+                self.wfile.write(body[:70000])
+                self.wfile.flush()
+                self.connection.shutdown(2)
+            else:
+                self.wfile.write(body[offset:])
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    try:
+        base = f"http://127.0.0.1:{httpd.server_port}"
+        path = tmp_path / "manifest.json"
+        pages = [(page, base + "/" + page) for page in ("one", "two", "three")]
+        checksums = {
+            page: hashlib.sha256(Handler.bodies["/" + page]).hexdigest()
+            for page in ("one", "two", "three")
+        }
+        with pytest.raises(AcquisitionError):
+            Acquisition(retries=0).acquire_pages(
+                Manifest.open(path, "source", "partition"), pages, tmp_path, "json", checksums,
+            )
+        assert list(Manifest.open(path, "source", "partition").pages) == ["one"]
+        assert (tmp_path / "one").read_bytes() == Handler.bodies["/one"]
+        assert not (tmp_path / "two").exists()
+        assert not (tmp_path / "three").exists()
+        assert [call[0] for call in Handler.calls] == ["/one", "/two"]
+
+        manifest = Manifest.open(path, "source", "partition")
+        Acquisition(retries=0).acquire_pages(manifest, pages, tmp_path, "json", checksums)
+        for page in ("one", "two", "three"):
+            data = (tmp_path / page).read_bytes()
+            assert data == Handler.bodies["/" + page]
+            assert hashlib.sha256(data).hexdigest() == checksums[page]
+        assert [call[0] for call in Handler.calls] == ["/one", "/two", "/two", "/three"]
+        assert Handler.calls[2][1] is not None
+        reopened = Manifest.open(path, "source", "partition")
+        assert set(reopened.pages) == {"one", "two", "three"}
+        assert all(reopened.pages[page]["sha256"] == checksums[page] for page in checksums)
+    finally:
+        httpd.shutdown()
+        thread.join()
+        httpd.server_close()
+
+
+@pytest.mark.parametrize("kind", ["json", "csv"])
+def test_html_after_comment_rejected_in_export(tmp_path, kind):
+    manifest = Manifest.open(tmp_path / "manifest.json", "source", "partition")
+    with pytest.raises(AcquisitionError, match="HTML"):
+        Acquisition().export(
+            manifest, "page", tmp_path, kind,
+            lambda path: path.write_bytes(b"<!-- login -->\n<form>Sign in</form>"),
+        )
+    assert not (tmp_path / "page").exists()
+    assert not manifest.pages
+
+
+def test_retry_limit_and_backoff(monkeypatch, tmp_path):
+    calls = []
+    delays = []
+    client = Acquisition(retries=2, backoff=0.5, sleep=delays.append)
+
+    def fail(*args):
+        calls.append(1)
+        raise OSError("interrupted")
+
+    monkeypatch.setattr(client, "_http", fail)
+    manifest = Manifest.open(tmp_path / "manifest.json", "source", "partition")
+    with pytest.raises(AcquisitionError, match="after retries"):
+        client.acquire_pages(manifest, [("page", "http://example.test/")], tmp_path, "json")
+    assert len(calls) == 3
+    assert delays == [0.5, 1.0]
+    assert not manifest.pages
+
+
+def test_legacy_downloader_content_type(monkeypatch, tmp_path):
+    import importlib.util
+    from contextlib import nullcontext
+
+    import httpx
+
+    path = Path(__file__).parents[1] / "scripts" / "_download_utils.py"
+    spec = importlib.util.spec_from_file_location("download_utils", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    request = httpx.Request("GET", "https://example.test")
+    cases = [
+        ("text/html; charset=utf-8", b"Sign in to continue", False),
+        ("application/xhtml+xml", b"Sign in to continue", False),
+        ("text/csv", b"name,value\na,b\n", True),
+        ("application/zip", b"PK\x03\x04sample", True),
+    ]
+    for index, (content_type, body, expected) in enumerate(cases):
+        response = httpx.Response(
+            200, headers={"Content-Type": content_type}, content=body, request=request,
+        )
+        monkeypatch.setattr(
+            module.httpx, "stream", lambda *a, response=response, **kw: nullcontext(response),
+        )
+        target = tmp_path / str(index)
+        assert module.download_file(str(request.url), target) is expected
+        if expected:
+            assert target.read_bytes() == body
+        else:
+            assert not target.exists()
+            assert not target.with_suffix(".partial").exists()

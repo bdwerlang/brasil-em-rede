@@ -30,6 +30,10 @@ def download_file(url: str, dest: Path, *, timeout: int = 600) -> bool:
             if response.status_code != 200:
                 logger.warning("Unexpected HTTP status for %s: %s", dest.name, response.status_code)
                 return False
+            content_type = response.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+            if content_type in {"text/html", "application/xhtml+xml"}:
+                logger.warning("HTML response rejected: %s", dest.name)
+                return False
             with partial.open("wb") as stream:
                 for chunk in response.iter_bytes(chunk_size=65_536):
                     stream.write(chunk)
