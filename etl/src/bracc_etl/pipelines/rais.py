@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 
 from bracc_etl.base import Pipeline
-from bracc_etl.dimensions.crosswalk import validate_crosswalk
+from bracc_etl.dimensions.crosswalk import PreparedCrosswalk, prepare_crosswalk
 
 if TYPE_CHECKING:
     from neo4j import Driver
@@ -107,6 +107,7 @@ class RaisPipeline(Pipeline):
         self.dimension_observations = []
         observations: list[dict[str, Any]] = []
         seen: dict[str, tuple[dict[str, Any], tuple[Any, ...]]] = {}
+        prepared: PreparedCrosswalk | None = None
         for _, row in df.iterrows():
             cnae = str(row.get("cnae_subclass", "")).strip()
             uf = str(row.get("uf", "")).strip()
@@ -148,9 +149,10 @@ class RaisPipeline(Pipeline):
                     }
                 )
                 observed = observations[-1]["dimensions"]
-                code_check = validate_crosswalk(
-                    [{key: observed[key] for key in ("territory", "activity", "unit")}],
-                    self.dimension_crosswalk,
+                if prepared is None:
+                    prepared = prepare_crosswalk(self.dimension_crosswalk)
+                code_check = prepared.validate(
+                    [{key: observed[key] for key in ("territory", "activity", "unit")}]
                 )[0]
             record = {
                 "code_validation_status": code_check["status"],

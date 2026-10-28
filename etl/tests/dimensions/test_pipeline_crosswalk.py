@@ -156,3 +156,44 @@ def test_siconfi_duplicate_status_persists_in_disposable_graph():
                 assert result["status"] == "matched_local"
     finally:
         driver.close()
+
+
+def test_crosswalk_prepared_once_and_only_for_complete_metadata(monkeypatch):
+    import pytest
+
+    from bracc_etl.dimensions.crosswalk import CrosswalkError, prepare_crosswalk
+    from bracc_etl.pipelines import rais, siconfi
+
+    rais_row = {
+        "cnae_subclass": "0111301", "uf": "SP", "ibge_code": "35",
+        "territorial_version": "v1", "cnae_version": "v2", "unit_system": "test",
+        "unit_code": "pessoas", "exercise": "2022",
+    }
+    siconfi_row = {
+        "cod_ibge": "0012345", "exercicio": "2022", "uf": "SP",
+        "versao_territorial": "v1", "tipo_territorio": "municipio",
+        "unidade_sistema": "test", "unidade_codigo": "BRL", "valor": "1",
+    }
+    for module, pipeline, row, incomplete, run in (
+        (rais, RaisPipeline(MagicMock()), rais_row, "ibge_code",
+         lambda p, rows: p._from_aggregated(pd.DataFrame(rows))),
+        (siconfi, SiconfiPipeline(MagicMock()), siconfi_row, "versao_territorial",
+         lambda p, rows: (setattr(p, "_raw", rows), p.transform())),
+    ):
+        calls = []
+
+        def prepare(table, calls=calls):
+            calls.append(table)
+            return prepare_crosswalk(table)
+
+        monkeypatch.setattr(module, "prepare_crosswalk", prepare)
+        run(pipeline, [row, row])
+        assert calls == [None]
+        calls.clear()
+        pipeline.dimension_crosswalk = {}
+        partial = {key: value for key, value in row.items() if key != incomplete}
+        run(pipeline, [partial])
+        assert calls == []
+        with pytest.raises(CrosswalkError):
+            run(pipeline, [row])
+        assert calls == [{}]

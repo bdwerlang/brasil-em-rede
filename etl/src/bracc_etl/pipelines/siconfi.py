@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 
 from bracc_etl.base import Pipeline
-from bracc_etl.dimensions.crosswalk import validate_crosswalk
+from bracc_etl.dimensions.crosswalk import PreparedCrosswalk, prepare_crosswalk
 from bracc_etl.dimensions.projection import project_siconfi
 
 if TYPE_CHECKING:
@@ -79,6 +79,7 @@ class SiconfiPipeline(Pipeline):
         dimension_by_fact: dict[str, dict[str, Any]] = {}
         metadata_by_fact: dict[str, dict[str, str]] = {}
         cnpj_by_fact: dict[str, str] = {}
+        prepared: PreparedCrosswalk | None = None
 
         required = (
             "cod_ibge",
@@ -207,9 +208,10 @@ class SiconfiPipeline(Pipeline):
                         "code": row["orgao_codigo"],
                         "version": row["orgao_versao"],
                     }
-                check = validate_crosswalk(
-                    [{key: dimensions[key] for key in ("territory", "unit")}],
-                    self.dimension_crosswalk,
+                if prepared is None:
+                    prepared = prepare_crosswalk(self.dimension_crosswalk)
+                check = prepared.validate(
+                    [{key: dimensions[key] for key in ("territory", "unit")}]
                 )[0]
                 fact["code_validation_status"] = check["status"]
                 fact["code_validation_reason"] = check["reason"]
