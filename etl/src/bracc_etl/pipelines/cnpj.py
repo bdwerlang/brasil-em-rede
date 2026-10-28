@@ -950,12 +950,9 @@ class CNPJPipeline(Pipeline):
 
     def _rebuild_latest_projection_from_snapshots(self) -> None:
         """Rebuild factual SOCIO_DE from latest snapshot per source/target pair."""
-        with self.driver.session(database=self.neo4j_database) as session:
-            session.run(
-                "MATCH ()-[r:SOCIO_DE]->() DELETE r",
-            )
-            session.run(
-                """
+        self.run_direct_write("MATCH ()-[r:SOCIO_DE]->() DELETE r")
+        self.run_direct_write(
+            """
                 CALL {
                   MATCH (a)-[r:SOCIO_DE_SNAPSHOT]->(b:Company)
                   WHERE coalesce(r.snapshot_date, '') <> ''

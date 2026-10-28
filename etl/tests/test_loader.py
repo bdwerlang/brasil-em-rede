@@ -112,3 +112,44 @@ def test_explicit_metrics_are_shared_across_threads():
         40,
         40,
     )
+
+
+def test_generic_query_metrics_record_confirmed_cypher_counters():
+    loader, tx = make_loader()
+    counters = tx.run.return_value.consume.return_value.counters
+    counters.nodes_created = 1
+    counters.relationships_created = 2
+    counters.nodes_deleted = 3
+    counters.relationships_deleted = 4
+    counters.properties_set = 5
+    counters.labels_added = 6
+    counters.labels_removed = 7
+
+    assert loader.run_query("UNWIND $rows AS row RETURN row", [{"id": 1}]) == 1
+
+    metrics = loader.metrics
+    assert metrics.generic_updates == 28
+    assert metrics.committed_rows == 1
+    assert metrics.verified_rows == 0
+    assert (metrics.nodes_created, metrics.relationships_created) == (1, 2)
+    assert (metrics.nodes_deleted, metrics.relationships_deleted) == (3, 4)
+    assert (metrics.properties_set, metrics.labels_added, metrics.labels_removed) == (5, 6, 7)
+
+
+def test_active_metrics_registration_rejects_concurrent_run_for_driver():
+    from bracc_etl.loader import (
+        LoadMetrics,
+        register_active_metrics,
+        unregister_active_metrics,
+    )
+
+    driver = MagicMock()
+    first = LoadMetrics()
+    second = LoadMetrics()
+    register_active_metrics(driver, first)
+    try:
+        with pytest.raises(RuntimeError, match="concurrent pipeline runs"):
+            register_active_metrics(driver, second)
+        assert Neo4jBatchLoader(driver).metrics is first
+    finally:
+        unregister_active_metrics(driver, first)

@@ -262,3 +262,51 @@ def test_reused_pipeline_resets_running_metrics() -> None:
     ]
     assert len(running) == 2
     assert all(params["submitted"] == params["rows_loaded"] == 0 for params in running)
+
+
+def test_direct_write_records_consumed_counters() -> None:
+    pipeline = DummyPipeline()
+    session = pipeline.driver.session.return_value.__enter__.return_value
+    summary = session.run.return_value.consume.return_value
+    counters = summary.counters
+    counters.nodes_created = 2
+    counters.relationships_created = 3
+    counters.nodes_deleted = 4
+    counters.relationships_deleted = 5
+    counters.properties_set = 6
+    counters.labels_added = 7
+    counters.labels_removed = 8
+
+    pipeline.run_direct_write("MATCH (n) RETURN n")
+
+    assert pipeline.load_metrics.direct_updates == 35
+    assert (
+        pipeline.load_metrics.nodes_created, pipeline.load_metrics.relationships_created
+    ) == (2, 3)
+    assert (
+        pipeline.load_metrics.nodes_deleted, pipeline.load_metrics.relationships_deleted
+    ) == (4, 5)
+    assert (pipeline.load_metrics.properties_set, pipeline.load_metrics.labels_added,
+            pipeline.load_metrics.labels_removed) == (6, 7, 8)
+
+
+def test_loader_created_in_worker_thread_uses_pipeline_run_metrics() -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    pipeline = DummyPipeline()
+
+    def threaded_load() -> None:
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            pool.submit(
+                lambda: Neo4jBatchLoader(pipeline.driver).load_nodes(
+                    "Test", [{"id": "threaded"}], "id"
+                )
+            ).result()
+
+    pipeline.load = threaded_load
+    pipeline.run()
+
+    assert pipeline.rows_loaded == 1
+    assert pipeline.load_metrics.submitted == 1
+    assert pipeline.load_metrics.verified_rows == 1
+    assert pipeline.load_metrics.committed_rows == 1

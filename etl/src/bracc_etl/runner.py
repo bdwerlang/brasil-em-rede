@@ -1,10 +1,12 @@
+import hashlib
 import logging
 import os
+from pathlib import Path
 
 import click
 from neo4j import GraphDatabase
 
-from bracc_etl.base import Pipeline
+from bracc_etl.base import EmptyLoadEvidence, Pipeline
 from bracc_etl.linking_hooks import run_post_load_hooks
 from bracc_etl.pipelines.bcb import BcbPipeline
 from bracc_etl.pipelines.bndes import BndesPipeline
@@ -119,6 +121,21 @@ def cli() -> None:
 @click.option("--neo4j-password", required=True, help="Neo4j password")
 @click.option("--neo4j-database", default="neo4j", help="Neo4j database")
 @click.option("--data-dir", default="./data", help="Directory for downloaded data")
+@click.option("--source-url", default=None, help="Independently configured canonical source URL")
+@click.option(
+    "--empty-evidence-manifest", default=None,
+    type=click.Path(exists=True, dir_okay=False, path_type=str),
+    help="Acquisition manifest supporting a verified empty load",
+)
+@click.option(
+    "--empty-evidence-artifact", default=None,
+    type=click.Path(exists=True, dir_okay=False, path_type=str),
+    help="Empty JSON or CSV artifact named by the manifest",
+)
+@click.option(
+    "--empty-evidence-format", type=click.Choice(["json", "csv"]),
+    default=None, help="Format of the empty artifact",
+)
 @click.option("--limit", type=int, default=None, help="Limit rows processed")
 @click.option("--chunk-size", type=int, default=50_000, help="Chunk size for batch processing")
 @click.option(
@@ -138,6 +155,10 @@ def run(
     neo4j_password: str,
     neo4j_database: str,
     data_dir: str,
+    source_url: str | None,
+    empty_evidence_manifest: str | None,
+    empty_evidence_artifact: str | None,
+    empty_evidence_format: str | None,
     limit: int | None,
     chunk_size: int,
     linking_tier: str,
@@ -147,6 +168,17 @@ def run(
 ) -> None:
     """Run an ETL pipeline."""
     os.environ["NEO4J_DATABASE"] = neo4j_database
+    evidence_args = (empty_evidence_manifest, empty_evidence_artifact, empty_evidence_format)
+    if any(evidence_args) and not all(evidence_args):
+        raise click.ClickException("empty-load evidence requires manifest, artifact, and format")
+    if streaming and any(evidence_args):
+        raise click.ClickException(
+            "empty-load evidence is not supported with --streaming"
+        )
+    if any(evidence_args) and not source_url:
+        raise click.ClickException(
+            "empty-load evidence requires an independently configured --source-url"
+        )
 
     try:
         identity = source_aliases().resolve(source, require_runner=True)
@@ -170,6 +202,17 @@ def run(
             chunk_size=chunk_size,
             history=history,
         )
+
+        pipeline.configured_source_url = source_url
+        if empty_evidence_manifest and empty_evidence_artifact and empty_evidence_format:
+            manifest_bytes = Path(empty_evidence_manifest).read_bytes()
+            pipeline.empty_load_evidence = EmptyLoadEvidence(
+                path=empty_evidence_manifest,
+                sha256=hashlib.sha256(manifest_bytes).hexdigest(),
+                artifact_path=empty_evidence_artifact,
+                source_url=source_url or "",
+                artifact_format=empty_evidence_format,
+            )
 
         if streaming and hasattr(pipeline, "run_streaming"):
             pipeline.run_streaming(start_phase=start_phase)
