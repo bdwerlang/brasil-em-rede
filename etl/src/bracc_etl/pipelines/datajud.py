@@ -11,13 +11,13 @@ import pandas as pd
 from bracc_etl.base import Pipeline
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     format_cpf,
     normalize_cnpj,
     normalize_name,
     parse_date,
-    strip_document,
 )
 
 if TYPE_CHECKING:
@@ -149,18 +149,18 @@ class DatajudPipeline(Pipeline):
             role = _pick(row, "role", "polo", "tipo_parte")
             party_name = normalize_name(_pick(row, "party_name", "nome", "parte"))
 
-            cpf_digits = strip_document(_pick(row, "party_cpf", "cpf"))
+            cpf_raw = _pick(row, "party_cpf", "cpf")
             cnpj_digits = normalize_cnpj(_pick(row, "party_cnpj", "cnpj"))
 
-            if len(cpf_digits) == 11:
-                cpf = format_cpf(cpf_digits)
+            if classify_document(cpf_raw) == "cpf_valid":
+                cpf = format_cpf(cpf_raw)
                 persons.append({"cpf": cpf, "name": party_name})
                 person_rels.append({
                     "source_key": cpf,
                     "target_key": case_id,
                     "role": role,
                 })
-            elif len(cnpj_digits) == 14:
+            elif classify_document(cnpj_digits) == "cnpj_valid":
                 cnpj = format_cnpj(cnpj_digits)
                 companies.append({"cnpj": cnpj, "razao_social": party_name})
                 company_rels.append({

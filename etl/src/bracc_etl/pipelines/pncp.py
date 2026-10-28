@@ -20,6 +20,7 @@ from bracc_etl.base import Pipeline
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
     cap_contract_value,
+    classify_document,
     deduplicate_rows,
     format_cnpj,
     normalize_cnpj,
@@ -180,7 +181,8 @@ class PncpPipeline(Pipeline):
             cnpj_raw = str(org.get("cnpj", "")).strip()
             cnpj_digits = normalize_cnpj(cnpj_raw)
 
-            if len(cnpj_digits) != 14:
+            # Require a complete CNPJ before constructing the bid identifier.
+            if classify_document(cnpj_raw) != "cnpj_valid":
                 skipped_no_cnpj += 1
                 continue
 

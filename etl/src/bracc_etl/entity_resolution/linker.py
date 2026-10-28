@@ -13,7 +13,7 @@ class PersonLinker:
 
     def __init__(self, db_api: Any) -> None:
         try:
-            from splink import Linker  # type: ignore[import-not-found]
+            from splink import Linker  # type: ignore[import-not-found,unused-ignore]
         except ImportError as exc:
             raise ImportError(
                 "splink is required for entity resolution. "
@@ -32,7 +32,7 @@ class PersonLinker:
         """
         settings = get_person_settings()
         self._linker = self._linker_cls(
-            df,
+            df,  # type: ignore[arg-type,unused-ignore]  # Splink accepts pandas at runtime.
             settings,
             db_api=self._db_api,
         )

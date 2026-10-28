@@ -23,8 +23,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/graph", tags=["graph"])
 
 _GRAPH_PROPS = {
-    "name", "razao_social", "cnpj", "cpf", "value", "date",
-    "type", "uf", "cargo", "partido",
+    "name",
+    "razao_social",
+    "cnpj",
+    "cpf",
+    "value",
+    "date",
+    "type",
+    "uf",
+    "cargo",
+    "partido",
 }
 
 _DEFAULT_LABEL_FILTER = "-User|-Investigation|-Annotation|-Tag"
@@ -106,16 +114,22 @@ async def get_graph(
 
     # Degree guard: cap depth to 1 for supernodes to prevent explosion
     degree_records = await execute_query(
-        session, "node_degree", {"entity_id": entity_id}, timeout=5,
+        session,
+        "node_degree",
+        {"entity_id": entity_id},
+        timeout=5,
     )
     if not degree_records:
         raise HTTPException(status_code=404, detail="Entity not found")
 
+    if len(degree_records) != 1:
+        raise HTTPException(status_code=409, detail="Ambiguous entity identifier")
     degree = degree_records[0]["degree"] if degree_records else 0
     if degree > 500:
         logger.info(
             "Supernode detected (degree=%d) for %s, capping depth to 1",
-            degree, entity_id,
+            degree,
+            entity_id,
         )
         depth = min(depth, 1)
 
@@ -141,7 +155,7 @@ async def get_graph(
     node_ids: set[str] = set()
 
     for node in raw_nodes:
-        node_id = node.element_id
+        node_id = node.get("entity_id") or node.element_id
         labels = list(node.labels)
         if should_hide_person_entities() and has_person_labels(labels):
             if node_id == center_id:
@@ -172,7 +186,8 @@ async def get_graph(
         )
         document_id = str(doc_id) if doc_id else None
 
-        nodes.append(GraphNode(
+        nodes.append(
+            GraphNode(
             id=node_id,
             label=_extract_label(node, labels),
             type=labels[0].lower() if labels else "unknown",
@@ -181,7 +196,8 @@ async def get_graph(
             sources=sources,
             is_pep=_is_pep(props),
             exposure_tier=infer_exposure_tier(labels),
-        ))
+            )
+        )
 
     # Parse edges — only between accepted nodes
     edges: list[GraphEdge] = []
@@ -193,8 +209,8 @@ async def get_graph(
             continue
         seen_edges.add(rel_id)
 
-        source_id = rel.start_node.element_id
-        target_id = rel.end_node.element_id
+        source_id = rel.start_node.get("entity_id") or rel.start_node.element_id
+        target_id = rel.end_node.get("entity_id") or rel.end_node.element_id
 
         if source_id not in node_ids or target_id not in node_ids:
             continue
@@ -208,7 +224,8 @@ async def get_graph(
         elif isinstance(rel_source_val, list):
             rel_sources = [SourceAttribution(database=s) for s in rel_source_val]
 
-        edges.append(GraphEdge(
+        edges.append(
+            GraphEdge(
             id=rel_id,
             source=source_id,
             target=target_id,
@@ -217,6 +234,7 @@ async def get_graph(
             confidence=confidence,
             sources=rel_sources,
             exposure_tier="public_safe",
-        ))
+            )
+        )
 
     return GraphResponse(nodes=nodes, edges=edges, center_id=center_id)

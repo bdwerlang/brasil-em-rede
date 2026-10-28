@@ -37,7 +37,7 @@ Cadastrar declarações fiscais por ente e conta, com dimensões explícitas de 
 Limites e pré-condições:
 
 - A projeção dimensional fica pendente quando faltam metadados explícitos; CNPJ não cria Company a partir de agregado.
-- MunicipalFinance não tem constraint e a chave não inclui anexo/relatório.
+- A constraint de `MunicipalFinance.finance_id` garante unicidade da chave atual, que não inclui anexo/relatório.
 - Bootstrap só verifica presença em data/siconfi/*; não baixa, não valida schema, não verifica completude e não comprova carga.
 - Não há hook pós-carga configurado; vínculos dependentes de outra carga precisam de religação idempotente explícita.
 
@@ -98,7 +98,7 @@ Tarefas específicas, em ordem:
 
 1. Criar aquisição da dimensão de entes e das páginas DCA com checkpoint por ente/ano.
 1. Validar códigos IBGE e metadados institucionais contra fontes oficiais e definir crosswalks comprovados.
-1. Ampliar finance_id para grão contábil e criar constraint MunicipalFinance.
+1. Ampliar finance_id para o grão contábil e planejar a transição da constraint existente.
 1. Evitar ler simultaneamente JSON e CSV da mesma extração como dados independentes.
 1. Validar balanços e totais por anexo e declarar cobertura DCA, expandindo RREO/RGF em contratos separados.
 
@@ -115,7 +115,7 @@ download validado, transformação, cadastro, ligações e operação incrementa
 ## Riscos e decisões pendentes
 
 - A projeção dimensional fica pendente quando faltam metadados explícitos; CNPJ não cria Company a partir de agregado.
-- MunicipalFinance não tem constraint e a chave não inclui anexo/relatório.
+- A constraint de `MunicipalFinance.finance_id` garante unicidade da chave atual, que não inclui anexo/relatório.
 - Status loaded herdado não foi confirmado no banco local; só manifestos, cobertura e execução real validados poderão atualizar load_state.
 
 ## Evidências e referências

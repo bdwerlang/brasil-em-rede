@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from bracc_etl.base import Pipeline
 from bracc_etl.loader import Neo4jBatchLoader
-from bracc_etl.transforms import format_cnpj, normalize_cnpj, normalize_name
+from bracc_etl.transforms import classify_document, format_cnpj, normalize_cnpj, normalize_name
 
 if TYPE_CHECKING:
     from neo4j import Driver
@@ -115,7 +115,7 @@ class InepPipeline(Pipeline):
             cnpj_raw = row.get("NU_CNPJ_ESCOLA_PRIVADA", "").strip()
             if cnpj_raw:
                 digits = normalize_cnpj(cnpj_raw)
-                if len(digits) == 14:
+                if classify_document(digits) == "cnpj_valid":
                     cnpj_formatted = format_cnpj(cnpj_raw)
                     links.append({
                         "source_key": cnpj_formatted,
@@ -126,7 +126,7 @@ class InepPipeline(Pipeline):
             cnpj_mant_raw = row.get("NU_CNPJ_MANTENEDORA", "").strip()
             if cnpj_mant_raw and cnpj_mant_raw != cnpj_raw:
                 digits_mant = normalize_cnpj(cnpj_mant_raw)
-                if len(digits_mant) == 14:
+                if classify_document(digits_mant) == "cnpj_valid":
                     cnpj_mant_formatted = format_cnpj(cnpj_mant_raw)
                     links.append({
                         "source_key": cnpj_mant_formatted,

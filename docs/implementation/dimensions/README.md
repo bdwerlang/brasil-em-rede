@@ -10,13 +10,14 @@ O resultado representa apenas as dimensões fornecidas, inclusive em linhas
 agregadas. Não cria pessoas ou empresas, nem transforma estatísticas em
 identidades. UF e exercício recebem validação estrutural, não certificação
 contra cadastros oficiais. A entrada deve ser validada contra a fonte e a
-versão territorial apropriadas antes da publicação. Não há aquisição,
-crosswalk oficial, persistência ou integração com pipelines existentes.
+versão territorial apropriadas antes da publicação. Não há aquisição nem
+crosswalk oficial; a correspondência com catálogo local não comprova oficialidade.
 
-As labels e chaves são propostas locais. Integração com o esquema e projeção
-Neo4j depende de #5 e de revisão das chaves; esta entrega não demonstra carga
-em grafo, acesso a fontes ou cobertura dos vocabulários oficiais. A base local
-contém alterações ainda dependentes das PRs #23–#26.
+RAIS e Siconfi podem projetar dimensões no Neo4j usando as labels e chaves do
+esquema integrado. Os ensaios usam dados sintéticos e não demonstram acesso a
+fontes reais nem cobertura dos vocabulários oficiais. A reconciliação de
+vínculos antigos em reprocessamentos e a integração das métricas de carga da
+projeção permanecem pendentes.
 
 O caminho de CSV agregado RAIS projeta dimensões e vínculos para `LaborStats`
 quando cada linha fornece explicitamente `ibge_code`, `territorial_version`,
