@@ -21,7 +21,8 @@
 **/.vite
 
 data
-docs
+docs/*
+!docs/source_registry_br_v1.csv
 audit-results
 scripts
 **/tests

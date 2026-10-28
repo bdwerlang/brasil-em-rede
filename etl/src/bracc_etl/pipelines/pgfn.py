@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from neo4j import Driver
 from bracc_etl.loader import Neo4jBatchLoader
 from bracc_etl.transforms import (
+    classify_document,
     format_cnpj,
     normalize_cnpj,
     normalize_name,
@@ -96,7 +97,7 @@ class PgfnPipeline(Pipeline):
                 for _, row in filtered.iterrows():
                     cnpj_raw = str(row["CPF_CNPJ"]).strip()
                     digits = normalize_cnpj(cnpj_raw)
-                    if len(digits) != 14:
+                    if classify_document(digits) != "cnpj_valid":
                         skipped_bad_cnpj += 1
                         continue
 

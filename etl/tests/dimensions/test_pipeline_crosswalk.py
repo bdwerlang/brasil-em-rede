@@ -180,10 +180,14 @@ def test_siconfi_body_crosswalk_independent_and_duplicates():
     pipeline._raw = [row]
     pipeline.transform()
     assert pipeline.finances[0]["public_body_validation_status"] == "pending"
+    assert pipeline.finances[0]["public_body_validation_reason"] == "crosswalk_unavailable"
+    assert pipeline.finances[0]["territory_unit_validation_status"] == "pending"
+    assert pipeline.finances[0]["territory_unit_validation_reason"] == "crosswalk_unavailable"
     dims = pipeline.dimension_observations[0]["dimensions"]
     pipeline.dimension_crosswalk = crosswalk([{key: dims[key] for key in ("territory", "unit")}])
     pipeline.transform()
     assert pipeline.finances[0]["territory_unit_validation_status"] == "matched_local"
+    assert pipeline.finances[0]["territory_unit_validation_reason"] == ""
     assert pipeline.finances[0]["public_body_validation_status"] == "pending"
     pipeline.dimension_crosswalk = crosswalk([dims])
     partial = deepcopy(row)

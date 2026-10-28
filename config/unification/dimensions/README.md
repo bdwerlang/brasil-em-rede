@@ -36,4 +36,5 @@ papel, código e versão coincidem com a tabela local. Esse resultado não atest
 oficialidade nem confirma vínculos entre órgãos, UGs e entes.
 O status geral `code_validation_status` só chega a `matched_local` se a
 verificação de território/unidade e a institucional coincidirem; a verificação
-territorial separada está em `territory_unit_validation_status`.
+territorial separada está em `territory_unit_validation_status` e
+`territory_unit_validation_reason`, mesmo quando o órgão também está pendente.
