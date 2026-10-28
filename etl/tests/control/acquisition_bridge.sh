@@ -53,4 +53,4 @@ INSERT INTO control.source VALUES ('cnpj','public');
 INSERT INTO control.dataset VALUES ('cnpj','cnpj','v1','public'),('other','cnpj','v1','public');
 INSERT INTO control.partition VALUES ('2026-01','cnpj');
 SQL
-PYTHONPATH="$root/etl/src" "$bridge_python" "$root/etl/tests/control/test_acquisition_bridge_postgres.py" "$tmp/socket"
+PYTHONPATH="$root/etl/src" "$bridge_python" "$root/etl/tests/control/acquisition_bridge_postgres.py" "$tmp/socket"
