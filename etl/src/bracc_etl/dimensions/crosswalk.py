@@ -27,12 +27,12 @@ class PreparedCrosswalk:
 
     def validate(self, observations: list[dict[str, Any]]) -> list[dict[str, str]]:
         """Return one matched or pending outcome per observation."""
-        if self._allowed is None:
-            return [{"status": "pending", "reason": "crosswalk_unavailable"} for _ in observations]
         outcomes = []
         for observation in observations:
             dimensions = materialize([observation])["dimensions"]
-            if not dimensions or any(
+            if self._allowed is None:
+                outcomes.append({"status": "pending", "reason": "crosswalk_unavailable"})
+            elif not dimensions or any(
                 tuple(sorted(item.items())) not in self._allowed for item in dimensions
             ):
                 outcomes.append({"status": "pending", "reason": "crosswalk_entry_missing"})

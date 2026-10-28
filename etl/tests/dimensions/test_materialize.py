@@ -8,7 +8,7 @@ def row():
         "territory": {
             "system": "IBGE",
             "type": "municipio",
-            "code": "0012345",
+            "code": "3550308",
             "territorial_version": "2022",
             "uf": "SP",
         },
@@ -31,7 +31,7 @@ def test_materializes_explicit_dimensions_and_preserves_codes():
     assert len(result["dimensions"]) == 5
     assert result["references"][0] == result["references"][1]
     by_kind = {item["kind"]: item for item in result["dimensions"]}
-    assert by_kind["Territory"]["territory_id"] == "IBGE:municipio:0012345:2022"
+    assert by_kind["Territory"]["territory_id"] == "IBGE:municipio:3550308:2022"
     assert by_kind["Territory"]["uf"] == "SP"
     assert by_kind["EconomicActivity"]["code"] == "0111301"
     assert by_kind["PublicBody"]["code"] == "000123"
@@ -52,6 +52,7 @@ def test_versions_roles_and_units_stay_distinct():
 
 def test_conflicting_uf_is_rejected():
     a, b = row(), row()
+    a["territory"]["system"] = b["territory"]["system"] = "test"
     b["territory"]["uf"] = "RJ"
     with pytest.raises(DimensionError, match="conflicting"):
         materialize([a, b])
@@ -70,3 +71,37 @@ def test_invalid_year_rejected():
     record["fiscal_year"]["year"] = "24"
     with pytest.raises(DimensionError):
         materialize([record])
+
+
+def test_ibge_territory_codes_match_uf_structure():
+    record = row()
+    record["territory"].update(code="3550308", uf="SP")
+    materialize([record])
+
+    record["territory"]["code"] = "3350308"
+    with pytest.raises(DimensionError, match="matching UF prefix"):
+        materialize([record])
+
+    record["territory"].update(type="uf", code="99", uf="SP")
+    with pytest.raises(DimensionError, match="UF code"):
+        materialize([record])
+
+
+def test_other_ibge_territory_types_remain_local_pending_observations():
+    from bracc_etl.dimensions.crosswalk import validate_crosswalk
+
+    observation = {
+        "territory": {
+            "system": "IBGE",
+            "type": "regiao",
+            "code": "sudeste",
+            "territorial_version": "local-v1",
+            "uf": "SP",
+        }
+    }
+    result = materialize([observation])
+    assert result["dimensions"][0]["territory_id"] == "IBGE:regiao:sudeste:local-v1"
+    assert validate_crosswalk([observation], None)[0] == {
+        "status": "pending",
+        "reason": "crosswalk_unavailable",
+    }
