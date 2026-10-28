@@ -2,6 +2,8 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN}
     ports:
       - "80:80"
       - "443:443"
@@ -42,6 +44,7 @@ services:
       dockerfile: api/Dockerfile
     restart: unless-stopped
     environment:
+      APP_ENV: production
       NEO4J_URI: bolt://neo4j:7687
       PUBLIC_MODE: ${PUBLIC_MODE:-false}
       PUBLIC_ALLOW_PERSON: ${PUBLIC_ALLOW_PERSON:-false}
@@ -77,6 +80,11 @@ services:
         VITE_PUBLIC_MODE: ${PUBLIC_MODE:-false}
         VITE_PATTERNS_ENABLED: ${PATTERNS_ENABLED:-false}
     restart: unless-stopped
+    environment:
+      APP_ENV: production
+      PUBLIC_MODE: ${PUBLIC_MODE:-false}
+      PATTERNS_ENABLED: ${PATTERNS_ENABLED:-false}
+      VITE_API_URL: ${VITE_API_URL:-}
     networks:
       - bracc
     depends_on:

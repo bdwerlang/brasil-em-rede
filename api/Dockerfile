@@ -18,6 +18,7 @@ ENV BRACC_SOURCE_REGISTRY_PATH=/app/docs/source_registry_br_v1.csv
 
 RUN uv sync --no-dev
 
+LABEL org.brasil-em-rede.api-source-catalog="v1"
 EXPOSE 8000
 
 CMD ["uv", "run", "uvicorn", "bracc.main:app", "--host", "0.0.0.0", "--port", "8000"]

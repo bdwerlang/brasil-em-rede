@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
+import { API_BASE_URL } from "@/config/runtime";
 
 export class ApiError extends Error {
   constructor(
@@ -11,7 +11,7 @@ export class ApiError extends Error {
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = `${API_BASE}${path}`;
+  const url = `${API_BASE_URL}${path}`;
   const response = await fetch(url, {
     credentials: "include",
     ...init,
@@ -33,7 +33,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
 }
 
 async function apiFetchBlob(path: string): Promise<Blob> {
-  const url = `${API_BASE}${path}`;
+  const url = `${API_BASE_URL}${path}`;
   const response = await fetch(url, { credentials: "include" });
 
   if (!response.ok) {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { API_BASE_URL } from "@/config/runtime";
 import { Link } from "react-router";
 
 import { Spinner } from "../components/common/Spinner";
@@ -19,7 +20,7 @@ interface EmendasResponse {
 
 const PAGE_SIZE = 50;
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = API_BASE_URL;
 
 export function Emendas() {
   const { t } = useTranslation();
