@@ -80,6 +80,16 @@ class SiconfiPipeline(Pipeline):
         metadata_by_fact: dict[str, dict[str, str]] = {}
         cnpj_by_fact: dict[str, str] = {}
 
+        required = (
+            "cod_ibge",
+            "exercicio",
+            "uf",
+            "versao_territorial",
+            "tipo_territorio",
+            "unidade_sistema",
+            "unidade_codigo",
+        )
+
         for row in self._raw:
             cod_ibge = str(row.get("cod_ibge", "")).strip()
             if not cod_ibge:
@@ -126,18 +136,6 @@ class SiconfiPipeline(Pipeline):
                 }
             )
 
-            required = (
-                "cod_ibge",
-                "exercicio",
-                "uf",
-                "versao_territorial",
-                "tipo_territorio",
-                "unidade_sistema",
-                "unidade_codigo",
-            )
-            missing = [
-                field for field in required if not isinstance(row.get(field), str) or not row[field]
-            ]
             metadata_fields = required + (
                 "orgao_jurisdicao",
                 "orgao_sistema",
@@ -152,8 +150,32 @@ class SiconfiPipeline(Pipeline):
                     if field in known and known[field] != value:
                         raise ValueError(f"conflicting metadata {field} for same finance_id")
                     known[field] = value
+
+        facts_by_id: dict[str, dict[str, Any]] = {}
+        status_fields = {
+            "code_validation_status",
+            "code_validation_reason",
+            "dimension_status",
+            "dimension_reason",
+        }
+        for fact in finances:
+            fact_id = fact["finance_id"]
+            previous = facts_by_id.get(fact_id)
+            if previous is None:
+                facts_by_id[fact_id] = fact
+                continue
+            if any(previous[key] != fact[key] for key in fact.keys() - status_fields):
+                raise ValueError("conflicting values for same finance_id")
+        self.finances = [facts_by_id[key] for key in sorted(facts_by_id)]
+        for fact in self.finances:
+            if fact["finance_id"] in cnpj_by_fact:
+                fact["observed_cnpj"] = cnpj_by_fact[fact["finance_id"]]
+        for fact in self.finances:
+            finance_id = fact["finance_id"]
+            row = metadata_by_fact[finance_id]
+            missing = [field for field in required if field not in row]
             if missing:
-                finances[-1]["dimension_reason"] = "missing_metadata:" + ",".join(missing)
+                fact["dimension_reason"] = "missing_metadata:" + ",".join(missing)
             if not missing:
                 if row["tipo_territorio"] not in {"municipio", "uf"}:
                     raise ValueError("tipo_territorio must be municipio or uf")
@@ -189,46 +211,9 @@ class SiconfiPipeline(Pipeline):
                     [{key: dimensions[key] for key in ("territory", "unit")}],
                     self.dimension_crosswalk,
                 )[0]
-                finances[-1]["code_validation_status"] = check["status"]
-                finances[-1]["code_validation_reason"] = check["reason"]
-                previous_dimensions = dimension_by_fact.get(finance_id)
-                if previous_dimensions is not None:
-                    for key in previous_dimensions.keys() & dimensions.keys():
-                        if previous_dimensions[key] != dimensions[key]:
-                            raise ValueError("conflicting dimensions for same finance_id")
-                    if "public_body" not in dimensions and "public_body" in previous_dimensions:
-                        dimensions["public_body"] = previous_dimensions["public_body"]
+                fact["code_validation_status"] = check["status"]
+                fact["code_validation_reason"] = check["reason"]
                 dimension_by_fact[finance_id] = dimensions
-
-        facts_by_id: dict[str, dict[str, Any]] = {}
-        status_fields = {
-            "code_validation_status",
-            "code_validation_reason",
-            "dimension_status",
-            "dimension_reason",
-        }
-        for fact in finances:
-            fact_id = fact["finance_id"]
-            previous = facts_by_id.get(fact_id)
-            if previous is None:
-                facts_by_id[fact_id] = fact
-                continue
-            if any(previous[key] != fact[key] for key in fact.keys() - status_fields):
-                raise ValueError("conflicting values for same finance_id")
-            # Prefer a complete dimensional observation, then choose a stable pending reason.
-            if (
-                fact["dimension_reason"] == "projection_not_completed"
-                and previous["dimension_reason"] != "projection_not_completed"
-            ) or (
-                fact["dimension_reason"] != "projection_not_completed"
-                and previous["dimension_reason"] != "projection_not_completed"
-                and fact["dimension_reason"] < previous["dimension_reason"]
-            ):
-                facts_by_id[fact_id] = fact
-        self.finances = [facts_by_id[key] for key in sorted(facts_by_id)]
-        for fact in self.finances:
-            if fact["finance_id"] in cnpj_by_fact:
-                fact["observed_cnpj"] = cnpj_by_fact[fact["finance_id"]]
         self.dimension_observations = [
             {"finance_id": key, "dimensions": dimension_by_fact[key]}
             for key in sorted(dimension_by_fact)
