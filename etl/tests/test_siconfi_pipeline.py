@@ -147,3 +147,21 @@ class TestPipelineMetadata:
 
     def test_source_id(self, pipeline: SiconfiPipeline) -> None:
         assert pipeline.source_id == "siconfi"
+
+
+def test_institution_is_not_projected_as_municipality(pipeline: SiconfiPipeline) -> None:
+    pipeline._raw = [
+        {
+            "cod_ibge": "3550308",
+            "ente": "Sao Paulo",
+            "instituicao": "Secretaria Municipal de Fazenda",
+            "exercicio": "2023",
+            "conta": "Receita",
+            "coluna": "Valor",
+            "valor": "1",
+        }
+    ]
+    pipeline.transform()
+    fact = pipeline.finances[0]
+    assert fact["municipality"] == "SAO PAULO"
+    assert fact["reporting_institution"] == "SECRETARIA MUNICIPAL DE FAZENDA"

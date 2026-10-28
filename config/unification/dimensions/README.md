@@ -38,3 +38,12 @@ O status geral `code_validation_status` só chega a `matched_local` se a
 verificação de território/unidade e a institucional coincidirem; a verificação
 territorial separada está em `territory_unit_validation_status` e
 `territory_unit_validation_reason`, mesmo quando o órgão também está pendente.
+
+A validação local de RAIS e Siconfi também inclui `fiscal_year`; sua presença
+estrutural não prova exercício publicado ou vigência oficial. Referências e
+limites de proveniência consultados em 2026-10-28 estão em
+[`docs/implementation/dimensions/README.md`](../../../docs/implementation/dimensions/README.md).
+
+Mesmo sem crosswalk fornecido, as observações dimensionais completas passam pela
+validação estrutural antes de receber `pending/crosswalk_unavailable`; ausência
+de vocabulário não mascara códigos IBGE estruturalmente inconsistentes.

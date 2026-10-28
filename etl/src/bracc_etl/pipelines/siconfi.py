@@ -96,8 +96,9 @@ class SiconfiPipeline(Pipeline):
             if not cod_ibge:
                 continue
 
-            # CSV uses "instituicao", API JSON uses "ente"
-            ente = normalize_name(str(row.get("instituicao", "") or row.get("ente", "")))
+            # DCA `instituicao` names the reporting institution, not the municipality.
+            municipality = normalize_name(str(row.get("ente", "")))
+            institution = normalize_name(str(row.get("instituicao", "")))
             exercicio = str(row.get("exercicio", "")).strip()
             conta = str(row.get("conta", "")).strip()
             coluna = str(row.get("coluna", "")).strip()
@@ -124,7 +125,8 @@ class SiconfiPipeline(Pipeline):
                 {
                     "finance_id": finance_id,
                     "cod_ibge": cod_ibge,
-                    "municipality": ente,
+                    "municipality": municipality,
+                    "reporting_institution": institution,
                     "year": exercicio,
                     "account": conta,
                     "column": coluna,
@@ -211,7 +213,7 @@ class SiconfiPipeline(Pipeline):
                 if prepared is None:
                     prepared = prepare_crosswalk(self.dimension_crosswalk)
                 check = prepared.validate(
-                    [{key: dimensions[key] for key in ("territory", "unit")}]
+                    [{key: dimensions[key] for key in ("territory", "unit", "fiscal_year")}]
                 )[0]
                 fact["code_validation_status"] = check["status"]
                 fact["code_validation_reason"] = check["reason"]

@@ -8,6 +8,7 @@ import pandas as pd
 
 from bracc_etl.base import Pipeline
 from bracc_etl.dimensions.crosswalk import PreparedCrosswalk, prepare_crosswalk
+from bracc_etl.dimensions.materialize import IBGE_UF_CODES
 
 if TYPE_CHECKING:
     from neo4j import Driver
@@ -16,36 +17,8 @@ from bracc_etl.loader import Neo4jBatchLoader
 
 logger = logging.getLogger(__name__)
 
-# UF IBGE numeric code -> state abbreviation
-UF_CODE_MAP = {
-    "11": "RO",
-    "12": "AC",
-    "13": "AM",
-    "14": "RR",
-    "15": "PA",
-    "16": "AP",
-    "17": "TO",
-    "21": "MA",
-    "22": "PI",
-    "23": "CE",
-    "24": "RN",
-    "25": "PB",
-    "26": "PE",
-    "27": "AL",
-    "28": "SE",
-    "29": "BA",
-    "31": "MG",
-    "32": "ES",
-    "33": "RJ",
-    "35": "SP",
-    "41": "PR",
-    "42": "SC",
-    "43": "RS",
-    "50": "MS",
-    "51": "MT",
-    "52": "GO",
-    "53": "DF",
-}
+# Canonical IBGE numeric UF codes shared with dimension validation.
+UF_CODE_MAP = IBGE_UF_CODES
 
 
 class RaisPipeline(Pipeline):
@@ -152,7 +125,12 @@ class RaisPipeline(Pipeline):
                 if prepared is None:
                     prepared = prepare_crosswalk(self.dimension_crosswalk)
                 code_check = prepared.validate(
-                    [{key: observed[key] for key in ("territory", "activity", "unit")}]
+                    [
+                        {
+                            key: observed[key]
+                            for key in ("territory", "activity", "unit", "fiscal_year")
+                        }
+                    ]
                 )[0]
             record = {
                 "code_validation_status": code_check["status"],
@@ -211,7 +189,12 @@ class RaisPipeline(Pipeline):
                 uf_code = str(row["UF"]).strip()
                 if not cnae or cnae == "0":
                     continue
-                uf = UF_CODE_MAP.get(uf_code, uf_code)
+                if uf_code in UF_CODE_MAP:
+                    uf = UF_CODE_MAP[uf_code]
+                elif uf_code in UF_CODE_MAP.values():
+                    uf = uf_code
+                else:
+                    raise ValueError(f"Unknown RAIS UF code: {uf_code}")
                 vinculos = int(str(row["Qtd Vínculos Ativos"]).strip() or "0")
                 vinculos_clt = int(str(row["Qtd Vínculos CLT"]).strip() or "0")
                 vinculos_estat = int(str(row["Qtd Vínculos Estatutários"]).strip() or "0")
