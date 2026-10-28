@@ -90,3 +90,24 @@ def test_load_calls_session() -> None:
     # The batch is transactional; index creation still uses the session.
     assert session.run.call_count >= 1
     assert driver.session.return_value.__enter__.return_value.run.call_count >= 2
+
+
+def test_unknown_numeric_uf_code_is_rejected(tmp_path: Path) -> None:
+    import pandas as pd
+    import pytest
+
+    pipeline = RaisPipeline(make_driver(), data_dir=str(tmp_path))
+    raw = tmp_path / "rais.txt"
+    pd.DataFrame(
+        [
+            {
+                "CNAE 2.0 Subclasse": "0111301",
+                "Qtd Vínculos Ativos": "1",
+                "Qtd Vínculos CLT": "1",
+                "Qtd Vínculos Estatutários": "0",
+                "UF": "99",
+            }
+        ]
+    ).to_csv(raw, sep=";", index=False, encoding="latin-1")
+    with pytest.raises(ValueError, match="Unknown RAIS UF code"):
+        pipeline._aggregate_raw(raw)
