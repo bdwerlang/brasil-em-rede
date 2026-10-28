@@ -101,7 +101,10 @@ def test_rais_rejects_conflicting_duplicates_before_load():
         "unit_code": "vinculos",
         "exercise": "2022",
     }
-    for records in ([row, {**row, "ibge_code": "33"}], [{**row, "ibge_code": "33"}, row]):
+    for records in (
+        [row, {**row, "territorial_version": "2023"}],
+        [{**row, "territorial_version": "2023"}, row],
+    ):
         with pytest.raises(ValueError, match="Conflicting RAIS aggregate"):
             pipeline._from_aggregated(pd.DataFrame(records))
         assert pipeline.labor_stats == []

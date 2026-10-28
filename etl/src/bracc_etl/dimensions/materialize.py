@@ -13,6 +13,37 @@ class DimensionError(ValueError):
     """An incomplete or conflicting dimension observation."""
 
 
+IBGE_UF_CODES = {
+    "11": "RO",
+    "12": "AC",
+    "13": "AM",
+    "14": "RR",
+    "15": "PA",
+    "16": "AP",
+    "17": "TO",
+    "21": "MA",
+    "22": "PI",
+    "23": "CE",
+    "24": "RN",
+    "25": "PB",
+    "26": "PE",
+    "27": "AL",
+    "28": "SE",
+    "29": "BA",
+    "31": "MG",
+    "32": "ES",
+    "33": "RJ",
+    "35": "SP",
+    "41": "PR",
+    "42": "SC",
+    "43": "RS",
+    "50": "MS",
+    "51": "MT",
+    "52": "GO",
+    "53": "DF",
+}
+
+
 def _text(value: object, field: str) -> str:
     if not isinstance(value, str) or not value or value != value.strip() or ":" in value:
         raise DimensionError(f"{field} must be nonempty text without ':' or surrounding whitespace")
@@ -66,6 +97,20 @@ def materialize(rows: list[dict[str, Any]]) -> Materialized:
                 if len(uf) != 2 or not uf.isascii() or not uf.isupper() or not uf.isalpha():
                     raise DimensionError("uf must be two uppercase ASCII letters")
                 record["uf"] = uf
+                if value["system"] == "IBGE" and value["type"] == "municipio":
+                    code = record["code"]
+                    if (
+                        len(code) != 7
+                        or not code.isascii()
+                        or not code.isdigit()
+                        or IBGE_UF_CODES.get(code[:2]) != uf
+                    ):
+                        raise DimensionError(
+                            "IBGE municipality code must be 7 digits with matching UF prefix"
+                        )
+                elif value["system"] == "IBGE" and value["type"] == "uf":
+                    if IBGE_UF_CODES.get(record["code"]) != uf:
+                        raise DimensionError("IBGE UF code must match the UF abbreviation")
             if key == "fiscal_year" and (
                 len(record["year"]) != 4
                 or not record["year"].isascii()

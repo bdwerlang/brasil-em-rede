@@ -12,12 +12,19 @@ def test_requires_provenance_and_preserves_code():
         "territory": {
             "system": "IBGE",
             "type": "uf",
-            "code": "01",
+            "code": "35",
             "territorial_version": "v1",
             "uf": "SP",
         }
     }
-    assert validate_crosswalk([row], None)[0]["status"] == "pending"
+    assert validate_crosswalk([row], None)[0] == {
+        "status": "pending",
+        "reason": "crosswalk_unavailable",
+    }
+    invalid = deepcopy(row)
+    invalid["territory"].update(code="99", uf="SP")
+    with pytest.raises(ValueError, match="UF code"):
+        validate_crosswalk([invalid], None)
     with pytest.raises(CrosswalkError):
         validate_crosswalk([row], {"entries": [row]})
     table = {
@@ -34,7 +41,8 @@ def test_requires_provenance_and_preserves_code():
     }
     assert validate_crosswalk([row], table)[0]["status"] == "matched_local"
     row["territory"]["code"] = "1"
-    assert validate_crosswalk([row], table)[0]["status"] == "pending"
+    with pytest.raises(ValueError, match="UF code"):
+        validate_crosswalk([row], table)
 
 
 def _table(entries):
@@ -75,9 +83,11 @@ def test_prepared_batch_equivalence_and_snapshot(monkeypatch):
 def test_prepared_missing_table_matches_compatibility_api():
     from bracc_etl.dimensions.crosswalk import prepare_crosswalk
 
-    rows = [{}, {"unit": "invalid"}]
+    rows = [{}, {"unit": {"system": "SI", "code": "kg"}}]
     assert prepare_crosswalk(None).validate(rows) == validate_crosswalk(rows, None)
     assert prepare_crosswalk(None).validate([]) == []
+    with pytest.raises(ValueError, match="unit must be an object"):
+        prepare_crosswalk(None).validate([{"unit": "invalid"}])
 
 
 @pytest.mark.parametrize(
@@ -86,12 +96,28 @@ def test_prepared_missing_table_matches_compatibility_api():
         {"entries": []},
         {"provenance": {"source": "s", "version": "v", "artifact_sha256": "x"}, "entries": []},
         _table([{"unit": "invalid"}]),
-        _table([
-            {"territory": {"system": "IBGE", "type": "uf", "code": "01",
-                           "territorial_version": "v1", "uf": "SP"}},
-            {"territory": {"system": "IBGE", "type": "uf", "code": "01",
-                           "territorial_version": "v1", "uf": "RJ"}},
-        ]),
+        _table(
+            [
+                {
+                    "territory": {
+                        "system": "IBGE",
+                        "type": "uf",
+                        "code": "35",
+                        "territorial_version": "v1",
+                        "uf": "SP",
+                    }
+                },
+                {
+                    "territory": {
+                        "system": "IBGE",
+                        "type": "uf",
+                        "code": "35",
+                        "territorial_version": "v1",
+                        "uf": "RJ",
+                    }
+                },
+            ]
+        ),
     ],
 )
 def test_preparation_rejects_invalid_or_conflicting_tables(table):

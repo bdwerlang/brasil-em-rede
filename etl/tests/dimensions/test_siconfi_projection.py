@@ -9,7 +9,7 @@ from bracc_etl.pipelines.siconfi import SiconfiPipeline
 
 def observation():
     return {
-        "cod_ibge": "0123456",
+        "cod_ibge": "3550308",
         "exercicio": "2022",
         "uf": "SP",
         "versao_territorial": "2022",
@@ -38,7 +38,7 @@ def pipeline_for(row):
 def test_explicit_dimensions_preserve_identifiers():
     pipeline = pipeline_for(observation())
     dimensions = pipeline.dimension_observations[0]["dimensions"]
-    assert dimensions["territory"]["code"] == "0123456"
+    assert dimensions["territory"]["code"] == "3550308"
     assert dimensions["territory"]["uf"] == "SP"
     assert dimensions["fiscal_year"]["year"] == "2022"
     assert dimensions["unit"]["code"] == "BRL"
