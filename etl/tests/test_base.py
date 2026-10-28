@@ -163,6 +163,44 @@ def test_empty_evidence_rejects_nonempty_or_tampered_artifact(tmp_path) -> None:
     ).verify("cnpj", url)
 
 
+def test_empty_evidence_rejects_manifest_with_other_pages(tmp_path) -> None:
+    raw = b"[]"
+    artifact = tmp_path / "page-1.json"
+    artifact.write_bytes(raw)
+    other_raw = b"[{\"id\":1}]"
+    other_artifact = tmp_path / "page-2.json"
+    other_artifact.write_bytes(other_raw)
+    url = "https://example.test/data"
+    pages = {
+        artifact.name: {
+            "source_sha256": hashlib.sha256(url.encode()).hexdigest(),
+            "sha256": hashlib.sha256(raw).hexdigest(),
+            "bytes": len(raw),
+        },
+        other_artifact.name: {
+            "source_sha256": hashlib.sha256(url.encode()).hexdigest(),
+            "sha256": hashlib.sha256(other_raw).hexdigest(),
+            "bytes": len(other_raw),
+        },
+    }
+    contents = json.dumps({"source_id": "cnpj", "pages": pages}).encode()
+    path = tmp_path / "manifest.json"
+    path.write_bytes(contents)
+    evidence = EmptyLoadEvidence(
+        str(path), hashlib.sha256(contents).hexdigest(), str(artifact), url, "json"
+    )
+    assert not evidence.verify("cnpj", url)
+
+    pipeline = DummyPipeline()
+    pipeline.load = lambda: None
+    pipeline.empty_load_evidence = evidence
+    pipeline.configured_source_url = url
+    with pytest.raises(ValueError, match="empty load requires evidence"):
+        pipeline.run()
+    session = pipeline.driver.session.return_value.__enter__.return_value
+    assert session.run.call_args.args[1]["status"] == "quality_fail"
+
+
 def test_untracked_direct_write_fails_closed() -> None:
     pipeline = DummyPipeline()
 
