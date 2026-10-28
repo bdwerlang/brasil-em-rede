@@ -179,3 +179,46 @@ def test_duplicate_body_link_in_disposable_graph():
                 assert result["codes"] == ["000123"]
     finally:
         driver.close()
+
+
+def test_complementary_duplicates_reconcile_before_projection():
+    full = observation()
+    territory = full.copy()
+    for field in (
+        "orgao_jurisdicao",
+        "orgao_sistema",
+        "orgao_papel",
+        "orgao_codigo",
+        "orgao_versao",
+    ):
+        del territory[field]
+    body = full.copy()
+    del body["versao_territorial"]
+    pipeline = SiconfiPipeline(MagicMock())
+    results = []
+    for rows in ([territory, body], [body, territory]):
+        pipeline._raw = rows
+        pipeline.transform()
+        results.append((pipeline.finances.copy(), pipeline.dimension_observations.copy()))
+        assert pipeline.dimension_observations[0]["dimensions"]["public_body"]["code"] == "000123"
+        assert pipeline.finances[0]["dimension_reason"] == "projection_not_completed"
+    assert results[0] == results[1]
+
+    body["uf"] = "RJ"
+    for rows in ([territory, body], [body, territory]):
+        pipeline._raw = rows
+        with pytest.raises(ValueError, match="conflicting metadata uf"):
+            pipeline.transform()
+
+
+def test_complementary_duplicates_keep_unresolved_metadata_pending():
+    first = observation()
+    second = observation()
+    del first["versao_territorial"]
+    del second["versao_territorial"]
+    del first["orgao_codigo"]
+    pipeline = SiconfiPipeline(MagicMock())
+    pipeline._raw = [first, second]
+    pipeline.transform()
+    assert pipeline.dimension_observations == []
+    assert pipeline.finances[0]["dimension_reason"] == "missing_metadata:versao_territorial"

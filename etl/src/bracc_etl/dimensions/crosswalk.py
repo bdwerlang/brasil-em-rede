@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+from dataclasses import dataclass
 from typing import Any
 
 from .materialize import materialize
@@ -11,16 +12,42 @@ class CrosswalkError(ValueError):
     """A crosswalk lacks provenance or contains conflicting records."""
 
 
-def validate_crosswalk(
-    observations: list[dict[str, Any]], crosswalk: dict[str, Any] | None
-) -> list[dict[str, str]]:
-    """Return matched/pending outcomes; caller supplies the evidence table.
+DimensionKey = tuple[tuple[str, str], ...]
 
-    Entries use the same explicit identifiers as materialize, with provenance
-    for each release. Absence is pending, not evidence that a code is invalid.
+
+@dataclass(frozen=True)
+class PreparedCrosswalk:
+    """Immutable snapshot of validated evidence, reusable across observation batches.
+
+    Prepare again when the source table changes; later mutations of that table do
+    not affect this snapshot. A missing table yields pending outcomes.
+    """
+
+    _allowed: frozenset[DimensionKey] | None
+
+    def validate(self, observations: list[dict[str, Any]]) -> list[dict[str, str]]:
+        """Return one matched or pending outcome per observation."""
+        if self._allowed is None:
+            return [{"status": "pending", "reason": "crosswalk_unavailable"} for _ in observations]
+        outcomes = []
+        for observation in observations:
+            dimensions = materialize([observation])["dimensions"]
+            if not dimensions or any(
+                tuple(sorted(item.items())) not in self._allowed for item in dimensions
+            ):
+                outcomes.append({"status": "pending", "reason": "crosswalk_entry_missing"})
+            else:
+                outcomes.append({"status": "matched_local", "reason": ""})
+        return outcomes
+
+
+def prepare_crosswalk(crosswalk: dict[str, Any] | None) -> PreparedCrosswalk:
+    """Check provenance and materialize the evidence table once for reuse.
+
+    This checks internal integrity and membership, not official authenticity.
     """
     if crosswalk is None:
-        return [{"status": "pending", "reason": "crosswalk_unavailable"} for _ in observations]
+        return PreparedCrosswalk(None)
     provenance = crosswalk.get("provenance")
     if not isinstance(provenance, dict) or not all(
         isinstance(provenance.get(k), str) and provenance[k].strip()
@@ -40,12 +67,15 @@ def validate_crosswalk(
         catalog = materialize(entries)["dimensions"]
     except (ValueError, TypeError, AttributeError) as exc:
         raise CrosswalkError("invalid or conflicting crosswalk entries") from exc
-    allowed = {tuple(sorted(item.items())) for item in catalog}
-    outcomes = []
-    for observation in observations:
-        dimensions = materialize([observation])["dimensions"]
-        if not dimensions or any(tuple(sorted(item.items())) not in allowed for item in dimensions):
-            outcomes.append({"status": "pending", "reason": "crosswalk_entry_missing"})
-        else:
-            outcomes.append({"status": "matched_local", "reason": ""})
-    return outcomes
+    return PreparedCrosswalk(frozenset(tuple(sorted(item.items())) for item in catalog))
+
+
+def validate_crosswalk(
+    observations: list[dict[str, Any]], crosswalk: dict[str, Any] | None
+) -> list[dict[str, str]]:
+    """Return matched/pending outcomes using the supplied evidence table.
+
+    For repeated batches, call prepare_crosswalk once and reuse its validate
+    method. Absence is pending, not evidence that a code is invalid.
+    """
+    return prepare_crosswalk(crosswalk).validate(observations)
