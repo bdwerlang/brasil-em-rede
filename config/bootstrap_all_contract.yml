@@ -93,7 +93,7 @@
       "required_inputs": [
         "data/comprasnet/*"
       ],
-      "blocking_reason_if_any": "-",
+      "blocking_reason_if_any": "No supported downloader is present; provide reviewed local files.",
       "core": true
     },
     {
@@ -138,7 +138,7 @@
       "required_inputs": [
         "data/datasus/*"
       ],
-      "blocking_reason_if_any": "-",
+      "blocking_reason_if_any": "No supported downloader is present; provide reviewed local files.",
       "core": false
     },
     {
