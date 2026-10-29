@@ -1,7 +1,15 @@
 // BR-ACC Dev Seed Data
 // Small fixture graph that exercises all 5 analysis patterns
 // Run: cypher-shell -f seed-dev.cypher
-
+//
+// ── ⚠️  DANGER: CASCADE DELETION  ─────────────────────────────────
+// This script permanently DELETES ALL GRAPH DATA by executing:
+//   MATCH (n) DETACH DELETE n;
+// This is IRREVERSIBLE and will destroy production data if run
+// against a live database. Use only with demo/development environments.
+// The bootstrap_public_demo.sh script requires explicit --reset flag
+// to execute this file.
+//
 // ── Clean existing dev data ─────────────────────────────
 MATCH (n) DETACH DELETE n;
 
