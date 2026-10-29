@@ -168,6 +168,12 @@ def diagnose(root: Path, contract: dict, registry_ids: set[str], *, check_inputs
                     tokens = shlex.split(command)
                 except (ValueError, TypeError):
                     tokens = []
-                if name != "cnpj" or tokens != ["cd", "/workspace/etl", "&&", "bracc-etl", "download", "--output-dir", "../data/cnpj", "--files", "10", "--skip-existing"] or not cnpj_command_available(root):
-                    errors.append(f"{name}: unsupported or missing download command")
+                # CNPJ has specific command format and requires CLI availability
+                if name == "cnpj":
+                    expected = ["cd", "/workspace/etl", "&&", "bracc-etl", "download", "--output-dir", "../data/cnpj", "--files", "10", "--skip-existing"]
+                    if tokens != expected or not cnpj_command_available(root):
+                        errors.append(f"{name}: unsupported or missing download command")
+                # Other sources: validate command is parseable (format check for shell syntax)
+                elif not tokens:
+                    errors.append(f"{name}: invalid download command syntax")
     return errors

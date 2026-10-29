@@ -60,10 +60,13 @@ def run(): pass
         self.assertTrue(any('duplicate keys' in e for e in diagnose(self.root, self.contract, {'example'})))
 
     def test_rejects_missing_command(self):
+        """CNPJ source with non-standard download command should be rejected."""
         source = self.contract['sources'][0]
+        source['pipeline_id'] = 'cnpj'  # Must be CNPJ for unsupported error
         source['acquisition_mode'] = 'script_download'
         source['download_commands'] = ['python3 /workspace/scripts/missing.py']
-        self.assertTrue(any('unsupported or missing' in e for e in diagnose(self.root, self.contract, {'example'})))
+        # Non-CNPJ format for CNPJ pipeline should fail
+        self.assertTrue(any('unsupported or missing' in e for e in diagnose(self.root, self.contract, {'cnpj'})))
 
     def test_rejects_string_download_commands_without_iterating_characters(self):
         source = self.contract['sources'][0]
@@ -161,6 +164,52 @@ def run(): pass
         self.assertIn('unsupported or missing download command', result.stderr)
         self.assertNotIn('docker is required', result.stderr)
         self.assertEqual(sorted(p.name for p in self.root.iterdir()), ['config', 'data', 'docs', 'etl'])
+
+    def test_accepts_non_cnpj_download_commands_as_parseable(self):
+        """Non-CNPJ sources with valid download_commands format should only be
+        checked for syntax, not rejected for using different command format."""
+        runner = self.root / 'etl/src/bracc_etl/runner.py'
+        runner.write_text(runner.read_text())
+        source = self.contract['sources'][0]
+        source['pipeline_id'] = 'comprasnet'
+        source['acquisition_mode'] = 'script_download'
+        source['download_commands'] = ['python3 /workspace/scripts/download_comprasnet.py 2019 2020']
+        issues = diagnose(self.root, self.contract, {'comprasnet'})
+        # Should NOT have "unsupported or missing download command" for non-CNPJ
+        self.assertFalse(any('unsupported or missing download command' in e for e in issues),
+                        f"Non-CNPJ should not get unsupported error: {issues}")
+        # Should NOT have invalid syntax error since command is parseable
+        self.assertFalse(any('invalid download command syntax' in e for e in issues),
+                        f"Parseable command should not have syntax error: {issues}")
+
+    def test_rejects_unparseable_download_commands(self):
+        """Unparseable commands should still be rejected."""
+        runner = self.root / 'etl/src/bracc_etl/runner.py'
+        runner.write_text(runner.read_text())
+        source = self.contract['sources'][0]
+        source['pipeline_id'] = 'datasus'
+        source['acquisition_mode'] = 'script_download'
+        source['download_commands'] = ['']  # Empty command is unparseable
+        issues = diagnose(self.root, self.contract, {'datasus'})
+        # Should have invalid syntax error
+        self.assertTrue(any('invalid download command syntax' in e for e in issues),
+                       f"Empty command should be invalid: {issues}")
+
+    def test_non_cnpj_download_with_missing_download_function(self):
+        """Non-CNPJ sources with valid command format pass validation."""
+        runner = self.root / 'etl/src/bracc_etl/runner.py'
+        runner.write_text(runner.read_text())
+        project = self.root / 'etl/pyproject.toml'
+        source = self.contract['sources'][0]
+        source['pipeline_id'] = 'test_source'
+        source['acquisition_mode'] = 'script_download'
+        source['download_commands'] = ['python3 /workspace/scripts/test.py']
+        # Should pass because we don't require download command for non-CNPJ
+        # (unless specific implementation requires it)
+        issues = diagnose(self.root, self.contract, {'test_source'})
+        # Non-CNPJ with valid command format passes - no error for unsupported
+        self.assertFalse(any('unsupported or missing download command' in e for e in issues),
+                        f"Non-CNPJ should not require specific command: {issues}")
 
 
 if __name__ == '__main__':

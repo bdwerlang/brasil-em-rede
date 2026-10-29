@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+# bootstrap_public_demo.sh - Bootstrap script for public demo purposes
+# WARNING: This script DOWNSIZES the Neo4j graph with seed-dev.cypher
+# which executes: MATCH (n) DETACH DELETE n
+# Use --reset only when intentionally clearing the database.
+# Without --reset, this script will still run but will NOT execute seed.
+
 set -euo pipefail
 
 PROFILE="demo"
@@ -7,6 +13,7 @@ DOWNLOAD="${DOWNLOAD:-false}"
 NEO4J_URI="${NEO4J_URI:-bolt://localhost:7687}"
 NEO4J_DATABASE="${NEO4J_DATABASE:-neo4j}"
 CNPJ_FILES="${CNPJ_FILES:-1}"
+RUN_SEED=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -26,6 +33,30 @@ while [[ $# -gt 0 ]]; do
       DOWNLOAD="false"
       shift
       ;;
+    --reset)
+      RUN_SEED="true"
+      shift
+      ;;
+    --no-reset)
+      RUN_SEED="false"
+      shift
+      ;;
+    --help)
+      echo "Usage: $0 [OPTIONS]"
+      echo ""
+      echo "Options:"
+      echo "  --profile demo|full    Profile mode (default: demo)"
+      echo "  --pipelines LIST       Comma-separated pipeline list (default: cnpj,tse,transparencia,sanctions)"
+      echo "  --download             Enable download stage"
+      echo "  --no-download          Disable download stage"
+      echo "  --reset                REQUIRED: Run seed which DETACH DELETES all graph data"
+      echo "  --no-reset             Skip seed (safe, no data modification)"
+      echo "  --help                 Show this help message"
+      echo ""
+      echo "WARNING: seed-dev.cypher contains 'MATCH (n) DETACH DELETE n'"
+      echo "         This will permanently delete all graph data. Use --reset only when intended."
+      exit 0
+      ;;
     *)
       echo "Unknown argument: $1" >&2
       exit 1
@@ -36,6 +67,12 @@ done
 if [[ "$PROFILE" != "demo" && "$PROFILE" != "full" ]]; then
   echo "Invalid --profile value: $PROFILE (expected demo|full)" >&2
   exit 1
+fi
+
+# Warn if --reset is not explicitly set when running seed
+if [[ "$RUN_SEED" == "false" && "$PROFILE" == "demo" ]]; then
+  echo "WARNING: Running in demo mode with --no-reset (default)." >&2
+  echo "         Seed will be SKIPPED. Use --reset to load demo data (DELETES existing data)." >&2
 fi
 
 if [[ -z "${NEO4J_PASSWORD:-}" && -f .env ]]; then
@@ -78,8 +115,13 @@ if ! curl -fsS http://localhost:8000/health >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "Loading deterministic development seed..."
-NEO4J_URI="$NEO4J_URI" NEO4J_DATABASE="$NEO4J_DATABASE" NEO4J_PASSWORD="$NEO4J_PASSWORD" bash infra/scripts/seed-dev.sh
+if [[ "$RUN_SEED" == "true" ]]; then
+  echo "WARNING: Loading deterministic development seed (DELETES existing graph data)..."
+  echo "Running: MATCH (n) DETACH DELETE n in seed-dev.cypher" >&2
+  NEO4J_URI="$NEO4J_URI" NEO4J_DATABASE="$NEO4J_DATABASE" NEO4J_PASSWORD="$NEO4J_PASSWORD" bash infra/scripts/seed-dev.sh
+else
+  echo "Skipping seed (graph remains unmodified)." >&2
+fi
 
 if [[ "$PROFILE" == "full" ]]; then
   if ! command -v uv >/dev/null 2>&1; then
