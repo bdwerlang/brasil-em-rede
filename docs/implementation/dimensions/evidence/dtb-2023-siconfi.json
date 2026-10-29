@@ -1,0 +1,61 @@
+{
+  "source": {
+    "requested_url": "https://geoftp.ibge.gov.br/organizacao_do_territorio/estrutura_territorial/divisao_territorial/2023/DTB_2023.zip",
+    "final_url": "https://geoftp.ibge.gov.br/organizacao_do_territorio/estrutura_territorial/divisao_territorial/2023/DTB_2023.zip",
+    "http_status": 200,
+    "retrieved_utc": "2026-10-29T01:47:18.591611+00:00",
+    "http_last_modified": "18/12/2024",
+    "internal_data_base": "22/11/2024",
+    "folder_label": "DTB_2023",
+    "temporal_limit": "The folder/artifact label 2023, internal base date 22/11/2024 and HTTP Last-Modified 18/12/2024 are distinct. Neither proves fiscal-2023 edition or historical compatibility. Current official webpage, retained local artifact/version and its label are distinct claims."
+  },
+  "receipt": {
+    "status": 200,
+    "retrieved_utc": "2026-10-29T01:47:18.591611+00:00",
+    "raw_sha256": "9737cb335711eac12fb76a99baee17f7ed169ad7e4006451e41edb2dc023c4c8"
+  },
+  "archive": {
+    "filename": "DTB_2023.zip",
+    "size_bytes": 1536464,
+    "sha256": "9737cb335711eac12fb76a99baee17f7ed169ad7e4006451e41edb2dc023c4c8",
+    "member": "DTB_2023/RELATORIO_DTB_BRASIL_MUNICIPIO.ods",
+    "member_size_bytes": 199549,
+    "member_sha256": "5b692f188ad75f536254b374b798d2f739d04ef636f58d32d8e13f899429170c",
+    "content_xml_size_bytes": 7659114,
+    "table": "DTB_Municipio",
+    "physical_row_count": 5578,
+    "header_physical_row": 6
+  },
+  "fixture": "etl/tests/fixtures/siconfi/dca_2023.json",
+  "excluded_blank_fixture_rows": 1,
+  "matches": [
+    {
+      "code": "3550308",
+      "fixture_name": "São Paulo",
+      "official_name": "São Paulo",
+      "uf_code": "35",
+      "physical_row": 3838
+    },
+    {
+      "code": "3304557",
+      "fixture_name": "Rio de Janeiro",
+      "official_name": "Rio de Janeiro",
+      "uf_code": "33",
+      "physical_row": 3249
+    },
+    {
+      "code": "5300108",
+      "fixture_name": "Brasília",
+      "official_name": "Brasília",
+      "uf_code": "53",
+      "physical_row": 5576
+    },
+    {
+      "code": "2927408",
+      "fixture_name": "Salvador",
+      "official_name": "Salvador",
+      "uf_code": "29",
+      "physical_row": 2169
+    }
+  ]
+}
