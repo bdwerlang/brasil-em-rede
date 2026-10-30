@@ -1,5 +1,7 @@
 # Materialização local de dimensões (F09)
 
+Evidência limitada da comparação da fixture Siconfi com o artefato DTB rotulado 2023: [método e limites temporais](dtb-2023-evidence.md).
+
 `bracc_etl.dimensions.materialize` transforma referências explícitas em registros
 distintos e referências por linha, em memória. Aceita território, órgão/UG/ente,
 atividade econômica, moeda ou unidade e exercício. Códigos e versões são texto:

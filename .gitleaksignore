@@ -1,0 +1,2 @@
+# Falso positivo: SHA-256 público de referência, não é credencial.
+f5e18bdb8e27e31fe24d5b99c3c49b11b1fdd398:etl/tests/control/package-integrity.sh:generic-api-key:36
