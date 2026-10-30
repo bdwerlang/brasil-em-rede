@@ -1,38 +1,27 @@
 # Reproducibility
 
-## Quick Local Demo (Deterministic)
+## Public demo bootstrap (safe default)
+
+The public wrapper is deliberately read-only by default. Its supported invocations are:
 
 ```bash
-cp .env.example .env
-make bootstrap-demo
+bash scripts/bootstrap_public_demo.sh --help
+bash scripts/bootstrap_public_demo.sh --doctor
 ```
 
-Expected results:
-- `http://localhost:8000/health` returns `{"status":"ok"}`.
-- Neo4j Browser is available at `http://localhost:7474`.
-- Demo graph seed is loaded via `infra/scripts/seed-dev.sh`.
+`--doctor` checks prerequisites without starting Docker; missing inputs are reported with exit code 1. Legacy `--profile`, `--download`, `--pipelines`, full-profile, and reset options are unsupported and fail closed. The wrapper does not expose an API or browser endpoint.
 
-## One-Script End-to-End Orchestration
+Seeding is a separate, explicit opt-in and requires `DEMO_NEO4J_PASSWORD`:
 
 ```bash
-# Demo profile
-bash scripts/bootstrap_public_demo.sh --profile demo
-
-# Full profile (orchestrates docker + ETL loop)
-bash scripts/bootstrap_public_demo.sh --profile full --pipelines cnpj,tse,transparencia,sanctions --download
-
-# Heavy one-command full ingestion (all implemented pipelines from contract)
-make bootstrap-all
-
-# Noninteractive heavy run (CI/automation)
-make bootstrap-all-noninteractive
+DEMO_NEO4J_PASSWORD='set-locally' bash scripts/bootstrap_public_demo.sh --seed-isolated --i-understand-isolated-demo
 ```
 
-Notes:
-- `full` profile runtime depends on external data source availability and your machine resources.
-- Some pipelines require credentials, API keys, or source-specific access preconditions.
-- `bootstrap-all` uses Dockerized ETL (no host `uv` required), prompts for reset by default, and writes run evidence to `audit-results/bootstrap-all/<UTC_STAMP>/summary.{json,md}`.
-- `bootstrap-all` defaults to full historical attempts and can be very long-running.
+The seed script creates a fresh random Compose project and volume; it does not target the shared stack. Do not infer that a seed was run from these instructions.
+
+## Separate operational workflows
+
+`make bootstrap-all` and `make bootstrap-all-noninteractive` invoke heavy bootstrap workflows, not the public wrapper's read-only check or isolated demo. BYO-data ETL commands likewise access the configured database and data directory. Each is a separate operational workflow requiring specific approval before execution. Some pipelines also have external credentials and source preconditions; runtimes and availability vary.
 
 ## BYO-Data Ingestion
 

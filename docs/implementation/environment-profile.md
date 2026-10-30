@@ -50,8 +50,12 @@ O readiness da API continua distinto do endpoint `/health`: verifica que o
 catálogo carregável está presente e que a API responde conectada ao Neo4j. Isso não
 certifica acesso a fontes, qualidade dos dados nem dimensão de uma partição real.
 
-`infra/scripts/seed-dev.sh` cria um projeto e volume Compose próprios, mas
-`scripts/bootstrap_public_demo.sh` ainda inicia o Compose compartilhado antes de
-chamar seed e pode executar ETL no banco configurado. Não use esse bootstrap como
-atalho para demonstração até uma demanda própria revisar e isolar esse contrato.
-Nenhum seed, reset, aquisição, migração ou restore real faz parte do preflight.
+`infra/scripts/seed-dev.sh` cria um projeto Compose e volume novos, com nome aleatório.
+O wrapper `scripts/bootstrap_public_demo.sh` é somente leitura por padrão; `--doctor`
+verifica pré-requisitos sem iniciar Docker e retorna código 1 quando faltam entradas.
+O seed exige opt-in explícito (`--seed-isolated --i-understand-isolated-demo`) e
+`DEMO_NEO4J_PASSWORD`. Não há endpoint de API ou navegador exposto pelo wrapper.
+Opções legadas de perfil/download/ETL/reset falham sem ação. `make bootstrap-all` e
+ETL BYO-data são fluxos operacionais separados, sujeitos a aprovação específica;
+não são substitutos do modo de verificação. Nenhum seed, reset, aquisição, migração
+ou restore real faz parte do preflight.
